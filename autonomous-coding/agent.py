@@ -12,7 +12,7 @@ from typing import Optional
 from claude_code_sdk import ClaudeSDKClient
 
 from client import create_client
-from progress import print_session_header, print_progress_summary
+from progress import print_session_header, print_progress_summary, is_linear_initialized
 from prompts import get_initializer_prompt, get_coding_prompt, copy_spec_to_project
 
 
@@ -122,22 +122,22 @@ async def run_autonomous_agent(
     project_dir.mkdir(parents=True, exist_ok=True)
 
     # Check if this is a fresh start or continuation
-    tests_file = project_dir / "feature_list.json"
-    is_first_run = not tests_file.exists()
+    # We use .linear_project.json as the marker for initialization
+    is_first_run = not is_linear_initialized(project_dir)
 
     if is_first_run:
         print("Fresh start - will use initializer agent")
         print()
         print("=" * 70)
         print("  NOTE: First session takes 10-20+ minutes!")
-        print("  The agent is generating 200 detailed test cases.")
+        print("  The agent is creating 50 Linear issues and setting up the project.")
         print("  This may appear to hang - it's working. Watch for [Tool: ...] output.")
         print("=" * 70)
         print()
         # Copy the app spec into the project directory for the agent to read
         copy_spec_to_project(project_dir)
     else:
-        print("Continuing existing project")
+        print("Continuing existing project (Linear initialized)")
         print_progress_summary(project_dir)
 
     # Main loop

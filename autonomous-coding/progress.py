@@ -3,37 +3,49 @@ Progress Tracking Utilities
 ===========================
 
 Functions for tracking and displaying progress of the autonomous coding agent.
+Progress is tracked via Linear issues, with local state cached in .linear_project.json.
 """
 
 import json
 from pathlib import Path
 
+from linear_config import LINEAR_PROJECT_MARKER
 
-def count_passing_tests(project_dir: Path) -> tuple[int, int]:
+
+def load_linear_project_state(project_dir: Path) -> dict | None:
     """
-    Count passing and total tests in feature_list.json.
+    Load the Linear project state from the marker file.
 
     Args:
-        project_dir: Directory containing feature_list.json
+        project_dir: Directory containing .linear_project.json
 
     Returns:
-        (passing_count, total_count)
+        Project state dict or None if not initialized
     """
-    tests_file = project_dir / "feature_list.json"
+    marker_file = project_dir / LINEAR_PROJECT_MARKER
 
-    if not tests_file.exists():
-        return 0, 0
+    if not marker_file.exists():
+        return None
 
     try:
-        with open(tests_file, "r") as f:
-            tests = json.load(f)
-
-        total = len(tests)
-        passing = sum(1 for test in tests if test.get("passes", False))
-
-        return passing, total
+        with open(marker_file, "r") as f:
+            return json.load(f)
     except (json.JSONDecodeError, IOError):
-        return 0, 0
+        return None
+
+
+def is_linear_initialized(project_dir: Path) -> bool:
+    """
+    Check if Linear project has been initialized.
+
+    Args:
+        project_dir: Directory to check
+
+    Returns:
+        True if .linear_project.json exists and is valid
+    """
+    state = load_linear_project_state(project_dir)
+    return state is not None and state.get("initialized", False)
 
 
 def print_session_header(session_num: int, is_initializer: bool) -> None:
@@ -47,11 +59,23 @@ def print_session_header(session_num: int, is_initializer: bool) -> None:
 
 
 def print_progress_summary(project_dir: Path) -> None:
-    """Print a summary of current progress."""
-    passing, total = count_passing_tests(project_dir)
+    """
+    Print a summary of current progress.
 
-    if total > 0:
-        percentage = (passing / total) * 100
-        print(f"\nProgress: {passing}/{total} tests passing ({percentage:.1f}%)")
-    else:
-        print("\nProgress: feature_list.json not yet created")
+    Since actual progress is tracked in Linear, this reads the local
+    state file for cached information. The agent updates Linear directly
+    and reports progress in session comments.
+    """
+    state = load_linear_project_state(project_dir)
+
+    if state is None:
+        print("\nProgress: Linear project not yet initialized")
+        return
+
+    total = state.get("total_issues", 0)
+    meta_issue = state.get("meta_issue_id", "unknown")
+
+    print(f"\nLinear Project Status:")
+    print(f"  Total issues created: {total}")
+    print(f"  META issue ID: {meta_issue}")
+    print(f"  (Check Linear for current Done/In Progress/Todo counts)")

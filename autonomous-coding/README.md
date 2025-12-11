@@ -1,10 +1,30 @@
-# Autonomous Coding Agent Demo
+# Autonomous Coding Agent (Linear-Integrated)
 
-A minimal harness demonstrating long-running autonomous coding with the Claude Agent SDK. This demo implements a two-agent pattern (initializer + coding agent) that can build complete applications over multiple sessions.
+A minimal harness demonstrating long-running autonomous coding with the Claude Agent SDK. This agent uses **Linear** for project management, giving you real-time visibility into progress.
+
+## To Run the Agent
+
+```bash
+cd autonomous-coding
+
+# 1. Set up your Claude OAuth token
+claude setup-token
+export CLAUDE_CODE_OAUTH_TOKEN='your-oauth-token'
+
+# 2. Get your Linear API key from https://linear.app/YOUR-TEAM/settings/api
+export LINEAR_API_KEY='lin_api_xxxxxxxxxxxxx'
+
+# 3. Run the agent
+python autonomous_agent_demo.py --project-dir ./luminous_app
+```
+
+## What Happens
+
+1. **First run**: Creates a Linear project with 50 issues based on `app_spec.txt`
+2. **Subsequent runs**: Agent queries Linear, picks highest-priority Todo issue, implements it, marks Done
+3. **You can watch**: Open your Linear workspace to see real-time progress
 
 ## Prerequisites
-
-**Required:** Install the latest versions of both Claude Code and the Claude Agent SDK:
 
 ```bash
 # Install Claude Code CLI (latest version required)
@@ -20,62 +40,74 @@ claude --version  # Should be latest version
 pip show claude-code-sdk  # Check SDK is installed
 ```
 
-**API Key:** Set your Anthropic API key:
-```bash
-export ANTHROPIC_API_KEY='your-api-key-here'
-```
+## Environment Variables
 
-## Quick Start
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `CLAUDE_CODE_OAUTH_TOKEN` | Claude Code OAuth token (from `claude setup-token`) | Yes |
+| `LINEAR_API_KEY` | Linear API key for project management | Yes |
 
-```bash
-python autonomous_agent_demo.py --project-dir ./my_project
-```
+## Command Line Options
 
-For testing with limited iterations:
-```bash
-python autonomous_agent_demo.py --project-dir ./my_project --max-iterations 3
-```
-
-## Important Timing Expectations
-
-> **Warning: This demo takes a long time to run!**
-
-- **First session (initialization):** The agent generates a `feature_list.json` with 200 test cases. This takes several minutes and may appear to hang - this is normal. The agent is writing out all the features.
-
-- **Subsequent sessions:** Each coding iteration can take **5-15 minutes** depending on complexity.
-
-- **Full app:** Building all 200 features typically requires **many hours** of total runtime across multiple sessions.
-
-**Tip:** The 200 features parameter in the prompts is designed for comprehensive coverage. If you want faster demos, you can modify `prompts/initializer_prompt.md` to reduce the feature count (e.g., 20-50 features for a quicker demo).
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--project-dir` | Directory for the generated project | `./autonomous_demo_project` |
+| `--max-iterations` | Max agent iterations | Unlimited |
+| `--model` | Claude model to use | `claude-opus-4-5-20251101` |
 
 ## How It Works
 
+### Linear-Centric Workflow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    LINEAR-INTEGRATED WORKFLOW               │
+├─────────────────────────────────────────────────────────────┤
+│  app_spec.txt ──► Initializer Agent ──► Linear Issues (50) │
+│                                              │               │
+│                    ┌─────────────────────────▼──────────┐   │
+│                    │        LINEAR WORKSPACE            │   │
+│                    │  ┌────────────────────────────┐    │   │
+│                    │  │ Issue: Auth - Login flow   │    │   │
+│                    │  │ Status: Todo → In Progress │    │   │
+│                    │  │ Comments: [session notes]  │    │   │
+│                    │  └────────────────────────────┘    │   │
+│                    └────────────────────────────────────┘   │
+│                                              │               │
+│                    Coding Agent queries Linear              │
+│                    ├── Search for Todo issues               │
+│                    ├── Update status to In Progress         │
+│                    ├── Implement & test with Puppeteer      │
+│                    ├── Add comment with implementation notes│
+│                    └── Update status to Done                │
+└─────────────────────────────────────────────────────────────┘
+```
+
 ### Two-Agent Pattern
 
-1. **Initializer Agent (Session 1):** Reads `app_spec.txt`, creates `feature_list.json` with 200 test cases, sets up project structure, and initializes git.
+1. **Initializer Agent (Session 1):**
+   - Reads `app_spec.txt`
+   - Lists teams and creates a new Linear project
+   - Creates 50 Linear issues with detailed test steps
+   - Creates a META issue for session tracking
+   - Sets up project structure, `init.sh`, and git
 
-2. **Coding Agent (Sessions 2+):** Picks up where the previous session left off, implements features one by one, and marks them as passing in `feature_list.json`.
+2. **Coding Agent (Sessions 2+):**
+   - Queries Linear for highest-priority Todo issue
+   - Runs verification tests on previously completed features
+   - Claims issue (status → In Progress)
+   - Implements the feature
+   - Tests via Puppeteer browser automation
+   - Adds implementation comment to issue
+   - Marks complete (status → Done)
+   - Updates META issue with session summary
 
-### Session Management
+### Session Handoff via Linear
 
-- Each session runs with a fresh context window
-- Progress is persisted via `feature_list.json` and git commits
-- The agent auto-continues between sessions (3 second delay)
-- Press `Ctrl+C` to pause; run the same command to resume
-
-## Security Model
-
-This demo uses a defense-in-depth security approach (see `security.py` and `client.py`):
-
-1. **OS-level Sandbox:** Bash commands run in an isolated environment
-2. **Filesystem Restrictions:** File operations restricted to the project directory only
-3. **Bash Allowlist:** Only specific commands are permitted:
-   - File inspection: `ls`, `cat`, `head`, `tail`, `wc`, `grep`
-   - Node.js: `npm`, `node`
-   - Version control: `git`
-   - Process management: `ps`, `lsof`, `sleep`, `pkill` (dev processes only)
-
-Commands not in the allowlist are blocked by the security hook.
+Instead of local text files, agents communicate through:
+- **Issue Comments**: Implementation details, blockers, context
+- **META Issue**: Session summaries and handoff notes
+- **Issue Status**: Todo / In Progress / Done workflow
 
 ## Project Structure
 
@@ -83,14 +115,17 @@ Commands not in the allowlist are blocked by the security hook.
 autonomous-coding/
 ├── autonomous_agent_demo.py  # Main entry point
 ├── agent.py                  # Agent session logic
-├── client.py                 # Claude SDK client configuration
+├── client.py                 # Claude SDK + MCP client configuration
 ├── security.py               # Bash command allowlist and validation
 ├── progress.py               # Progress tracking utilities
 ├── prompts.py                # Prompt loading utilities
+├── linear_config.py          # Linear configuration constants
 ├── prompts/
-│   ├── app_spec.txt          # Application specification
-│   ├── initializer_prompt.md # First session prompt
-│   └── coding_prompt.md      # Continuation session prompt
+│   ├── app_spec.txt          # Luminous application specification
+│   ├── initializer_prompt.md # First session prompt (creates Linear issues)
+│   └── coding_prompt.md      # Continuation session prompt (works issues)
+├── ACCJC/                    # Accreditation standards (reference data)
+├── reference_data/           # Course data and PRD documents
 └── requirements.txt          # Python dependencies
 ```
 
@@ -99,21 +134,36 @@ autonomous-coding/
 After running, your project directory will contain:
 
 ```
-my_project/
-├── feature_list.json         # Test cases (source of truth)
+luminous_app/
+├── .linear_project.json      # Linear project state (marker file)
 ├── app_spec.txt              # Copied specification
 ├── init.sh                   # Environment setup script
-├── claude-progress.txt       # Session progress notes
 ├── .claude_settings.json     # Security settings
 └── [application files]       # Generated application code
 ```
+
+## MCP Servers Used
+
+| Server | Transport | Purpose |
+|--------|-----------|---------|
+| **Linear** | HTTP (Streamable HTTP) | Project management - issues, status, comments |
+| **Puppeteer** | stdio | Browser automation for UI testing |
+
+## Security Model
+
+This demo uses defense-in-depth security (see `security.py` and `client.py`):
+
+1. **OS-level Sandbox:** Bash commands run in an isolated environment
+2. **Filesystem Restrictions:** File operations restricted to project directory
+3. **Bash Allowlist:** Only specific commands permitted (npm, node, git, etc.)
+4. **MCP Permissions:** Tools explicitly allowed in security settings
 
 ## Running the Generated Application
 
 After the agent completes (or pauses), you can run the generated application:
 
 ```bash
-cd generations/my_project
+cd generations/luminous_app
 
 # Run the setup script created by the agent
 ./init.sh
@@ -123,25 +173,15 @@ npm install
 npm run dev
 ```
 
-The application will typically be available at `http://localhost:3000` or similar (check the agent's output or `init.sh` for the exact URL).
-
-## Command Line Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--project-dir` | Directory for the project | `./autonomous_demo_project` |
-| `--max-iterations` | Max agent iterations | Unlimited |
-| `--model` | Claude model to use | `claude-sonnet-4-5-20250929` |
-
 ## Customization
 
 ### Changing the Application
 
 Edit `prompts/app_spec.txt` to specify a different application to build.
 
-### Adjusting Feature Count
+### Adjusting Issue Count
 
-Edit `prompts/initializer_prompt.md` and change the "200 features" requirement to a smaller number for faster demos.
+Edit `prompts/initializer_prompt.md` and change "50 issues" to your desired count.
 
 ### Modifying Allowed Commands
 
@@ -149,15 +189,26 @@ Edit `security.py` to add or remove commands from `ALLOWED_COMMANDS`.
 
 ## Troubleshooting
 
+**"CLAUDE_CODE_OAUTH_TOKEN not set"**
+Run `claude setup-token` to generate a token, then export it.
+
+**"LINEAR_API_KEY not set"**
+Get your API key from `https://linear.app/YOUR-TEAM/settings/api`
+
 **"Appears to hang on first run"**
-This is normal. The initializer agent is generating 200 detailed test cases, which takes significant time. Watch for `[Tool: ...]` output to confirm the agent is working.
+Normal behavior. The initializer is creating a Linear project and 50 issues with detailed descriptions. Watch for `[Tool: mcp__linear__create_issue]` output.
 
 **"Command blocked by security hook"**
-The agent tried to run a command not in the allowlist. This is the security system working as intended. If needed, add the command to `ALLOWED_COMMANDS` in `security.py`.
+The agent tried to run a disallowed command. Add it to `ALLOWED_COMMANDS` in `security.py` if needed.
 
-**"API key not set"**
-Ensure `ANTHROPIC_API_KEY` is exported in your shell environment.
+**"MCP server connection failed"**
+Verify your `LINEAR_API_KEY` is valid and has appropriate permissions. The Linear MCP server uses HTTP transport at `https://mcp.linear.app/mcp`.
 
-## License
+## Viewing Progress
 
-Internal Anthropic use.
+Open your Linear workspace to see:
+- The project created by the initializer agent
+- All 50 issues organized under the project
+- Real-time status changes (Todo → In Progress → Done)
+- Implementation comments on each issue
+- Session summaries on the META issue

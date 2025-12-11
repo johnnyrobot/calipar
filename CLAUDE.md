@@ -41,9 +41,14 @@ The agent in `autonomous-coding/` builds Luminous using the spec in `prompts/app
 ```bash
 cd autonomous-coding
 pip install -r requirements.txt
-export ANTHROPIC_API_KEY='your-key'
 
-# Run (first session takes 10-20+ minutes generating 200 test cases)
+# Set up Claude OAuth token (run 'claude setup-token' first if needed)
+export CLAUDE_CODE_OAUTH_TOKEN='your-oauth-token'
+
+# Set up Linear API key (from https://linear.app/YOUR-TEAM/settings/api)
+export LINEAR_API_KEY='lin_api_xxxxxxxxxxxxx'
+
+# Run (first session takes 10-20+ minutes creating 50 Linear issues)
 python autonomous_agent_demo.py --project-dir ./luminous_app
 
 # Test with limited iterations
@@ -52,18 +57,27 @@ python autonomous_agent_demo.py --project-dir ./luminous_app --max-iterations 3
 
 Generated projects go to `generations/<project-dir>/`.
 
+### Linear Integration
+
+The agent uses Linear for project management instead of local files:
+- **First session**: Creates a Linear project with 50 issues based on `app_spec.txt`
+- **Subsequent sessions**: Queries Linear for Todo issues, works them, marks Done
+- **Session handoff**: Via comments on a META issue in Linear
+- **Real-time visibility**: Watch progress in your Linear workspace
+
 ### Two-Agent Pattern
-- **Session 1 (Initializer)**: Reads `app_spec.txt`, generates `feature_list.json` with 200 test cases, sets up project structure
-- **Sessions 2+ (Coding Agent)**: Implements features one-by-one, marks them complete in `feature_list.json`
+- **Session 1 (Initializer)**: Reads `app_spec.txt`, creates Linear project with 50 issues, sets up project structure
+- **Sessions 2+ (Coding Agent)**: Queries Linear for Todo issues, implements features, marks them Done in Linear
 
 ### Key Files
 - `autonomous_agent_demo.py` - CLI entry point
 - `agent.py` - Session loop using `ClaudeSDKClient`
-- `client.py` - SDK client with security settings
+- `client.py` - SDK client with security settings and MCP servers (Puppeteer, Linear)
+- `linear_config.py` - Linear configuration constants
 - `security.py` - Bash command allowlist and validation hooks
 - `prompts/app_spec.txt` - Full Luminous specification
-- `prompts/initializer_prompt.md` - First session prompt
-- `prompts/coding_prompt.md` - Continuation prompt
+- `prompts/initializer_prompt.md` - First session prompt (creates Linear issues)
+- `prompts/coding_prompt.md` - Continuation prompt (works Linear issues)
 
 ### Security Model (Defense in Depth)
 1. **OS-level sandbox**: Bash commands isolated

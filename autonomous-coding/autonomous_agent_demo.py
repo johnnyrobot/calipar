@@ -21,7 +21,9 @@ from agent import run_autonomous_agent
 
 
 # Configuration
-DEFAULT_MODEL = "claude-sonnet-4-5-20250929"
+# Using Claude Opus 4.5 as default for best coding and agentic performance
+# See: https://www.anthropic.com/news/claude-opus-4-5
+DEFAULT_MODEL = "claude-opus-4-5-20251101"
 
 
 def parse_args() -> argparse.Namespace:
@@ -44,7 +46,8 @@ Examples:
   python autonomous_agent_demo.py --project-dir ./claude_clone
 
 Environment Variables:
-  ANTHROPIC_API_KEY    Your Anthropic API key (required)
+  CLAUDE_CODE_OAUTH_TOKEN    Claude Code OAuth token (required)
+  LINEAR_API_KEY             Linear API key (required)
         """,
     )
 
@@ -76,12 +79,20 @@ def main() -> None:
     """Main entry point."""
     args = parse_args()
 
-    # Check for API key
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        print("Error: ANTHROPIC_API_KEY environment variable not set")
-        print("\nGet your API key from: https://console.anthropic.com/")
+    # Check for Claude Code OAuth token
+    if not os.environ.get("CLAUDE_CODE_OAUTH_TOKEN"):
+        print("Error: CLAUDE_CODE_OAUTH_TOKEN environment variable not set")
+        print("\nRun 'claude setup-token' after installing the Claude Code CLI.")
         print("\nThen set it:")
-        print("  export ANTHROPIC_API_KEY='your-api-key-here'")
+        print("  export CLAUDE_CODE_OAUTH_TOKEN='your-token-here'")
+        return
+
+    # Check for Linear API key
+    if not os.environ.get("LINEAR_API_KEY"):
+        print("Error: LINEAR_API_KEY environment variable not set")
+        print("\nGet your API key from: https://linear.app/YOUR-TEAM/settings/api")
+        print("\nThen set it:")
+        print("  export LINEAR_API_KEY='lin_api_xxxxxxxxxxxxx'")
         return
 
     # Automatically place projects in generations/ directory unless already specified
