@@ -1,0 +1,2164 @@
+Directory structure:
+└── coleam00-linear-coding-agent-harness/
+    ├── README.md
+    ├── agent.py
+    ├── autonomous_agent_demo.py
+    ├── client.py
+    ├── LICENSE
+    ├── linear_config.py
+    ├── progress.py
+    ├── prompts.py
+    ├── requirements.txt
+    ├── security.py
+    ├── test_security.py
+    └── prompts/
+        ├── coding_prompt.md
+        └── initializer_prompt.md
+
+================================================
+FILE: README.md
+================================================
+# Autonomous Coding Agent Demo (Linear-Integrated)
+
+A minimal harness demonstrating long-running autonomous coding with the Claude Agent SDK. This demo implements a two-agent pattern (initializer + coding agent) with **Linear as the core project management system** for tracking all work.
+
+## Key Features
+
+- **Linear Integration**: All work is tracked as Linear issues, not local files
+- **Real-time Visibility**: Watch agent progress directly in your Linear workspace
+- **Session Handoff**: Agents communicate via Linear comments, not text files
+- **Two-Agent Pattern**: Initializer creates Linear project & issues, coding agents implement them
+- **Browser Testing**: Puppeteer MCP for UI verification
+- **Claude Opus 4.5**: Uses Claude's most capable model by default
+
+## Prerequisites
+
+### 1. Install Claude Code CLI and Python SDK
+
+```bash
+# Install Claude Code CLI (latest version required)
+npm install -g @anthropic-ai/claude-code
+
+# Install Python dependencies
+pip install -r requirements.txt
+```
+
+### 2. Set Up Authentication
+
+You need two authentication tokens:
+
+**Claude Code OAuth Token:**
+```bash
+# Generate the token using Claude Code CLI
+claude setup-token
+
+# Set the environment variable
+export CLAUDE_CODE_OAUTH_TOKEN='your-oauth-token-here'
+```
+
+**Linear API Key:**
+```bash
+# Get your API key from: https://linear.app/YOUR-TEAM/settings/api
+export LINEAR_API_KEY='lin_api_xxxxxxxxxxxxx'
+```
+
+### 3. Verify Installation
+
+```bash
+claude --version  # Should be latest version
+pip show claude-code-sdk  # Check SDK is installed
+```
+
+## Quick Start
+
+```bash
+python autonomous_agent_demo.py --project-dir ./my_project
+```
+
+For testing with limited iterations:
+```bash
+python autonomous_agent_demo.py --project-dir ./my_project --max-iterations 3
+```
+
+## How It Works
+
+### Linear-Centric Workflow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    LINEAR-INTEGRATED WORKFLOW               │
+├─────────────────────────────────────────────────────────────┤
+│  app_spec.txt ──► Initializer Agent ──► Linear Issues (50) │
+│                                              │               │
+│                    ┌─────────────────────────▼──────────┐   │
+│                    │        LINEAR WORKSPACE            │   │
+│                    │  ┌────────────────────────────┐    │   │
+│                    │  │ Issue: Auth - Login flow   │    │   │
+│                    │  │ Status: Todo → In Progress │    │   │
+│                    │  │ Comments: [session notes]  │    │   │
+│                    │  └────────────────────────────┘    │   │
+│                    └────────────────────────────────────┘   │
+│                                              │               │
+│                    Coding Agent queries Linear              │
+│                    ├── Search for Todo issues               │
+│                    ├── Update status to In Progress         │
+│                    ├── Implement & test with Puppeteer      │
+│                    ├── Add comment with implementation notes│
+│                    └── Update status to Done                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Two-Agent Pattern
+
+1. **Initializer Agent (Session 1):**
+   - Reads `app_spec.txt`
+   - Lists teams and creates a new Linear project
+   - Creates 50 Linear issues with detailed test steps
+   - Creates a META issue for session tracking
+   - Sets up project structure, `init.sh`, and git
+
+2. **Coding Agent (Sessions 2+):**
+   - Queries Linear for highest-priority Todo issue
+   - Runs verification tests on previously completed features
+   - Claims issue (status → In Progress)
+   - Implements the feature
+   - Tests via Puppeteer browser automation
+   - Adds implementation comment to issue
+   - Marks complete (status → Done)
+   - Updates META issue with session summary
+
+### Session Handoff via Linear
+
+Instead of local text files, agents communicate through:
+- **Issue Comments**: Implementation details, blockers, context
+- **META Issue**: Session summaries and handoff notes
+- **Issue Status**: Todo / In Progress / Done workflow
+
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `CLAUDE_CODE_OAUTH_TOKEN` | Claude Code OAuth token (from `claude setup-token`) | Yes |
+| `LINEAR_API_KEY` | Linear API key for MCP access | Yes |
+
+## Command Line Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--project-dir` | Directory for the project | `./autonomous_demo_project` |
+| `--max-iterations` | Max agent iterations | Unlimited |
+| `--model` | Claude model to use | `claude-opus-4-5-20251101` |
+
+## Project Structure
+
+```
+linear-agent-harness/
+├── autonomous_agent_demo.py  # Main entry point
+├── agent.py                  # Agent session logic
+├── client.py                 # Claude SDK + MCP client configuration
+├── security.py               # Bash command allowlist and validation
+├── progress.py               # Progress tracking utilities
+├── prompts.py                # Prompt loading utilities
+├── linear_config.py          # Linear configuration constants
+├── prompts/
+│   ├── app_spec.txt          # Application specification
+│   ├── initializer_prompt.md # First session prompt (creates Linear issues)
+│   └── coding_prompt.md      # Continuation session prompt (works issues)
+└── requirements.txt          # Python dependencies
+```
+
+## Generated Project Structure
+
+After running, your project directory will contain:
+
+```
+my_project/
+├── .linear_project.json      # Linear project state (marker file)
+├── app_spec.txt              # Copied specification
+├── init.sh                   # Environment setup script
+├── .claude_settings.json     # Security settings
+└── [application files]       # Generated application code
+```
+
+## MCP Servers Used
+
+| Server | Transport | Purpose |
+|--------|-----------|---------|
+| **Linear** | HTTP (Streamable HTTP) | Project management - issues, status, comments |
+| **Puppeteer** | stdio | Browser automation for UI testing |
+
+## Security Model
+
+This demo uses defense-in-depth security (see `security.py` and `client.py`):
+
+1. **OS-level Sandbox:** Bash commands run in an isolated environment
+2. **Filesystem Restrictions:** File operations restricted to project directory
+3. **Bash Allowlist:** Only specific commands permitted (npm, node, git, etc.)
+4. **MCP Permissions:** Tools explicitly allowed in security settings
+
+## Linear Setup
+
+Before running, ensure you have:
+
+1. A Linear workspace with at least one team
+2. An API key with read/write permissions (from Settings > API)
+3. The agent will automatically detect your team and create a project
+
+The initializer agent will create:
+- A new Linear project named after your app
+- 50 feature issues based on `app_spec.txt`
+- 1 META issue for session tracking and handoff
+
+All subsequent coding agents will work from this Linear project.
+
+## Customization
+
+### Changing the Application
+
+Edit `prompts/app_spec.txt` to specify a different application to build.
+
+### Adjusting Issue Count
+
+Edit `prompts/initializer_prompt.md` and change "50 issues" to your desired count.
+
+### Modifying Allowed Commands
+
+Edit `security.py` to add or remove commands from `ALLOWED_COMMANDS`.
+
+## Troubleshooting
+
+**"CLAUDE_CODE_OAUTH_TOKEN not set"**
+Run `claude setup-token` to generate a token, then export it.
+
+**"LINEAR_API_KEY not set"**
+Get your API key from `https://linear.app/YOUR-TEAM/settings/api`
+
+**"Appears to hang on first run"**
+Normal behavior. The initializer is creating a Linear project and 50 issues with detailed descriptions. Watch for `[Tool: mcp__linear__create_issue]` output.
+
+**"Command blocked by security hook"**
+The agent tried to run a disallowed command. Add it to `ALLOWED_COMMANDS` in `security.py` if needed.
+
+**"MCP server connection failed"**
+Verify your `LINEAR_API_KEY` is valid and has appropriate permissions. The Linear MCP server uses HTTP transport at `https://mcp.linear.app/mcp`.
+
+## Viewing Progress
+
+Open your Linear workspace to see:
+- The project created by the initializer agent
+- All 50 issues organized under the project
+- Real-time status changes (Todo → In Progress → Done)
+- Implementation comments on each issue
+- Session summaries on the META issue
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+
+
+================================================
+FILE: agent.py
+================================================
+"""
+Agent Session Logic
+===================
+
+Core agent interaction functions for running autonomous coding sessions.
+"""
+
+import asyncio
+from pathlib import Path
+from typing import Optional
+
+from claude_code_sdk import ClaudeSDKClient
+
+from client import create_client
+from progress import print_session_header, print_progress_summary, is_linear_initialized
+from prompts import get_initializer_prompt, get_coding_prompt, copy_spec_to_project
+
+
+# Configuration
+AUTO_CONTINUE_DELAY_SECONDS = 3
+
+
+async def run_agent_session(
+    client: ClaudeSDKClient,
+    message: str,
+    project_dir: Path,
+) -> tuple[str, str]:
+    """
+    Run a single agent session using Claude Agent SDK.
+
+    Args:
+        client: Claude SDK client
+        message: The prompt to send
+        project_dir: Project directory path
+
+    Returns:
+        (status, response_text) where status is:
+        - "continue" if agent should continue working
+        - "error" if an error occurred
+    """
+    print("Sending prompt to Claude Agent SDK...\n")
+
+    try:
+        # Send the query
+        await client.query(message)
+
+        # Collect response text and show tool use
+        response_text = ""
+        async for msg in client.receive_response():
+            msg_type = type(msg).__name__
+
+            # Handle AssistantMessage (text and tool use)
+            if msg_type == "AssistantMessage" and hasattr(msg, "content"):
+                for block in msg.content:
+                    block_type = type(block).__name__
+
+                    if block_type == "TextBlock" and hasattr(block, "text"):
+                        response_text += block.text
+                        print(block.text, end="", flush=True)
+                    elif block_type == "ToolUseBlock" and hasattr(block, "name"):
+                        print(f"\n[Tool: {block.name}]", flush=True)
+                        if hasattr(block, "input"):
+                            input_str = str(block.input)
+                            if len(input_str) > 200:
+                                print(f"   Input: {input_str[:200]}...", flush=True)
+                            else:
+                                print(f"   Input: {input_str}", flush=True)
+
+            # Handle UserMessage (tool results)
+            elif msg_type == "UserMessage" and hasattr(msg, "content"):
+                for block in msg.content:
+                    block_type = type(block).__name__
+
+                    if block_type == "ToolResultBlock":
+                        result_content = getattr(block, "content", "")
+                        is_error = getattr(block, "is_error", False)
+
+                        # Check if command was blocked by security hook
+                        if "blocked" in str(result_content).lower():
+                            print(f"   [BLOCKED] {result_content}", flush=True)
+                        elif is_error:
+                            # Show errors (truncated)
+                            error_str = str(result_content)[:500]
+                            print(f"   [Error] {error_str}", flush=True)
+                        else:
+                            # Tool succeeded - just show brief confirmation
+                            print("   [Done]", flush=True)
+
+        print("\n" + "-" * 70 + "\n")
+        return "continue", response_text
+
+    except Exception as e:
+        print(f"Error during agent session: {e}")
+        return "error", str(e)
+
+
+async def run_autonomous_agent(
+    project_dir: Path,
+    model: str,
+    max_iterations: Optional[int] = None,
+) -> None:
+    """
+    Run the autonomous agent loop.
+
+    Args:
+        project_dir: Directory for the project
+        model: Claude model to use
+        max_iterations: Maximum number of iterations (None for unlimited)
+    """
+    print("\n" + "=" * 70)
+    print("  AUTONOMOUS CODING AGENT DEMO")
+    print("=" * 70)
+    print(f"\nProject directory: {project_dir}")
+    print(f"Model: {model}")
+    if max_iterations:
+        print(f"Max iterations: {max_iterations}")
+    else:
+        print("Max iterations: Unlimited (will run until completion)")
+    print()
+
+    # Create project directory
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    # Check if this is a fresh start or continuation
+    # We use .linear_project.json as the marker for initialization
+    is_first_run = not is_linear_initialized(project_dir)
+
+    if is_first_run:
+        print("Fresh start - will use initializer agent")
+        print()
+        print("=" * 70)
+        print("  NOTE: First session takes 10-20+ minutes!")
+        print("  The agent is creating 50 Linear issues and setting up the project.")
+        print("  This may appear to hang - it's working. Watch for [Tool: ...] output.")
+        print("=" * 70)
+        print()
+        # Copy the app spec into the project directory for the agent to read
+        copy_spec_to_project(project_dir)
+    else:
+        print("Continuing existing project (Linear initialized)")
+        print_progress_summary(project_dir)
+
+    # Main loop
+    iteration = 0
+
+    while True:
+        iteration += 1
+
+        # Check max iterations
+        if max_iterations and iteration > max_iterations:
+            print(f"\nReached max iterations ({max_iterations})")
+            print("To continue, run the script again without --max-iterations")
+            break
+
+        # Print session header
+        print_session_header(iteration, is_first_run)
+
+        # Create client (fresh context)
+        client = create_client(project_dir, model)
+
+        # Choose prompt based on session type
+        if is_first_run:
+            prompt = get_initializer_prompt()
+            is_first_run = False  # Only use initializer once
+        else:
+            prompt = get_coding_prompt()
+
+        # Run session with async context manager
+        async with client:
+            status, response = await run_agent_session(client, prompt, project_dir)
+
+        # Handle status
+        if status == "continue":
+            print(f"\nAgent will auto-continue in {AUTO_CONTINUE_DELAY_SECONDS}s...")
+            print_progress_summary(project_dir)
+            await asyncio.sleep(AUTO_CONTINUE_DELAY_SECONDS)
+
+        elif status == "error":
+            print("\nSession encountered an error")
+            print("Will retry with a fresh session...")
+            await asyncio.sleep(AUTO_CONTINUE_DELAY_SECONDS)
+
+        # Small delay between sessions
+        if max_iterations is None or iteration < max_iterations:
+            print("\nPreparing next session...\n")
+            await asyncio.sleep(1)
+
+    # Final summary
+    print("\n" + "=" * 70)
+    print("  SESSION COMPLETE")
+    print("=" * 70)
+    print(f"\nProject directory: {project_dir}")
+    print_progress_summary(project_dir)
+
+    # Print instructions for running the generated application
+    print("\n" + "-" * 70)
+    print("  TO RUN THE GENERATED APPLICATION:")
+    print("-" * 70)
+    print(f"\n  cd {project_dir.resolve()}")
+    print("  ./init.sh           # Run the setup script")
+    print("  # Or manually:")
+    print("  npm install && npm run dev")
+    print("\n  Then open http://localhost:3000 (or check init.sh for the URL)")
+    print("-" * 70)
+
+    print("\nDone!")
+
+
+
+================================================
+FILE: autonomous_agent_demo.py
+================================================
+#!/usr/bin/env python3
+"""
+Autonomous Coding Agent Demo
+============================
+
+A minimal harness demonstrating long-running autonomous coding with Claude.
+This script implements the two-agent pattern (initializer + coding agent) and
+incorporates all the strategies from the long-running agents guide.
+
+Example Usage:
+    python autonomous_agent_demo.py --project-dir ./claude_clone_demo
+    python autonomous_agent_demo.py --project-dir ./claude_clone_demo --max-iterations 5
+"""
+
+import argparse
+import asyncio
+import os
+from pathlib import Path
+
+from agent import run_autonomous_agent
+
+
+# Configuration
+# Using Claude Opus 4.5 as default for best coding and agentic performance
+# See: https://www.anthropic.com/news/claude-opus-4-5
+DEFAULT_MODEL = "claude-opus-4-5-20251101"
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Autonomous Coding Agent Demo - Long-running agent harness",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Start fresh project
+  python autonomous_agent_demo.py --project-dir ./claude_clone
+
+  # Use a specific model
+  python autonomous_agent_demo.py --project-dir ./claude_clone --model claude-sonnet-4-5-20250929
+
+  # Limit iterations for testing
+  python autonomous_agent_demo.py --project-dir ./claude_clone --max-iterations 5
+
+  # Continue existing project
+  python autonomous_agent_demo.py --project-dir ./claude_clone
+
+Environment Variables:
+  CLAUDE_CODE_OAUTH_TOKEN    Claude Code OAuth token (required)
+  LINEAR_API_KEY             Linear API key (required)
+        """,
+    )
+
+    parser.add_argument(
+        "--project-dir",
+        type=Path,
+        default=Path("./autonomous_demo_project"),
+        help="Directory for the project (default: generations/autonomous_demo_project). Relative paths automatically placed in generations/ directory.",
+    )
+
+    parser.add_argument(
+        "--max-iterations",
+        type=int,
+        default=None,
+        help="Maximum number of agent iterations (default: unlimited)",
+    )
+
+    parser.add_argument(
+        "--model",
+        type=str,
+        default=DEFAULT_MODEL,
+        help=f"Claude model to use (default: {DEFAULT_MODEL})",
+    )
+
+    return parser.parse_args()
+
+
+def main() -> None:
+    """Main entry point."""
+    args = parse_args()
+
+    # Check for Claude Code OAuth token
+    if not os.environ.get("CLAUDE_CODE_OAUTH_TOKEN"):
+        print("Error: CLAUDE_CODE_OAUTH_TOKEN environment variable not set")
+        print("\nRun 'claude setup-token' after installing the Claude Code CLI.")
+        print("\nThen set it:")
+        print("  export CLAUDE_CODE_OAUTH_TOKEN='your-token-here'")
+        return
+
+    # Check for Linear API key
+    if not os.environ.get("LINEAR_API_KEY"):
+        print("Error: LINEAR_API_KEY environment variable not set")
+        print("\nGet your API key from: https://linear.app/YOUR-TEAM/settings/api")
+        print("\nThen set it:")
+        print("  export LINEAR_API_KEY='lin_api_xxxxxxxxxxxxx'")
+        return
+
+    # Automatically place projects in generations/ directory unless already specified
+    project_dir = args.project_dir
+    if not str(project_dir).startswith("generations/"):
+        # Convert relative paths to be under generations/
+        if project_dir.is_absolute():
+            # If absolute path, use as-is
+            pass
+        else:
+            # Prepend generations/ to relative paths
+            project_dir = Path("generations") / project_dir
+
+    # Run the agent
+    try:
+        asyncio.run(
+            run_autonomous_agent(
+                project_dir=project_dir,
+                model=args.model,
+                max_iterations=args.max_iterations,
+            )
+        )
+    except KeyboardInterrupt:
+        print("\n\nInterrupted by user")
+        print("To resume, run the same command again")
+    except Exception as e:
+        print(f"\nFatal error: {e}")
+        raise
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+================================================
+FILE: client.py
+================================================
+"""
+Claude SDK Client Configuration
+===============================
+
+Functions for creating and configuring the Claude Agent SDK client.
+"""
+
+import json
+import os
+from pathlib import Path
+
+from claude_code_sdk import ClaudeCodeOptions, ClaudeSDKClient
+from claude_code_sdk.types import HookMatcher
+
+from security import bash_security_hook
+
+
+# Puppeteer MCP tools for browser automation
+PUPPETEER_TOOLS = [
+    "mcp__puppeteer__puppeteer_navigate",
+    "mcp__puppeteer__puppeteer_screenshot",
+    "mcp__puppeteer__puppeteer_click",
+    "mcp__puppeteer__puppeteer_fill",
+    "mcp__puppeteer__puppeteer_select",
+    "mcp__puppeteer__puppeteer_hover",
+    "mcp__puppeteer__puppeteer_evaluate",
+]
+
+# Linear MCP tools for project management
+# Official Linear MCP server at mcp.linear.app
+LINEAR_TOOLS = [
+    # Team & Project discovery
+    "mcp__linear__list_teams",
+    "mcp__linear__get_team",
+    "mcp__linear__list_projects",
+    "mcp__linear__get_project",
+    "mcp__linear__create_project",
+    "mcp__linear__update_project",
+    # Issue management
+    "mcp__linear__list_issues",
+    "mcp__linear__get_issue",
+    "mcp__linear__create_issue",
+    "mcp__linear__update_issue",
+    "mcp__linear__list_my_issues",
+    # Comments
+    "mcp__linear__list_comments",
+    "mcp__linear__create_comment",
+    # Workflow
+    "mcp__linear__list_issue_statuses",
+    "mcp__linear__get_issue_status",
+    "mcp__linear__list_issue_labels",
+    # Users
+    "mcp__linear__list_users",
+    "mcp__linear__get_user",
+]
+
+# Built-in tools
+BUILTIN_TOOLS = [
+    "Read",
+    "Write",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Bash",
+]
+
+
+def create_client(project_dir: Path, model: str) -> ClaudeSDKClient:
+    """
+    Create a Claude Agent SDK client with multi-layered security.
+
+    Args:
+        project_dir: Directory for the project
+        model: Claude model to use
+
+    Returns:
+        Configured ClaudeSDKClient
+
+    Security layers (defense in depth):
+    1. Sandbox - OS-level bash command isolation prevents filesystem escape
+    2. Permissions - File operations restricted to project_dir only
+    3. Security hooks - Bash commands validated against an allowlist
+       (see security.py for ALLOWED_COMMANDS)
+    """
+    api_key = os.environ.get("CLAUDE_CODE_OAUTH_TOKEN")
+    if not api_key:
+        raise ValueError(
+            "CLAUDE_CODE_OAUTH_TOKEN environment variable not set.\n"
+            "Run 'claude setup-token after installing the Claude Code CLI."
+        )
+
+    linear_api_key = os.environ.get("LINEAR_API_KEY")
+    if not linear_api_key:
+        raise ValueError(
+            "LINEAR_API_KEY environment variable not set.\n"
+            "Get your API key from: https://linear.app/YOUR-TEAM/settings/api"
+        )
+
+    # Create comprehensive security settings
+    # Note: Using relative paths ("./**") restricts access to project directory
+    # since cwd is set to project_dir
+    security_settings = {
+        "sandbox": {"enabled": True, "autoAllowBashIfSandboxed": True},
+        "permissions": {
+            "defaultMode": "acceptEdits",  # Auto-approve edits within allowed directories
+            "allow": [
+                # Allow all file operations within the project directory
+                "Read(./**)",
+                "Write(./**)",
+                "Edit(./**)",
+                "Glob(./**)",
+                "Grep(./**)",
+                # Bash permission granted here, but actual commands are validated
+                # by the bash_security_hook (see security.py for allowed commands)
+                "Bash(*)",
+                # Allow Puppeteer MCP tools for browser automation
+                *PUPPETEER_TOOLS,
+                # Allow Linear MCP tools for project management
+                *LINEAR_TOOLS,
+            ],
+        },
+    }
+
+    # Ensure project directory exists before creating settings file
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    # Write settings to a file in the project directory
+    settings_file = project_dir / ".claude_settings.json"
+    with open(settings_file, "w") as f:
+        json.dump(security_settings, f, indent=2)
+
+    print(f"Created security settings at {settings_file}")
+    print("   - Sandbox enabled (OS-level bash isolation)")
+    print(f"   - Filesystem restricted to: {project_dir.resolve()}")
+    print("   - Bash commands restricted to allowlist (see security.py)")
+    print("   - MCP servers: puppeteer (browser automation), linear (project management)")
+    print()
+
+    return ClaudeSDKClient(
+        options=ClaudeCodeOptions(
+            model=model,
+            system_prompt="You are an expert full-stack developer building a production-quality web application. You use Linear for project management and tracking all your work.",
+            allowed_tools=[
+                *BUILTIN_TOOLS,
+                *PUPPETEER_TOOLS,
+                *LINEAR_TOOLS,
+            ],
+            mcp_servers={
+                "puppeteer": {"command": "npx", "args": ["puppeteer-mcp-server"]},
+                # Linear MCP with Streamable HTTP transport (recommended over SSE)
+                # See: https://linear.app/docs/mcp
+                "linear": {
+                    "type": "http",
+                    "url": "https://mcp.linear.app/mcp",
+                    "headers": {
+                        "Authorization": f"Bearer {linear_api_key}"
+                    }
+                }
+            },
+            hooks={
+                "PreToolUse": [
+                    HookMatcher(matcher="Bash", hooks=[bash_security_hook]),
+                ],
+            },
+            max_turns=1000,
+            cwd=str(project_dir.resolve()),
+            settings=str(settings_file.resolve()),  # Use absolute path
+        )
+    )
+
+
+
+================================================
+FILE: LICENSE
+================================================
+MIT License
+
+Copyright (c) 2025 Cole Medin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+
+================================================
+FILE: linear_config.py
+================================================
+"""
+Linear Configuration
+====================
+
+Configuration constants for Linear integration.
+These values are used in prompts and for project state management.
+"""
+
+import os
+
+# Environment variables (must be set before running)
+LINEAR_API_KEY = os.environ.get("LINEAR_API_KEY")
+
+# Default number of issues to create (can be overridden via command line)
+DEFAULT_ISSUE_COUNT = 50
+
+# Issue status workflow (Linear default states)
+STATUS_TODO = "Todo"
+STATUS_IN_PROGRESS = "In Progress"
+STATUS_DONE = "Done"
+
+# Label categories (map to feature types)
+LABEL_FUNCTIONAL = "functional"
+LABEL_STYLE = "style"
+LABEL_INFRASTRUCTURE = "infrastructure"
+
+# Priority mapping (Linear uses 0-4 where 1=Urgent, 4=Low, 0=No priority)
+PRIORITY_URGENT = 1
+PRIORITY_HIGH = 2
+PRIORITY_MEDIUM = 3
+PRIORITY_LOW = 4
+
+# Local marker file to track Linear project initialization
+LINEAR_PROJECT_MARKER = ".linear_project.json"
+
+# Meta issue title for project tracking and session handoff
+META_ISSUE_TITLE = "[META] Project Progress Tracker"
+
+
+
+================================================
+FILE: progress.py
+================================================
+"""
+Progress Tracking Utilities
+===========================
+
+Functions for tracking and displaying progress of the autonomous coding agent.
+Progress is tracked via Linear issues, with local state cached in .linear_project.json.
+"""
+
+import json
+from pathlib import Path
+
+from linear_config import LINEAR_PROJECT_MARKER
+
+
+def load_linear_project_state(project_dir: Path) -> dict | None:
+    """
+    Load the Linear project state from the marker file.
+
+    Args:
+        project_dir: Directory containing .linear_project.json
+
+    Returns:
+        Project state dict or None if not initialized
+    """
+    marker_file = project_dir / LINEAR_PROJECT_MARKER
+
+    if not marker_file.exists():
+        return None
+
+    try:
+        with open(marker_file, "r") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError):
+        return None
+
+
+def is_linear_initialized(project_dir: Path) -> bool:
+    """
+    Check if Linear project has been initialized.
+
+    Args:
+        project_dir: Directory to check
+
+    Returns:
+        True if .linear_project.json exists and is valid
+    """
+    state = load_linear_project_state(project_dir)
+    return state is not None and state.get("initialized", False)
+
+
+def print_session_header(session_num: int, is_initializer: bool) -> None:
+    """Print a formatted header for the session."""
+    session_type = "INITIALIZER" if is_initializer else "CODING AGENT"
+
+    print("\n" + "=" * 70)
+    print(f"  SESSION {session_num}: {session_type}")
+    print("=" * 70)
+    print()
+
+
+def print_progress_summary(project_dir: Path) -> None:
+    """
+    Print a summary of current progress.
+
+    Since actual progress is tracked in Linear, this reads the local
+    state file for cached information. The agent updates Linear directly
+    and reports progress in session comments.
+    """
+    state = load_linear_project_state(project_dir)
+
+    if state is None:
+        print("\nProgress: Linear project not yet initialized")
+        return
+
+    total = state.get("total_issues", 0)
+    meta_issue = state.get("meta_issue_id", "unknown")
+
+    print(f"\nLinear Project Status:")
+    print(f"  Total issues created: {total}")
+    print(f"  META issue ID: {meta_issue}")
+    print(f"  (Check Linear for current Done/In Progress/Todo counts)")
+
+
+
+================================================
+FILE: prompts.py
+================================================
+"""
+Prompt Loading Utilities
+========================
+
+Functions for loading prompt templates from the prompts directory.
+"""
+
+import shutil
+from pathlib import Path
+
+
+PROMPTS_DIR = Path(__file__).parent / "prompts"
+
+
+def load_prompt(name: str) -> str:
+    """Load a prompt template from the prompts directory."""
+    prompt_path = PROMPTS_DIR / f"{name}.md"
+    return prompt_path.read_text()
+
+
+def get_initializer_prompt() -> str:
+    """Load the initializer prompt."""
+    return load_prompt("initializer_prompt")
+
+
+def get_coding_prompt() -> str:
+    """Load the coding agent prompt."""
+    return load_prompt("coding_prompt")
+
+
+def copy_spec_to_project(project_dir: Path) -> None:
+    """Copy the app spec file into the project directory for the agent to read."""
+    spec_source = PROMPTS_DIR / "app_spec.txt"
+    spec_dest = project_dir / "app_spec.txt"
+    if not spec_dest.exists():
+        shutil.copy(spec_source, spec_dest)
+        print("Copied app_spec.txt to project directory")
+
+
+
+================================================
+FILE: requirements.txt
+================================================
+claude-code-sdk>=0.0.25
+
+
+
+================================================
+FILE: security.py
+================================================
+"""
+Security Hooks for Autonomous Coding Agent
+==========================================
+
+Pre-tool-use hooks that validate bash commands for security.
+Uses an allowlist approach - only explicitly permitted commands can run.
+"""
+
+import os
+import shlex
+
+
+# Allowed commands for development tasks
+# Minimal set needed for the autonomous coding demo
+ALLOWED_COMMANDS = {
+    # File inspection
+    "ls",
+    "cat",
+    "head",
+    "tail",
+    "wc",
+    "grep",
+    # File operations (agent uses SDK tools for most file ops, but cp/mkdir needed occasionally)
+    "cp",
+    "mkdir",
+    "chmod",  # For making scripts executable; validated separately
+    # Directory
+    "pwd",
+    # Node.js development
+    "npm",
+    "node",
+    # Version control
+    "git",
+    # Process management
+    "ps",
+    "lsof",
+    "sleep",
+    "pkill",  # For killing dev servers; validated separately
+    # Script execution
+    "init.sh",  # Init scripts; validated separately
+}
+
+# Commands that need additional validation even when in the allowlist
+COMMANDS_NEEDING_EXTRA_VALIDATION = {"pkill", "chmod", "init.sh"}
+
+
+def split_command_segments(command_string: str) -> list[str]:
+    """
+    Split a compound command into individual command segments.
+
+    Handles command chaining (&&, ||, ;) but not pipes (those are single commands).
+
+    Args:
+        command_string: The full shell command
+
+    Returns:
+        List of individual command segments
+    """
+    import re
+
+    # Split on && and || while preserving the ability to handle each segment
+    # This regex splits on && or || that aren't inside quotes
+    segments = re.split(r"\s*(?:&&|\|\|)\s*", command_string)
+
+    # Further split on semicolons
+    result = []
+    for segment in segments:
+        sub_segments = re.split(r'(?<!["\'])\s*;\s*(?!["\'])', segment)
+        for sub in sub_segments:
+            sub = sub.strip()
+            if sub:
+                result.append(sub)
+
+    return result
+
+
+def extract_commands(command_string: str) -> list[str]:
+    """
+    Extract command names from a shell command string.
+
+    Handles pipes, command chaining (&&, ||, ;), and subshells.
+    Returns the base command names (without paths).
+
+    Args:
+        command_string: The full shell command
+
+    Returns:
+        List of command names found in the string
+    """
+    commands = []
+
+    # shlex doesn't treat ; as a separator, so we need to pre-process
+    import re
+
+    # Split on semicolons that aren't inside quotes (simple heuristic)
+    # This handles common cases like "echo hello; ls"
+    segments = re.split(r'(?<!["\'])\s*;\s*(?!["\'])', command_string)
+
+    for segment in segments:
+        segment = segment.strip()
+        if not segment:
+            continue
+
+        try:
+            tokens = shlex.split(segment)
+        except ValueError:
+            # Malformed command (unclosed quotes, etc.)
+            # Return empty to trigger block (fail-safe)
+            return []
+
+        if not tokens:
+            continue
+
+        # Track when we expect a command vs arguments
+        expect_command = True
+
+        for token in tokens:
+            # Shell operators indicate a new command follows
+            if token in ("|", "||", "&&", "&"):
+                expect_command = True
+                continue
+
+            # Skip shell keywords that precede commands
+            if token in (
+                "if",
+                "then",
+                "else",
+                "elif",
+                "fi",
+                "for",
+                "while",
+                "until",
+                "do",
+                "done",
+                "case",
+                "esac",
+                "in",
+                "!",
+                "{",
+                "}",
+            ):
+                continue
+
+            # Skip flags/options
+            if token.startswith("-"):
+                continue
+
+            # Skip variable assignments (VAR=value)
+            if "=" in token and not token.startswith("="):
+                continue
+
+            if expect_command:
+                # Extract the base command name (handle paths like /usr/bin/python)
+                cmd = os.path.basename(token)
+                commands.append(cmd)
+                expect_command = False
+
+    return commands
+
+
+def validate_pkill_command(command_string: str) -> tuple[bool, str]:
+    """
+    Validate pkill commands - only allow killing dev-related processes.
+
+    Uses shlex to parse the command, avoiding regex bypass vulnerabilities.
+
+    Returns:
+        Tuple of (is_allowed, reason_if_blocked)
+    """
+    # Allowed process names for pkill
+    allowed_process_names = {
+        "node",
+        "npm",
+        "npx",
+        "vite",
+        "next",
+    }
+
+    try:
+        tokens = shlex.split(command_string)
+    except ValueError:
+        return False, "Could not parse pkill command"
+
+    if not tokens:
+        return False, "Empty pkill command"
+
+    # Separate flags from arguments
+    args = []
+    for token in tokens[1:]:
+        if not token.startswith("-"):
+            args.append(token)
+
+    if not args:
+        return False, "pkill requires a process name"
+
+    # The target is typically the last non-flag argument
+    target = args[-1]
+
+    # For -f flag (full command line match), extract the first word as process name
+    # e.g., "pkill -f 'node server.js'" -> target is "node server.js", process is "node"
+    if " " in target:
+        target = target.split()[0]
+
+    if target in allowed_process_names:
+        return True, ""
+    return False, f"pkill only allowed for dev processes: {allowed_process_names}"
+
+
+def validate_chmod_command(command_string: str) -> tuple[bool, str]:
+    """
+    Validate chmod commands - only allow making files executable with +x.
+
+    Returns:
+        Tuple of (is_allowed, reason_if_blocked)
+    """
+    try:
+        tokens = shlex.split(command_string)
+    except ValueError:
+        return False, "Could not parse chmod command"
+
+    if not tokens or tokens[0] != "chmod":
+        return False, "Not a chmod command"
+
+    # Look for the mode argument
+    # Valid modes: +x, u+x, a+x, etc. (anything ending with +x for execute permission)
+    mode = None
+    files = []
+
+    for token in tokens[1:]:
+        if token.startswith("-"):
+            # Skip flags like -R (we don't allow recursive chmod anyway)
+            return False, "chmod flags are not allowed"
+        elif mode is None:
+            mode = token
+        else:
+            files.append(token)
+
+    if mode is None:
+        return False, "chmod requires a mode"
+
+    if not files:
+        return False, "chmod requires at least one file"
+
+    # Only allow +x variants (making files executable)
+    # This matches: +x, u+x, g+x, o+x, a+x, ug+x, etc.
+    import re
+
+    if not re.match(r"^[ugoa]*\+x$", mode):
+        return False, f"chmod only allowed with +x mode, got: {mode}"
+
+    return True, ""
+
+
+def validate_init_script(command_string: str) -> tuple[bool, str]:
+    """
+    Validate init.sh script execution - only allow ./init.sh.
+
+    Returns:
+        Tuple of (is_allowed, reason_if_blocked)
+    """
+    try:
+        tokens = shlex.split(command_string)
+    except ValueError:
+        return False, "Could not parse init script command"
+
+    if not tokens:
+        return False, "Empty command"
+
+    # The command should be exactly ./init.sh (possibly with arguments)
+    script = tokens[0]
+
+    # Allow ./init.sh or paths ending in /init.sh
+    if script == "./init.sh" or script.endswith("/init.sh"):
+        return True, ""
+
+    return False, f"Only ./init.sh is allowed, got: {script}"
+
+
+def get_command_for_validation(cmd: str, segments: list[str]) -> str:
+    """
+    Find the specific command segment that contains the given command.
+
+    Args:
+        cmd: The command name to find
+        segments: List of command segments
+
+    Returns:
+        The segment containing the command, or empty string if not found
+    """
+    for segment in segments:
+        segment_commands = extract_commands(segment)
+        if cmd in segment_commands:
+            return segment
+    return ""
+
+
+async def bash_security_hook(input_data, tool_use_id=None, context=None):
+    """
+    Pre-tool-use hook that validates bash commands using an allowlist.
+
+    Only commands in ALLOWED_COMMANDS are permitted.
+
+    Args:
+        input_data: Dict containing tool_name and tool_input
+        tool_use_id: Optional tool use ID
+        context: Optional context
+
+    Returns:
+        Empty dict to allow, or {"decision": "block", "reason": "..."} to block
+    """
+    if input_data.get("tool_name") != "Bash":
+        return {}
+
+    command = input_data.get("tool_input", {}).get("command", "")
+    if not command:
+        return {}
+
+    # Extract all commands from the command string
+    commands = extract_commands(command)
+
+    if not commands:
+        # Could not parse - fail safe by blocking
+        return {
+            "decision": "block",
+            "reason": f"Could not parse command for security validation: {command}",
+        }
+
+    # Split into segments for per-command validation
+    segments = split_command_segments(command)
+
+    # Check each command against the allowlist
+    for cmd in commands:
+        if cmd not in ALLOWED_COMMANDS:
+            return {
+                "decision": "block",
+                "reason": f"Command '{cmd}' is not in the allowed commands list",
+            }
+
+        # Additional validation for sensitive commands
+        if cmd in COMMANDS_NEEDING_EXTRA_VALIDATION:
+            # Find the specific segment containing this command
+            cmd_segment = get_command_for_validation(cmd, segments)
+            if not cmd_segment:
+                cmd_segment = command  # Fallback to full command
+
+            if cmd == "pkill":
+                allowed, reason = validate_pkill_command(cmd_segment)
+                if not allowed:
+                    return {"decision": "block", "reason": reason}
+            elif cmd == "chmod":
+                allowed, reason = validate_chmod_command(cmd_segment)
+                if not allowed:
+                    return {"decision": "block", "reason": reason}
+            elif cmd == "init.sh":
+                allowed, reason = validate_init_script(cmd_segment)
+                if not allowed:
+                    return {"decision": "block", "reason": reason}
+
+    return {}
+
+
+
+================================================
+FILE: test_security.py
+================================================
+#!/usr/bin/env python3
+"""
+Security Hook Tests
+===================
+
+Tests for the bash command security validation logic.
+Run with: python test_security.py
+"""
+
+import asyncio
+import sys
+
+from security import (
+    bash_security_hook,
+    extract_commands,
+    validate_chmod_command,
+    validate_init_script,
+)
+
+
+def test_hook(command: str, should_block: bool) -> bool:
+    """Test a single command against the security hook."""
+    input_data = {"tool_name": "Bash", "tool_input": {"command": command}}
+    result = asyncio.run(bash_security_hook(input_data))
+    was_blocked = result.get("decision") == "block"
+
+    if was_blocked == should_block:
+        status = "PASS"
+    else:
+        status = "FAIL"
+        expected = "blocked" if should_block else "allowed"
+        actual = "blocked" if was_blocked else "allowed"
+        reason = result.get("reason", "")
+        print(f"  {status}: {command!r}")
+        print(f"         Expected: {expected}, Got: {actual}")
+        if reason:
+            print(f"         Reason: {reason}")
+        return False
+
+    print(f"  {status}: {command!r}")
+    return True
+
+
+def test_extract_commands():
+    """Test the command extraction logic."""
+    print("\nTesting command extraction:\n")
+    passed = 0
+    failed = 0
+
+    test_cases = [
+        ("ls -la", ["ls"]),
+        ("npm install && npm run build", ["npm", "npm"]),
+        ("cat file.txt | grep pattern", ["cat", "grep"]),
+        ("/usr/bin/node script.js", ["node"]),
+        ("VAR=value ls", ["ls"]),
+        ("git status || git init", ["git", "git"]),
+    ]
+
+    for cmd, expected in test_cases:
+        result = extract_commands(cmd)
+        if result == expected:
+            print(f"  PASS: {cmd!r} -> {result}")
+            passed += 1
+        else:
+            print(f"  FAIL: {cmd!r}")
+            print(f"         Expected: {expected}, Got: {result}")
+            failed += 1
+
+    return passed, failed
+
+
+def test_validate_chmod():
+    """Test chmod command validation."""
+    print("\nTesting chmod validation:\n")
+    passed = 0
+    failed = 0
+
+    # Test cases: (command, should_be_allowed, description)
+    test_cases = [
+        # Allowed cases
+        ("chmod +x init.sh", True, "basic +x"),
+        ("chmod +x script.sh", True, "+x on any script"),
+        ("chmod u+x init.sh", True, "user +x"),
+        ("chmod a+x init.sh", True, "all +x"),
+        ("chmod ug+x init.sh", True, "user+group +x"),
+        ("chmod +x file1.sh file2.sh", True, "multiple files"),
+        # Blocked cases
+        ("chmod 777 init.sh", False, "numeric mode"),
+        ("chmod 755 init.sh", False, "numeric mode 755"),
+        ("chmod +w init.sh", False, "write permission"),
+        ("chmod +r init.sh", False, "read permission"),
+        ("chmod -x init.sh", False, "remove execute"),
+        ("chmod -R +x dir/", False, "recursive flag"),
+        ("chmod --recursive +x dir/", False, "long recursive flag"),
+        ("chmod +x", False, "missing file"),
+    ]
+
+    for cmd, should_allow, description in test_cases:
+        allowed, reason = validate_chmod_command(cmd)
+        if allowed == should_allow:
+            print(f"  PASS: {cmd!r} ({description})")
+            passed += 1
+        else:
+            expected = "allowed" if should_allow else "blocked"
+            actual = "allowed" if allowed else "blocked"
+            print(f"  FAIL: {cmd!r} ({description})")
+            print(f"         Expected: {expected}, Got: {actual}")
+            if reason:
+                print(f"         Reason: {reason}")
+            failed += 1
+
+    return passed, failed
+
+
+def test_validate_init_script():
+    """Test init.sh script execution validation."""
+    print("\nTesting init.sh validation:\n")
+    passed = 0
+    failed = 0
+
+    # Test cases: (command, should_be_allowed, description)
+    test_cases = [
+        # Allowed cases
+        ("./init.sh", True, "basic ./init.sh"),
+        ("./init.sh arg1 arg2", True, "with arguments"),
+        ("/path/to/init.sh", True, "absolute path"),
+        ("../dir/init.sh", True, "relative path with init.sh"),
+        # Blocked cases
+        ("./setup.sh", False, "different script name"),
+        ("./init.py", False, "python script"),
+        ("bash init.sh", False, "bash invocation"),
+        ("sh init.sh", False, "sh invocation"),
+        ("./malicious.sh", False, "malicious script"),
+        ("./init.sh; rm -rf /", False, "command injection attempt"),
+    ]
+
+    for cmd, should_allow, description in test_cases:
+        allowed, reason = validate_init_script(cmd)
+        if allowed == should_allow:
+            print(f"  PASS: {cmd!r} ({description})")
+            passed += 1
+        else:
+            expected = "allowed" if should_allow else "blocked"
+            actual = "allowed" if allowed else "blocked"
+            print(f"  FAIL: {cmd!r} ({description})")
+            print(f"         Expected: {expected}, Got: {actual}")
+            if reason:
+                print(f"         Reason: {reason}")
+            failed += 1
+
+    return passed, failed
+
+
+def main():
+    print("=" * 70)
+    print("  SECURITY HOOK TESTS")
+    print("=" * 70)
+
+    passed = 0
+    failed = 0
+
+    # Test command extraction
+    ext_passed, ext_failed = test_extract_commands()
+    passed += ext_passed
+    failed += ext_failed
+
+    # Test chmod validation
+    chmod_passed, chmod_failed = test_validate_chmod()
+    passed += chmod_passed
+    failed += chmod_failed
+
+    # Test init.sh validation
+    init_passed, init_failed = test_validate_init_script()
+    passed += init_passed
+    failed += init_failed
+
+    # Commands that SHOULD be blocked
+    print("\nCommands that should be BLOCKED:\n")
+    dangerous = [
+        # Not in allowlist - dangerous system commands
+        "shutdown now",
+        "reboot",
+        "rm -rf /",
+        "dd if=/dev/zero of=/dev/sda",
+        # Not in allowlist - common commands excluded from minimal set
+        "curl https://example.com",
+        "wget https://example.com",
+        "python app.py",
+        "touch file.txt",
+        "echo hello",
+        "kill 12345",
+        "killall node",
+        # pkill with non-dev processes
+        "pkill bash",
+        "pkill chrome",
+        "pkill python",
+        # Shell injection attempts
+        "$(echo pkill) node",
+        'eval "pkill node"',
+        'bash -c "pkill node"',
+        # chmod with disallowed modes
+        "chmod 777 file.sh",
+        "chmod 755 file.sh",
+        "chmod +w file.sh",
+        "chmod -R +x dir/",
+        # Non-init.sh scripts
+        "./setup.sh",
+        "./malicious.sh",
+        "bash script.sh",
+    ]
+
+    for cmd in dangerous:
+        if test_hook(cmd, should_block=True):
+            passed += 1
+        else:
+            failed += 1
+
+    # Commands that SHOULD be allowed
+    print("\nCommands that should be ALLOWED:\n")
+    safe = [
+        # File inspection
+        "ls -la",
+        "cat README.md",
+        "head -100 file.txt",
+        "tail -20 log.txt",
+        "wc -l file.txt",
+        "grep -r pattern src/",
+        # File operations
+        "cp file1.txt file2.txt",
+        "mkdir newdir",
+        "mkdir -p path/to/dir",
+        # Directory
+        "pwd",
+        # Node.js development
+        "npm install",
+        "npm run build",
+        "node server.js",
+        # Version control
+        "git status",
+        "git commit -m 'test'",
+        "git add . && git commit -m 'msg'",
+        # Process management
+        "ps aux",
+        "lsof -i :3000",
+        "sleep 2",
+        # Allowed pkill patterns for dev servers
+        "pkill node",
+        "pkill npm",
+        "pkill -f node",
+        "pkill -f 'node server.js'",
+        "pkill vite",
+        # Chained commands
+        "npm install && npm run build",
+        "ls | grep test",
+        # Full paths
+        "/usr/local/bin/node app.js",
+        # chmod +x (allowed)
+        "chmod +x init.sh",
+        "chmod +x script.sh",
+        "chmod u+x init.sh",
+        "chmod a+x init.sh",
+        # init.sh execution (allowed)
+        "./init.sh",
+        "./init.sh --production",
+        "/path/to/init.sh",
+        # Combined chmod and init.sh
+        "chmod +x init.sh && ./init.sh",
+    ]
+
+    for cmd in safe:
+        if test_hook(cmd, should_block=False):
+            passed += 1
+        else:
+            failed += 1
+
+    # Summary
+    print("\n" + "-" * 70)
+    print(f"  Results: {passed} passed, {failed} failed")
+    print("-" * 70)
+
+    if failed == 0:
+        print("\n  ALL TESTS PASSED")
+        return 0
+    else:
+        print(f"\n  {failed} TEST(S) FAILED")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+
+
+
+================================================
+FILE: prompts/coding_prompt.md
+================================================
+## YOUR ROLE - CODING AGENT
+
+You are continuing work on a long-running autonomous development task.
+This is a FRESH context window - you have no memory of previous sessions.
+
+You have access to Linear for project management via MCP tools. Linear is your
+single source of truth for what needs to be built and what's been completed.
+
+### STEP 1: GET YOUR BEARINGS (MANDATORY)
+
+Start by orienting yourself:
+
+```bash
+# 1. See your working directory
+pwd
+
+# 2. List files to understand project structure
+ls -la
+
+# 3. Read the project specification to understand what you're building
+cat app_spec.txt
+
+# 4. Read the Linear project state
+cat .linear_project.json
+
+# 5. Check recent git history
+git log --oneline -20
+```
+
+Understanding the `app_spec.txt` is critical - it contains the full requirements
+for the application you're building.
+
+### STEP 2: CHECK LINEAR STATUS
+
+Query Linear to understand current project state. The `.linear_project.json` file
+contains the `project_id` and `team_id` you should use for all Linear queries.
+
+1. **Find the META issue** for session context:
+   Use `mcp__linear__list_issues` with the project ID from `.linear_project.json`
+   and search for "[META] Project Progress Tracker".
+   Read the issue description and recent comments for context from previous sessions.
+
+2. **Count progress:**
+   Use `mcp__linear__list_issues` with the project ID to get all issues, then count:
+   - Issues with status "Done" = completed
+   - Issues with status "Todo" = remaining
+   - Issues with status "In Progress" = currently being worked on
+
+3. **Check for in-progress work:**
+   If any issue is "In Progress", that should be your first priority.
+   A previous session may have been interrupted.
+
+### STEP 3: START SERVERS (IF NOT RUNNING)
+
+If `init.sh` exists, run it:
+```bash
+chmod +x init.sh
+./init.sh
+```
+
+Otherwise, start servers manually and document the process.
+
+### STEP 4: VERIFICATION TEST (CRITICAL!)
+
+**MANDATORY BEFORE NEW WORK:**
+
+The previous session may have introduced bugs. Before implementing anything
+new, you MUST run verification tests.
+
+Use `mcp__linear__list_issues` with the project ID and status "Done" to find 1-2
+completed features that are core to the app's functionality.
+
+Test these through the browser using Puppeteer:
+- Navigate to the feature
+- Verify it still works as expected
+- Take screenshots to confirm
+
+**If you find ANY issues (functional or visual):**
+- Use `mcp__linear__update_issue` to set status back to "In Progress"
+- Add a comment explaining what broke
+- Fix the issue BEFORE moving to new features
+- This includes UI bugs like:
+  * White-on-white text or poor contrast
+  * Random characters displayed
+  * Incorrect timestamps
+  * Layout issues or overflow
+  * Buttons too close together
+  * Missing hover states
+  * Console errors
+
+### STEP 5: SELECT NEXT ISSUE TO WORK ON
+
+Use `mcp__linear__list_issues` with the project ID from `.linear_project.json`:
+- Filter by `status`: "Todo"
+- Sort by priority (1=urgent is highest)
+- `limit`: 5
+
+Review the highest-priority unstarted issues and select ONE to work on.
+
+### STEP 6: CLAIM THE ISSUE
+
+Before starting work, use `mcp__linear__update_issue` to:
+- Set the issue's `status` to "In Progress"
+
+This signals to any other agents (or humans watching) that this issue is being worked on.
+
+### STEP 7: IMPLEMENT THE FEATURE
+
+Read the issue description for test steps and implement accordingly:
+
+1. Write the code (frontend and/or backend as needed)
+2. Test manually using browser automation (see Step 8)
+3. Fix any issues discovered
+4. Verify the feature works end-to-end
+
+### STEP 8: VERIFY WITH BROWSER AUTOMATION
+
+**CRITICAL:** You MUST verify features through the actual UI.
+
+Use browser automation tools:
+- `mcp__puppeteer__puppeteer_navigate` - Start browser and go to URL
+- `mcp__puppeteer__puppeteer_screenshot` - Capture screenshot
+- `mcp__puppeteer__puppeteer_click` - Click elements
+- `mcp__puppeteer__puppeteer_fill` - Fill form inputs
+
+**DO:**
+- Test through the UI with clicks and keyboard input
+- Take screenshots to verify visual appearance
+- Check for console errors in browser
+- Verify complete user workflows end-to-end
+
+**DON'T:**
+- Only test with curl commands (backend testing alone is insufficient)
+- Use JavaScript evaluation to bypass UI (no shortcuts)
+- Skip visual verification
+- Mark issues Done without thorough verification
+
+### STEP 9: UPDATE LINEAR ISSUE (CAREFULLY!)
+
+After thorough verification:
+
+1. **Add implementation comment** using `mcp__linear__create_comment`:
+   ```markdown
+   ## Implementation Complete
+
+   ### Changes Made
+   - [List of files changed]
+   - [Key implementation details]
+
+   ### Verification
+   - Tested via Puppeteer browser automation
+   - Screenshots captured
+   - All test steps from issue description verified
+
+   ### Git Commit
+   [commit hash and message]
+   ```
+
+2. **Update status** using `mcp__linear__update_issue`:
+   - Set `status` to "Done"
+
+**ONLY update status to Done AFTER:**
+- All test steps in the issue description pass
+- Visual verification via screenshots
+- No console errors
+- Code committed to git
+
+### STEP 10: COMMIT YOUR PROGRESS
+
+Make a descriptive git commit:
+```bash
+git add .
+git commit -m "Implement [feature name]
+
+- Added [specific changes]
+- Tested with browser automation
+- Linear issue: [issue identifier]
+"
+```
+
+### STEP 11: UPDATE META ISSUE
+
+Add a comment to the "[META] Project Progress Tracker" issue with session summary:
+
+```markdown
+## Session Complete - [Brief description]
+
+### Completed This Session
+- [Issue title]: [Brief summary of implementation]
+
+### Current Progress
+- X issues Done
+- Y issues In Progress
+- Z issues remaining in Todo
+
+### Verification Status
+- Ran verification tests on [feature names]
+- All previously completed features still working: [Yes/No]
+
+### Notes for Next Session
+- [Any important context]
+- [Recommendations for what to work on next]
+- [Any blockers or concerns]
+```
+
+### STEP 12: END SESSION CLEANLY
+
+Before context fills up:
+1. Commit all working code
+2. If working on an issue you can't complete:
+   - Add a comment explaining progress and what's left
+   - Keep status as "In Progress" (don't revert to Todo)
+3. Update META issue with session summary
+4. Ensure no uncommitted changes
+5. Leave app in working state (no broken features)
+
+---
+
+## LINEAR WORKFLOW RULES
+
+**Status Transitions:**
+- Todo → In Progress (when you start working)
+- In Progress → Done (when verified complete)
+- Done → In Progress (only if regression found)
+
+**Comments Are Your Memory:**
+- Every implementation gets a detailed comment
+- Session handoffs happen via META issue comments
+- Comments are permanent - future agents will read them
+
+**NEVER:**
+- Delete or archive issues
+- Modify issue descriptions or test steps
+- Work on issues already "In Progress" by someone else
+- Mark "Done" without verification
+- Leave issues "In Progress" when switching to another issue
+
+---
+
+## TESTING REQUIREMENTS
+
+**ALL testing must use browser automation tools.**
+
+Available Puppeteer tools:
+- `mcp__puppeteer__puppeteer_navigate` - Go to URL
+- `mcp__puppeteer__puppeteer_screenshot` - Capture screenshot
+- `mcp__puppeteer__puppeteer_click` - Click elements
+- `mcp__puppeteer__puppeteer_fill` - Fill form inputs
+- `mcp__puppeteer__puppeteer_select` - Select dropdown options
+- `mcp__puppeteer__puppeteer_hover` - Hover over elements
+
+Test like a human user with mouse and keyboard. Don't take shortcuts.
+
+---
+
+## SESSION PACING
+
+**How many issues should you complete per session?**
+
+This depends on the project phase:
+
+**Early phase (< 20% Done):** You may complete multiple issues per session when:
+- Setting up infrastructure/scaffolding that unlocks many issues at once
+- Fixing build issues that were blocking progress
+- Auditing existing code and marking already-implemented features as Done
+
+**Mid/Late phase (> 20% Done):** Slow down to **1-2 issues per session**:
+- Each feature now requires focused implementation and testing
+- Quality matters more than quantity
+- Clean handoffs are critical
+
+**After completing an issue, ask yourself:**
+1. Is the app in a stable, working state right now?
+2. Have I been working for a while? (You can't measure this precisely, but use judgment)
+3. Would this be a good stopping point for handoff?
+
+If yes to all three → proceed to Step 11 (session summary) and end cleanly.
+If no → you may continue to the next issue, but **commit first** and stay aware.
+
+**Golden rule:** It's always better to end a session cleanly with good handoff notes
+than to start another issue and risk running out of context mid-implementation.
+
+---
+
+## IMPORTANT REMINDERS
+
+**Your Goal:** Production-quality application with all Linear issues Done
+
+**This Session's Goal:** Make meaningful progress with clean handoff
+
+**Priority:** Fix regressions before implementing new features
+
+**Quality Bar:**
+- Zero console errors
+- Polished UI matching the design in app_spec.txt
+- All features work end-to-end through the UI
+- Fast, responsive, professional
+
+**Context is finite.** You cannot monitor your context usage, so err on the side
+of ending sessions early with good handoff notes. The next agent will continue.
+
+---
+
+Begin by running Step 1 (Get Your Bearings).
+
+
+
+================================================
+FILE: prompts/initializer_prompt.md
+================================================
+## YOUR ROLE - INITIALIZER AGENT (Session 1 of Many)
+
+You are the FIRST agent in a long-running autonomous development process.
+Your job is to set up the foundation for all future coding agents.
+
+You have access to Linear for project management via MCP tools. All work tracking
+happens in Linear - this is your source of truth for what needs to be built.
+
+### FIRST: Read the Project Specification
+
+Start by reading `app_spec.txt` in your working directory. This file contains
+the complete specification for what you need to build. Read it carefully
+before proceeding.
+
+### SECOND: Set Up Linear Project
+
+Before creating issues, you need to set up Linear:
+
+1. **Get the team ID:**
+   Use `mcp__linear__list_teams` to see available teams.
+   Note the team ID (e.g., "TEAM-123") for the team where you'll create issues.
+
+2. **Create a Linear project:**
+   Use `mcp__linear__create_project` to create a new project:
+   - `name`: Use the project name from app_spec.txt (e.g., "Claude.ai Clone")
+   - `teamIds`: Array with your team ID
+   - `description`: Brief project overview from app_spec.txt
+
+   Save the returned project ID - you'll use it when creating issues.
+
+### CRITICAL TASK: Create Linear Issues
+
+Based on `app_spec.txt`, create Linear issues for each feature using the
+`mcp__linear__create_issue` tool. Create 50 detailed issues that
+comprehensively cover all features in the spec.
+
+**For each feature, create an issue with:**
+
+```
+title: Brief feature name (e.g., "Auth - User login flow")
+teamId: [Use the team ID you found earlier]
+projectId: [Use the project ID from the project you created]
+description: Markdown with feature details and test steps (see template below)
+priority: 1-4 based on importance (1=urgent/foundational, 4=low/polish)
+```
+
+**Issue Description Template:**
+```markdown
+## Feature Description
+[Brief description of what this feature does and why it matters]
+
+## Category
+[functional OR style]
+
+## Test Steps
+1. Navigate to [page/location]
+2. [Specific action to perform]
+3. [Another action]
+4. Verify [expected result]
+5. [Additional verification steps as needed]
+
+## Acceptance Criteria
+- [ ] [Specific criterion 1]
+- [ ] [Specific criterion 2]
+- [ ] [Specific criterion 3]
+```
+
+**Requirements for Linear Issues:**
+- Create 50 issues total covering all features in the spec
+- Mix of functional and style features (note category in description)
+- Order by priority: foundational features get priority 1-2, polish features get 3-4
+- Include detailed test steps in each issue description
+- All issues start in "Todo" status (default)
+
+**Priority Guidelines:**
+- Priority 1 (Urgent): Core infrastructure, database, basic UI layout
+- Priority 2 (High): Primary user-facing features, authentication
+- Priority 3 (Medium): Secondary features, enhancements
+- Priority 4 (Low): Polish, nice-to-haves, edge cases
+
+**CRITICAL INSTRUCTION:**
+Once created, issues can ONLY have their status changed (Todo → In Progress → Done).
+Never delete issues, never modify descriptions after creation.
+This ensures no functionality is missed across sessions.
+
+### NEXT TASK: Create Meta Issue for Session Tracking
+
+Create a special issue titled "[META] Project Progress Tracker" with:
+
+```markdown
+## Project Overview
+[Copy the project name and brief overview from app_spec.txt]
+
+## Session Tracking
+This issue is used for session handoff between coding agents.
+Each agent should add a comment summarizing their session.
+
+## Key Milestones
+- [ ] Project setup complete
+- [ ] Core infrastructure working
+- [ ] Primary features implemented
+- [ ] All features complete
+- [ ] Polish and refinement done
+
+## Notes
+[Any important context about the project]
+```
+
+This META issue will be used by all future agents to:
+- Read context from previous sessions (via comments)
+- Write session summaries before ending
+- Track overall project milestones
+
+### NEXT TASK: Create init.sh
+
+Create a script called `init.sh` that future agents can use to quickly
+set up and run the development environment. The script should:
+
+1. Install any required dependencies
+2. Start any necessary servers or services
+3. Print helpful information about how to access the running application
+
+Base the script on the technology stack specified in `app_spec.txt`.
+
+### NEXT TASK: Initialize Git
+
+Create a git repository and make your first commit with:
+- init.sh (environment setup script)
+- README.md (project overview and setup instructions)
+- Any initial project structure files
+
+Commit message: "Initial setup: project structure and init script"
+
+### NEXT TASK: Create Project Structure
+
+Set up the basic project structure based on what's specified in `app_spec.txt`.
+This typically includes directories for frontend, backend, and any other
+components mentioned in the spec.
+
+### NEXT TASK: Save Linear Project State
+
+Create a file called `.linear_project.json` with the following information:
+```json
+{
+  "initialized": true,
+  "created_at": "[current timestamp]",
+  "team_id": "[ID of the team you used]",
+  "project_id": "[ID of the Linear project you created]",
+  "project_name": "[Name of the project from app_spec.txt]",
+  "meta_issue_id": "[ID of the META issue you created]",
+  "total_issues": 50,
+  "notes": "Project initialized by initializer agent"
+}
+```
+
+This file tells future sessions that Linear has been set up.
+
+### OPTIONAL: Start Implementation
+
+If you have time remaining in this session, you may begin implementing
+the highest-priority features. Remember:
+- Use `mcp__linear__linear_search_issues` to find Todo issues with priority 1
+- Use `mcp__linear__linear_update_issue` to set status to "In Progress"
+- Work on ONE feature at a time
+- Test thoroughly before marking status as "Done"
+- Add a comment to the issue with implementation notes
+- Commit your progress before session ends
+
+### ENDING THIS SESSION
+
+Before your context fills up:
+1. Commit all work with descriptive messages
+2. Add a comment to the META issue summarizing what you accomplished:
+   ```markdown
+   ## Session 1 Complete - Initialization
+
+   ### Accomplished
+   - Created 50 Linear issues from app_spec.txt
+   - Set up project structure
+   - Created init.sh
+   - Initialized git repository
+   - [Any features started/completed]
+
+   ### Linear Status
+   - Total issues: 50
+   - Done: X
+   - In Progress: Y
+   - Todo: Z
+
+   ### Notes for Next Session
+   - [Any important context]
+   - [Recommendations for what to work on next]
+   ```
+3. Ensure `.linear_project.json` exists
+4. Leave the environment in a clean, working state
+
+The next agent will continue from here with a fresh context window.
+
+---
+
+**Remember:** You have unlimited time across many sessions. Focus on
+quality over speed. Production-ready is the goal.
+
+
