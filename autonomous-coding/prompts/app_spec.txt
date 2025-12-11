@@ -45,6 +45,41 @@
     </environment_setup>
   </prerequisites>
 
+  <reference_data>
+    <description>
+      The following reference materials are available for building and testing the application.
+      These contain real institutional data, accreditation standards, and detailed requirements.
+    </description>
+
+    <accjc_documents path="../ACCJC/">
+      - ACCJC-2024-Accreditation-Standards.pdf - The official 2024 accreditation standards that Luminous must help satisfy
+      - Eligibility-Requirements-for-Accreditation.pdf - ER requirements including ER 11 (Student Learning and Achievement)
+      - Various policy documents for compliance reference
+      Use these for: Training the Equity Lens Assistant, Compliance Copilot RAG, and validating feature alignment
+    </accjc_documents>
+
+    <course_data path="../reference_data/">
+      - la_mission_PPM_Published_Map_Export_2025-2026_10-15-2025.csv - Program-to-course mapping data from LAMC
+      - LAC_SRC_COURSE_MASTER_11492.xlsx - Course master data
+      - NEW LAMC GE and Cal-GETC GE 2025-2026.xlsx - General Education requirements mapping
+      Use these for: Testing SLO heatmaps, curriculum widgets, data visualization, and eLumen sync features
+    </course_data>
+
+    <prd_documents path="../reference_data/">
+      - PRD_comprehensive.md - Comprehensive 288-line PRD with detailed ACCJC mappings, eLumen integration specs, and module requirements
+      - PRD_revision2.md - Earlier revision with AI feature details and Google Gemini integration specs
+      - PRD_revision3.md - Module specifications with user role workflows
+      Use these for: Additional context on requirements, user pain points, and implementation priorities
+    </prd_documents>
+
+    <usage_guidelines>
+      - Load course CSV/Excel data to populate mock databases for testing
+      - Reference ACCJC PDFs when implementing equity analysis prompts
+      - Use PRD documents to understand the "why" behind features
+      - Generate realistic test data based on the course data patterns
+    </usage_guidelines>
+  </reference_data>
+
   <core_features>
     <program_review_template_designer>
       - Template versioning for "Instructional," "Student Services," "Administrative," and "CTE" units
