@@ -31,13 +31,13 @@ Before creating issues, you need to set up Linear:
 ### CRITICAL TASK: Create Linear Issues
 
 Based on `app_spec.txt`, create Linear issues for each feature using the
-`mcp__linear__create_issue` tool. Create 50 detailed issues that
+`mcp__linear__create_issue` tool. Create ~50 detailed issues that
 comprehensively cover all features in the spec.
 
 **For each feature, create an issue with:**
 
 ```
-title: Brief feature name (e.g., "Auth - User login flow")
+title: Brief feature name (e.g., "Auth - Firebase Login Page")
 teamId: [Use the team ID you found earlier]
 projectId: [Use the project ID from the project you created]
 description: Markdown with feature details and test steps (see template below)
@@ -66,22 +66,14 @@ priority: 1-4 based on importance (1=urgent/foundational, 4=low/polish)
 ```
 
 **Requirements for Linear Issues:**
-- Create 50 issues total covering all features in the spec
-- Mix of functional and style features (note category in description)
-- Order by priority: foundational features get priority 1-2, polish features get 3-4
-- Include detailed test steps in each issue description
+- Create ~50 issues total covering all features in the spec
+- **Include specific tasks for:**
+    - Docker Compose setup (Frontend, Backend, Postgres)
+    - SQLModel Schema definition (Users, Orgs, Reviews)
+    - Gemini File Search Ingestion Script (uploading ACCJC PDFs)
+    - Firebase Auth Integration (Frontend & Backend)
+- Order by priority: foundational features get priority 1-2
 - All issues start in "Todo" status (default)
-
-**Priority Guidelines:**
-- Priority 1 (Urgent): Core infrastructure, database, basic UI layout
-- Priority 2 (High): Primary user-facing features, authentication
-- Priority 3 (Medium): Secondary features, enhancements
-- Priority 4 (Low): Polish, nice-to-haves, edge cases
-
-**CRITICAL INSTRUCTION:**
-Once created, issues can ONLY have their status changed (Todo → In Progress → Done).
-Never delete issues, never modify descriptions after creation.
-This ensures no functionality is missed across sessions.
 
 ### NEXT TASK: Create Meta Issue for Session Tracking
 
@@ -96,46 +88,56 @@ This issue is used for session handoff between coding agents.
 Each agent should add a comment summarizing their session.
 
 ## Key Milestones
-- [ ] Project setup complete
-- [ ] Core infrastructure working
+- [ ] Project setup (Docker, Git, DB) complete
+- [ ] Authentication working
+- [ ] Database Schema & Seed Data applied
+- [ ] Gemini File Search Indexed
 - [ ] Primary features implemented
-- [ ] All features complete
 - [ ] Polish and refinement done
-
-## Notes
-[Any important context about the project]
 ```
 
-This META issue will be used by all future agents to:
-- Read context from previous sessions (via comments)
-- Write session summaries before ending
-- Track overall project milestones
+### NEXT TASK: Create init.sh (Docker Wrapper)
 
-### NEXT TASK: Create init.sh
+Create a script called `init.sh` that wraps docker-compose commands for easy usage:
 
-Create a script called `init.sh` that future agents can use to quickly
-set up and run the development environment. The script should:
+```bash
+#!/bin/bash
+# init.sh - Setup and run Luminous environment
 
-1. Install any required dependencies
-2. Start any necessary servers or services
-3. Print helpful information about how to access the running application
+# Check for .env
+if [ ! -f .env ]; then
+  echo "Creating .env from .env.example..."
+  cp .env.example .env
+  echo "Please update .env with your keys!"
+fi
 
-Base the script on the technology stack specified in `app_spec.txt`.
+# Build and Start Containers
+docker-compose up -d --build
+
+# Run Migrations (if needed)
+# docker-compose exec backend python -m src.scripts.migrate
+
+echo "Luminous is running!"
+echo "Frontend: http://localhost:3000"
+echo "Backend: http://localhost:8000/docs"
+```
 
 ### NEXT TASK: Initialize Git
 
 Create a git repository and make your first commit with:
-- init.sh (environment setup script)
+- init.sh
 - README.md (project overview and setup instructions)
+- .gitignore
 - Any initial project structure files
 
 Commit message: "Initial setup: project structure and init script"
 
 ### NEXT TASK: Create Project Structure
 
-Set up the basic project structure based on what's specified in `app_spec.txt`.
-This typically includes directories for frontend, backend, and any other
-components mentioned in the spec.
+Set up the basic project structure based on `app_spec.txt`:
+- `frontend/` (Next.js app)
+- `backend/` (FastAPI app)
+- `docker-compose.yml`
 
 ### NEXT TASK: Save Linear Project State
 
@@ -153,50 +155,17 @@ Create a file called `.linear_project.json` with the following information:
 }
 ```
 
-This file tells future sessions that Linear has been set up.
-
 ### OPTIONAL: Start Implementation
 
 If you have time remaining in this session, you may begin implementing
-the highest-priority features. Remember:
-- Use `mcp__linear__list_issues` to find Todo issues with priority 1
-- Use `mcp__linear__update_issue` to set status to "In Progress"
-- Work on ONE feature at a time
-- Test thoroughly before marking status as "Done"
-- Add a comment to the issue with implementation notes
-- Commit your progress before session ends
+the highest-priority features (e.g., Docker setup, basic DB schema).
 
 ### ENDING THIS SESSION
 
 Before your context fills up:
 1. Commit all work with descriptive messages
-2. Add a comment to the META issue summarizing what you accomplished:
-   ```markdown
-   ## Session 1 Complete - Initialization
-
-   ### Accomplished
-   - Created 50 Linear issues from app_spec.txt
-   - Set up project structure
-   - Created init.sh
-   - Initialized git repository
-   - [Any features started/completed]
-
-   ### Linear Status
-   - Total issues: 50
-   - Done: X
-   - In Progress: Y
-   - Todo: Z
-
-   ### Notes for Next Session
-   - [Any important context]
-   - [Recommendations for what to work on next]
-   ```
+2. Add a comment to the META issue summarizing what you accomplished
 3. Ensure `.linear_project.json` exists
-4. Leave the environment in a clean, working state
+4. Leave the environment in a clean, working state (Docker containers define)
 
 The next agent will continue from here with a fresh context window.
-
----
-
-**Remember:** You have unlimited time across many sessions. Focus on
-quality over speed. Production-ready is the goal.

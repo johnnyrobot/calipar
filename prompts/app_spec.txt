@@ -2,46 +2,62 @@
   <project_name>Luminous - Next-Gen Integrated Planning & Program Review Platform</project_name>
 
   <overview>
-    Build "Luminous," an AI-enhanced Program Review and Integrated Planning platform for Los Angeles Mission College (LAMC) / LACCD. The application serves as a "System of Engagement" that overlays existing "Systems of Record" (eLumen, PeopleSoft). It prioritizes User Experience (UX) and AI Assistance using Google Gemini to reduce the cognitive load of data analysis and report writing for faculty. The platform transforms compliance-driven Program Review into meaningful institutional improvement by embedding equity analytics, enforcing ACCJC accreditation standards, and creating a "Golden Thread" linking Mission -> Strategic Plan -> Program Goal -> Resource Request.
+    Build "Luminous," an AI-enhanced Program Review and Integrated Planning platform for Los Angeles Mission College (LAMC) / LACCD. The application serves as a "System of Engagement" that overlays existing "Systems of Record" (eLumen, PeopleSoft). It prioritizes User Experience (UX) and AI Assistance using **Google Gemini 2.5 Flash** to reduce the cognitive load of data analysis and report writing for faculty. The platform transforms compliance-driven Program Review into meaningful institutional improvement by embedding equity analytics, enforcing ACCJC accreditation standards, and creating a "Golden Thread" linking Mission -> Strategic Plan -> Program Goal -> Resource Request.
   </overview>
 
   <technology_stack>
-    <api_key>
-      You can use a Google AI API key located at /tmp/api-key for testing. You will not be allowed to read this file, but you can reference it in code.
-    </api_key>
     <frontend>
       <framework>Next.js (React)</framework>
       <styling>Tailwind CSS</styling>
-      <state_management>React hooks and context</state_management>
+      <state_management>Zustand or React Context</state_management>
       <routing>Next.js App Router</routing>
       <markdown>React Markdown for message rendering</markdown>
       <charts>Chart.js or Recharts for data visualization</charts>
-      <port>Only launch on port {frontend_port}</port>
     </frontend>
     <backend>
       <runtime>Python with FastAPI</runtime>
-      <database>Google Firestore (NoSQL)</database>
-      <ai_integration>Google Vertex AI (Gemini 1.5 Pro)</ai_integration>
-      <rag>Google Vertex AI Agent Builder for document search</rag>
-      <data_warehouse>Google BigQuery for analytics</data_warehouse>
+      <database>
+        **Neon (Serverless Postgres)** using **SQLModel** (SQLAlchemy).
+        For local/VPS development, use a standard Postgres 16+ container in Docker Compose if Neon is not directly accessible, but the target production DB is Neon.
+      </database>
+      <ai_integration>
+        **Google Gen AI SDK** using **Gemini 2.5 Flash** (or `gemini-2.5-flash-lite`) for high-speed, low-cost inference.
+      </ai_integration>
+      <rag>
+        **Gemini API File Search** for retrieving institutional context (ACCJC standards, handbooks).
+        Documents are uploaded/indexed into a File Search Store.
+      </rag>
     </backend>
-    <communication>
-      <api>RESTful endpoints</api>
-      <streaming>Server-Sent Events for AI response streaming</streaming>
-      <external_apis>eLumen API (read-only), PeopleSoft/SIS data sync</external_apis>
-    </communication>
+    <authentication>
+      <provider>**Firebase Authentication** (Email/Password)</provider>
+      <implementation>
+        - Frontend: Firebase JS SDK for login/signup
+        - Backend: `firebase-admin` SDK for verifying ID tokens in API dependencies
+      </implementation>
+      <user_management>
+        - Seed initial users (Faculty, Chair, Dean, Admin) manually via script
+        - Map Firebase UIDs to local `users` table in Postgres
+      </user_management>
+    </authentication>
     <deployment>
-      <hosting>Google Cloud Run</hosting>
-      <authentication>SAML 2.0 / LACCD SSO (Azure AD) - mock for demo</authentication>
+      <hosting>**Docker Compose** on VPS</hosting>
+      <containerization>
+        - `frontend` service (Node.js)
+        - `backend` service (Python/FastAPI)
+        - `db` service (Postgres 16 - strictly for local/VPS dev env)
+      </containerization>
     </deployment>
   </technology_stack>
 
   <prerequisites>
     <environment_setup>
-      - Google Cloud Project configured with Vertex AI, Firestore, BigQuery
-      - Frontend dependencies installed via pnpm
-      - Backend code in /server directory using Python/FastAPI
-      - Install backend dependencies as needed
+      - Google AI API Key (exported as `GOOGLE_API_KEY`)
+      - Firebase Project created with Authentication enabled (Email/Pass)
+      - `serviceAccountKey.json` for Firebase Admin SDK placed in `/backend`
+      - `.env` file containing:
+        - `DATABASE_URL` (Neon connection string or local postgres)
+        - `GOOGLE_API_KEY`
+        - `GEMINI_FILE_SEARCH_STORE_NAME` (ID of the indexed store)
     </environment_setup>
   </prerequisites>
 
@@ -52,696 +68,228 @@
     </description>
 
     <accjc_documents path="../ACCJC/">
-      - ACCJC-2024-Accreditation-Standards.pdf - The official 2024 accreditation standards that Luminous must help satisfy
-      - Eligibility-Requirements-for-Accreditation.pdf - ER requirements including ER 11 (Student Learning and Achievement)
-      - Various policy documents for compliance reference
-      Use these for: Training the Equity Lens Assistant, Compliance Copilot RAG, and validating feature alignment
+      - ACCJC-2024-Accreditation-Standards.pdf
+      - Eligibility-Requirements-for-Accreditation.pdf
+      - Various policy documents
+      **Action:** These must be indexed into the Gemini File Search Store during initialization.
     </accjc_documents>
 
     <course_data path="../reference_data/">
-      - la_mission_PPM_Published_Map_Export_2025-2026_10-15-2025.csv - Program-to-course mapping data from LAMC
-      - LAC_SRC_COURSE_MASTER_11492.xlsx - Course master data
-      - NEW LAMC GE and Cal-GETC GE 2025-2026.xlsx - General Education requirements mapping
-      Use these for: Testing SLO heatmaps, curriculum widgets, data visualization, and eLumen sync features
+      - la_mission_PPM_Published_Map_Export_2025-2026_10-15-2025.csv
+      - LAC_SRC_COURSE_MASTER_11492.xlsx
+      - NEW LAMC GE and Cal-GETC GE 2025-2026.xlsx
+      **Action:** Use this data to seed the `courses`, `enrollments`, and `slo_data` tables in Postgres.
     </course_data>
 
     <prd_documents path="../reference_data/">
-      - PRD_comprehensive.md - Comprehensive 288-line PRD with detailed ACCJC mappings, eLumen integration specs, and module requirements
-      - PRD_revision2.md - Earlier revision with AI feature details and Google Gemini integration specs
-      - PRD_revision3.md - Module specifications with user role workflows
-      Use these for: Additional context on requirements, user pain points, and implementation priorities
+      - PRD_comprehensive.md
+      - PRD_revision2.md
+      - PRD_revision3.md
     </prd_documents>
-
-    <usage_guidelines>
-      - Load course CSV/Excel data to populate mock databases for testing
-      - Reference ACCJC PDFs when implementing equity analysis prompts
-      - Use PRD documents to understand the "why" behind features
-      - Generate realistic test data based on the course data patterns
-    </usage_guidelines>
   </reference_data>
 
   <core_features>
     <program_review_template_designer>
       - Template versioning for "Instructional," "Student Services," "Administrative," and "CTE" units
-      - Pre-population (roll-over) of static fields from previous cycles
+      - **JSONB Column in Postgres:** Store the flexible form schema and user responses in a `content` JSONB column within the `program_reviews` table.
       - Embedded live data widgets between narrative text prompts
-      - Curriculum currency widget showing courses and last approval dates
-      - SLO performance widget with demographic disaggregation
-      - Template branching for CTE programs (adds Labor Market Analysis, Advisory Board sections)
-      - Flexible form schema that changes year-over-year without database migrations
+      - Curriculum currency widget
     </program_review_template_designer>
 
     <context_aware_editor>
-      - "Smart Context" editor that is AI-assisted, not a blank text box
-      - Data injection: Auto-fetch program success/retention data when opening sections
-      - Gemini Analysis Assistant: Click "Analyze Trends" to get AI-generated bullet summaries
-      - "Expand to Narrative" feature: AI rewrites bullets into formal academic prose
-      - Evidence Locker: Upload supporting documents (meeting minutes, advisory board agendas)
-      - Drag-and-drop AI insights into narrative
-      - "Rewrite for Tone" to polish rough notes into professional academic writing
+      - "Smart Context" editor powered by Gemini 2.5 Flash
+      - Data injection: Auto-fetch program success/retention data
+      - **Gemini Analysis:** Click "Analyze Trends" -> System sends data + prompt to Gemini -> returns bullet points
+      - "Expand to Narrative": AI rewrites bullets into academic prose
     </context_aware_editor>
 
     <equity_lens_assistant>
       - Pre-submission "Equity Check" button
-      - AI analyzes text against ACCJC Standards 2.2 and 1.3
-      - Flags when demographic gaps in data are not addressed in narrative
-      - Suggests equity-focused goals based on Disproportionate Impact (DI) data
-      - Percentage Point Gap (PPG) and "80% Rule" methodology visualization
-      - Mandatory boolean flag: "Does this action plan explicitly address an equity gap?"
+      - AI analyzes text against ACCJC Standards using RAG (File Search)
+      - Flags unaddressed demographic gaps
     </equity_lens_assistant>
 
-    <slo_assessment_synthesis>
-      - Ingest raw SLO assessment data from eLumen API
-      - AI identifies outliers and trends across sections
-      - Visual heatmap of Course SLO performance (Green/Yellow/Red)
-      - Click Red tiles to open "Create Action Plan" modal
-      - Maps CSLOs to PSLOs to ISLOs (Course -> Program -> Institutional)
-      - Distinguish SLOs (instructional) from SAOs (Service Area Outcomes for non-instructional units)
-    </slo_assessment_synthesis>
-
     <integrated_planning_goal_setting>
-      - Goal Mapping: Create Program Goals mapped to ISMP Institutional Goals via multi-select
-      - Visual display of goal alignment ("Golden Thread")
-      - Status Tracking: Require status update on previous cycle goals before submission
-      - Longitudinal Action View: Timeline showing goal lifecycle across years
-      - Mandatory linkage: Action Plans cannot exist without parent Strategic Initiative
-      - Many-to-Many relationship: One Action Plan can support multiple Strategic Initiatives
+      - Goal Mapping: **Relational Link** between `action_plans` and `strategic_initiatives` tables
+      - Visual display of "Golden Thread"
     </integrated_planning_goal_setting>
 
     <resource_allocation_management>
-      - Mandatory Goal Linkage: Cannot add resource request without linking to Action Plan
-      - "Amazon Cart" experience for resource shopping
-      - Object Code validation dropdown (1000-Certificated Salaries, 4000-Supplies, 6000-Capital Outlay)
-      - Total Cost of Ownership (TCO): Auto-add maintenance/IT support line items
-      - FTE and Position Control Number required for personnel requests
-      - Prioritization Workflow: Committees can view and rank relevant requests
-      - Closing the Loop Notification: Faculty notified when resource is funded
-      - Resource Allocation Report grouped by Strategic Goal
+      - **Relational Table:** `resource_requests` table with foreign key to `action_plans`
+      - "Amazon Cart" experience
+      - Object Code validation (1000-6000 series)
+      - Total Cost of Ownership (TCO) calculator
     </resource_allocation_management>
 
     <compliance_copilot>
-      - Sidebar chatbot ("Mission-Bot") for institutional document queries
-      - RAG implementation using Vertex AI Search
-      - Index core PDFs: ISMP, Governance Handbook, Catalog, Program Review Handbook
-      - Query example: "Which strategic goal relates to dual enrollment?"
-      - Returns exact text with page citations
-      - Ensures Program Goals align with College Mission (ACCJC Standard 1.1)
+      - Sidebar chatbot ("Mission-Bot")
+      - **Implementation:** Uses `google.genai.Client` with `tools=[file_search_tool]`
+      - Queries the indexed ACCJC/Institutional documents
     </compliance_copilot>
 
     <workflow_governance>
-      - Visual Workflow Engine with progress bar (Draft -> Dept Chair -> Dean -> PROC -> Approved)
-      - Role-Based Access Control (RBAC)
-      - Deans can comment but cannot alter faculty text
-      - Branching Logic: If Resource Request > $0, route to Budget Committee
-      - PROC Validation Rubric: Scorecard overlay for quality rating
-      - AI Pre-Score: Suggested rubric score with human override
-      - Split-screen Validator's Cockpit (Review left, Rubric right)
-      - Audit Trail: Timestamped log of every status change, edit, comment
+      - State machine managed via `status` column in `program_reviews` table
+      - RBAC enforced via `users.role` and Firebase Custom Claims (optional) or DB lookup
     </workflow_governance>
-
-    <dashboard_the_pulse>
-      - High-level cards: Days until Due, SLO Assessment Completion %, Budget Request Status
-      - AI Insight notifications ("Your department is 10% below Institution-Set Standard")
-      - Gap Analysis visualization against Institution-Set Standards
-      - Red/Green indicators comparing program rates to institutional floors
-      - Trigger mandatory Improvement Plan if below standard
-      - Longitudinal Trend Analysis (5+ years of data)
-      - Access analytics logging (who viewed what, when)
-    </dashboard_the_pulse>
-
-    <data_integration>
-      - eLumen Curriculum Sync (nightly): GET /fullcourses for active courses
-      - Viability Check: Flag courses not offered in >2 years
-      - SLO Performance Import from eLumen Insights module
-      - PeopleSoft/SIS Enrollment Data sync (nightly)
-      - Faculty Assignments linked to sections for workflow routing
-      - Student Attributes for disaggregation (DSPS, EOPS, Veteran, Foster Youth, Ethnicity, Gender)
-      - Export approved Resource Requests to SAP/Budget tools
-    </data_integration>
-
-    <collaboration_sharing>
-      - Public Read-Only View for cross-department review reading
-      - Multiple Collaborators can author different sections simultaneously
-      - Export conversation formats (PDF, JSON, Markdown)
-      - Share artifacts and resource request data
-    </collaboration_sharing>
-
-    <settings_preferences>
-      - Theme selection (Light, Dark, Auto)
-      - Font size adjustment
-      - Accessibility options
-      - Keyboard shortcuts reference
-      - Custom instructions management (Global, Project-specific, Conversation-specific)
-    </settings_preferences>
   </core_features>
 
   <database_schema>
+    <type>Relational (Postgres) using SQLModel</type>
     <tables>
       <users>
-        - id, email, name, avatar_url, role
-        - created_at, last_login
-        - preferences (JSON: theme, font_size, etc.)
-        - custom_instructions
-        - department_id, division_id
+        - id: UUID (PK)
+        - firebase_uid: String (Unique, Indexed)
+        - email: String
+        - full_name: String
+        - role: Enum (Faculty, Chair, Dean, Admin, PROC)
+        - department_id: Foreign Key -> organizations.id
       </users>
 
       <organizations>
-        - id, name, parent_id, type (college/division/department)
-        - created_at, updated_at
-        - hierarchy for data rollup
+        - id: UUID (PK)
+        - name: String
+        - type: Enum (College, Division, Department)
+        - parent_id: Foreign Key -> organizations.id (Self-referential)
       </organizations>
 
       <strategic_initiatives>
-        - id, name, description
-        - ismp_goal_number (1-5)
-        - created_at, updated_at
-        - is_active
+        - id: UUID (PK)
+        - code: String (e.g., "1.1")
+        - description: Text
+        - active: Boolean
       </strategic_initiatives>
 
       <program_reviews>
-        - id, organization_id, user_id
-        - template_type (instructional/student_services/administrative/cte)
-        - cycle_year, review_type (comprehensive/annual_update)
-        - status (draft/review/validation/prioritization/approved/archived)
-        - created_at, updated_at, submitted_at
-        - workflow_state (JSON: current step, history)
+        - id: UUID (PK)
+        - org_id: Foreign Key -> organizations.id
+        - author_id: Foreign Key -> users.id
+        - cycle_year: String (e.g., "2025-2026")
+        - status: Enum (Draft, In Review, Validated, Approved)
+        - **content**: JSONB (Stores the dynamic form data/narratives)
+        - created_at: DateTime
+        - updated_at: DateTime
       </program_reviews>
 
-      <review_sections>
-        - id, program_review_id
-        - section_type (mission_alignment/curriculum/slo_assessment/equity_analysis/resource_requests)
-        - narrative_content (TEXT)
-        - ai_drafts (JSON: generated suggestions)
-        - data_snapshot (JSON: frozen data at time of writing)
-        - created_at, updated_at
-      </review_sections>
-
       <action_plans>
-        - id, program_review_id, organization_id
-        - title, description
-        - status (pending/in_progress/completed/on_hold/abandoned)
-        - addresses_equity_gap (boolean)
-        - equity_justification (TEXT)
-        - created_at, updated_at
-        - target_completion_date
+        - id: UUID (PK)
+        - review_id: Foreign Key -> program_reviews.id
+        - title: String
+        - description: Text
+        - equity_gap_addressed: Boolean
       </action_plans>
 
-      <action_plan_initiatives>
-        - id, action_plan_id, strategic_initiative_id
-        - (junction table for many-to-many mapping)
-      </action_plan_initiatives>
+      <action_plan_mappings>
+        - id: UUID (PK)
+        - action_plan_id: Foreign Key -> action_plans.id
+        - initiative_id: Foreign Key -> strategic_initiatives.id
+      </action_plan_mappings>
 
       <resource_requests>
-        - id, action_plan_id, program_review_id
-        - title, description, justification
-        - object_code (1000/2000/3000/4000/5000/6000)
-        - amount, tco_amount (Total Cost of Ownership)
-        - priority (critical/high/medium/low)
-        - funding_status (requested/approved/funded/denied)
-        - fte (for personnel), position_control_number
-        - created_at, updated_at
-        - funded_date, funding_source
+        - id: UUID (PK)
+        - action_plan_id: Foreign Key -> action_plans.id
+        - object_code: String
+        - amount: Decimal
+        - justification: Text
+        - priority: Enum
+        - is_funded: Boolean
       </resource_requests>
 
-      <slo_data>
-        - id, course_id, slo_identifier
-        - assessment_period, success_rate
-        - disaggregated_data (JSON: by ethnicity, gender, etc.)
-        - imported_from_elumen_at
-      </slo_data>
-
-      <curriculum_data>
-        - id, course_id, course_name, department_id
-        - last_approval_date, is_active
-        - last_offered_date
-        - imported_from_elumen_at
-      </curriculum_data>
-
-      <enrollment_data>
-        - id, course_id, term, section_id
-        - enrollment_count, success_rate, retention_rate
-        - disaggregated_data (JSON)
-        - imported_at
-      </enrollment_data>
-
-      <validation_rubrics>
-        - id, program_review_id, proc_member_id
-        - section_scores (JSON: section -> score)
-        - overall_score (exemplary/satisfactory/developing)
-        - comments (TEXT)
-        - ai_suggested_score (JSON)
-        - created_at
-      </validation_rubrics>
-
-      <audit_log>
-        - id, user_id, entity_type, entity_id
-        - action (created/updated/status_changed/commented/viewed)
-        - details (JSON)
-        - created_at
-      </audit_log>
-
       <documents>
-        - id, filename, file_path, document_type
-        - indexed_in_vertex (boolean)
-        - uploaded_by, uploaded_at
+        - id: UUID (PK)
+        - filename: String
+        - gemini_file_uri: String (URI in Google Gen AI)
+        - uploaded_at: DateTime
       </documents>
-
-      <ai_conversations>
-        - id, user_id, program_review_id
-        - messages (JSON array)
-        - created_at, updated_at
-      </ai_conversations>
     </tables>
   </database_schema>
 
   <api_endpoints_summary>
-    <authentication>
-      - POST /api/auth/login (mock SSO)
-      - POST /api/auth/logout
-      - GET /api/auth/me
-    </authentication>
+    <auth>
+      - POST /api/auth/login (Verify Firebase Token, return User profile)
+      - POST /api/auth/seed (Dev only: Seed initial users)
+    </auth>
 
     <program_reviews>
-      - GET /api/program-reviews
-      - POST /api/program-reviews
-      - GET /api/program-reviews/:id
-      - PUT /api/program-reviews/:id
-      - POST /api/program-reviews/:id/submit
-      - PUT /api/program-reviews/:id/status
-      - GET /api/program-reviews/:id/history
+      - GET /api/reviews (List by Dept/User)
+      - POST /api/reviews (Create new)
+      - GET /api/reviews/{id}
+      - PATCH /api/reviews/{id} (Update JSON content)
+      - POST /api/reviews/{id}/submit
     </program_reviews>
 
-    <sections>
-      - GET /api/program-reviews/:id/sections
-      - PUT /api/sections/:id
-      - POST /api/sections/:id/ai-analyze
-      - POST /api/sections/:id/ai-expand
-    </sections>
-
-    <action_plans>
-      - GET /api/program-reviews/:id/action-plans
-      - POST /api/action-plans
-      - PUT /api/action-plans/:id
-      - DELETE /api/action-plans/:id
-      - POST /api/action-plans/:id/initiatives
-    </action_plans>
-
-    <resource_requests>
-      - GET /api/action-plans/:id/resource-requests
-      - POST /api/resource-requests
-      - PUT /api/resource-requests/:id
-      - DELETE /api/resource-requests/:id
-      - GET /api/resource-requests/prioritization
-      - PUT /api/resource-requests/:id/priority
-      - PUT /api/resource-requests/:id/funding-status
-    </resource_requests>
-
-    <data>
-      - GET /api/data/slo/:organization_id
-      - GET /api/data/enrollment/:organization_id
-      - GET /api/data/curriculum/:organization_id
-      - GET /api/data/trends/:organization_id
-      - GET /api/data/equity-gaps/:organization_id
-    </data>
-
-    <validation>
-      - GET /api/program-reviews/:id/validation
-      - POST /api/program-reviews/:id/validation
-      - PUT /api/validation/:id
-      - GET /api/validation/aggregate-scores
-    </validation>
-
     <ai>
-      - POST /api/ai/analyze-trends
-      - POST /api/ai/expand-narrative
-      - POST /api/ai/equity-check
-      - POST /api/ai/chat (Compliance Copilot)
-      - POST /api/ai/slo-insights
-      - GET /api/ai/suggested-actions/:organization_id
+      - POST /api/ai/analyze (Gemini 2.5 Flash analysis)
+      - POST /api/ai/expand (Gemini 2.5 Flash rewriting)
+      - POST /api/ai/chat (Gemini 2.5 Flash + File Search for Compliance Copilot)
     </ai>
 
-    <documents>
-      - POST /api/documents/upload
-      - GET /api/documents
-      - DELETE /api/documents/:id
-      - POST /api/documents/search (Vertex AI Search)
-    </documents>
-
-    <dashboard>
-      - GET /api/dashboard/overview
-      - GET /api/dashboard/deadlines
-      - GET /api/dashboard/institution-set-standards
-      - GET /api/dashboard/completion-status
-    </dashboard>
-
-    <admin>
-      - GET /api/admin/templates
-      - POST /api/admin/templates
-      - PUT /api/admin/templates/:id
-      - GET /api/admin/strategic-initiatives
-      - POST /api/admin/strategic-initiatives
-      - GET /api/admin/object-codes
-      - GET /api/admin/audit-log
-    </admin>
-
-    <external_sync>
-      - POST /api/sync/elumen/curriculum
-      - POST /api/sync/elumen/slo
-      - POST /api/sync/sis/enrollment
-      - GET /api/sync/status
-    </external_sync>
+    <resources>
+      - POST /api/resources (Add request)
+      - GET /api/resources/summary (For Budget Committee)
+    </resources>
   </api_endpoints_summary>
-
-  <ui_layout>
-    <main_structure>
-      - Three-column layout: sidebar (navigation), main (review workspace), panel (AI assistant/artifacts)
-      - Collapsible sidebar with resize handle
-      - Responsive breakpoints: mobile (single column), tablet (two column), desktop (three column)
-      - Persistent header with organization selector and user profile
-      - Bottom status bar showing review progress
-    </main_structure>
-
-    <sidebar_left>
-      - Dashboard link (prominent)
-      - Program Reviews list (grouped by status: In Progress, Submitted, Archived)
-      - Organization/Department selector
-      - Quick filters (My Reviews, All Department Reviews)
-      - Settings gear icon at bottom
-      - Help/Documentation link
-    </sidebar_left>
-
-    <main_workspace>
-      - Review header: Title, Cycle Year, Status Badge, Template Type
-      - Progress stepper showing sections (Mission, Curriculum, SLOs, Equity, Resources)
-      - Section content area with:
-        - Data visualization widgets (charts, tables, heatmaps)
-        - Rich text editor for narrative
-        - AI action buttons (Analyze, Expand, Check)
-      - Save draft / Submit buttons
-      - Comments panel for reviewer feedback
-    </main_workspace>
-
-    <right_panel>
-      - AI Assistant chat interface (Compliance Copilot)
-      - Evidence Locker (uploaded documents)
-      - Action Plans sidebar with resource request summary
-      - Validation rubric (for PROC reviewers)
-      - Data source indicators
-    </right_panel>
-
-    <modals_overlays>
-      - Create Action Plan modal
-      - Add Resource Request modal (with TCO calculator)
-      - Goal Mapping interface
-      - Equity Check results
-      - Settings modal
-      - Document upload
-      - Export options
-    </modals_overlays>
-  </ui_layout>
-
-  <design_system>
-    <color_palette>
-      - Primary: Deep blue (#1E3A8A) for institutional trust
-      - Accent: Amber/Orange (#F59E0B) for actions and highlights
-      - Success: Green (#10B981) for meeting standards
-      - Warning: Yellow (#FBBF24) for approaching thresholds
-      - Danger: Red (#EF4444) for below standards
-      - Background: White (#FFFFFF light), Dark gray (#1F2937 dark)
-      - Surface: Light gray (#F3F4F6 light), Darker gray (#374151 dark)
-      - Text: Near black (#111827 light), Off-white (#F9FAFB dark)
-    </color_palette>
-
-    <typography>
-      - Sans-serif system font stack (Inter, system-ui)
-      - Headings: font-semibold
-      - Body: font-normal, leading-relaxed
-      - Data labels: font-medium, text-sm
-      - Narrative text: text-base (16px), comfortable line-height
-    </typography>
-
-    <components>
-      <data_widgets>
-        - Cards with chart.js visualizations
-        - Heatmaps for SLO performance
-        - Trend lines for longitudinal data
-        - Disaggregation toggle buttons
-        - Color-coded status indicators
-      </data_widgets>
-
-      <narrative_editor>
-        - Rich text with markdown support
-        - AI suggestion highlights
-        - Inline comments
-        - Word count and completeness indicator
-      </narrative_editor>
-
-      <workflow_indicators>
-        - Horizontal stepper for review progress
-        - Status badges with color coding
-        - Approval chain visualization
-        - Deadline countdown
-      </workflow_indicators>
-
-      <buttons>
-        - Primary: Blue background, white text
-        - Secondary: Border style with hover fill
-        - AI Actions: Amber accent with sparkle icon
-        - Danger: Red for destructive actions
-      </buttons>
-    </components>
-
-    <animations>
-      - Smooth transitions (150-300ms)
-      - Fade in for data loading
-      - Slide in for panels
-      - Typing indicator for AI responses
-      - Progress animations for submissions
-    </animations>
-  </design_system>
-
-  <user_roles>
-    <faculty_writer>
-      - Complete Program Reviews for their department
-      - Use AI tools for data analysis and narrative drafting
-      - Create Action Plans and Resource Requests
-      - Upload evidence documents
-      - View historical reviews
-    </faculty_writer>
-
-    <department_chair>
-      - Review and approve department submissions
-      - View all reviews in their department
-      - Add comments but cannot alter faculty text
-      - Forward approved reviews to Dean
-      - "Completeness Check" AI feature
-    </department_chair>
-
-    <dean>
-      - Review submissions across division
-      - Approve/return reviews with feedback
-      - View division-wide analytics
-      - Forward to PROC
-    </dean>
-
-    <proc_member>
-      - Access Validator's Cockpit (split-screen)
-      - Complete validation rubrics
-      - View AI Pre-Score suggestions
-      - Rate review quality
-      - Aggregate scoring for institutional training needs
-    </proc_member>
-
-    <budget_committee>
-      - View consolidated resource requests
-      - Apply priority scores/rankings
-      - Filter by object code, strategic goal
-      - Mark funding status
-    </budget_committee>
-
-    <admin_data_steward>
-      - Configure templates
-      - Manage Strategic Initiatives
-      - Trigger data syncs
-      - View audit logs
-      - Manage user roles
-    </admin_data_steward>
-  </user_roles>
-
-  <accreditation_alignment>
-    <standard_1_3>
-      - Longitudinal Trend Analysis (5+ years)
-      - Disaggregation by demographics in real-time
-      - Access analytics logging for audit proof of "regular review"
-    </standard_1_3>
-
-    <standard_1_4>
-      - Conditional Logic enforcing Mission -> Goal -> Request linkage
-      - Resource Allocation Report grouped by Strategic Goal
-    </standard_1_4>
-
-    <standard_2_2>
-      - Template Branching for CTE programs
-      - Labor Market Analysis and Advisory Board sections
-    </standard_2_2>
-
-    <standard_2_9>
-      - Universal review for all units (instructional + student services)
-      - Support for SAOs distinct from SLOs
-    </standard_2_9>
-
-    <standard_4_2>
-      - Visual Workflow Engine
-      - Role-Based Access Control
-      - Audit trail for all actions
-    </standard_4_2>
-
-    <er_11>
-      - Institution-Set Standards visualization
-      - Gap Analysis with mandatory Improvement Plan triggers
-    </er_11>
-  </accreditation_alignment>
 
   <implementation_steps>
     <step number="1">
-      <title>Setup Project Foundation</title>
+      <title>Setup Project & Docker</title>
       <tasks>
-        - Initialize Next.js frontend with Tailwind CSS
-        - Set up FastAPI backend
-        - Configure Google Cloud Project (Firestore, Vertex AI)
-        - Create database schema in Firestore
-        - Set up basic authentication (mock SSO)
-        - Create health check endpoints
+        - Create `docker-compose.yml` with Backend, Frontend, and Postgres services
+        - Initialize Git repo
+        - Create `requirements.txt` and `package.json`
       </tasks>
     </step>
 
     <step number="2">
-      <title>Build Dashboard and Navigation</title>
+      <title>Database & Schema</title>
       <tasks>
-        - Create main layout with sidebar and workspace
-        - Build Dashboard "Pulse" view with status cards
-        - Implement navigation between reviews
-        - Add organization selector
-        - Build deadline and status displays
+        - Define SQLModel classes (Users, Reviews, etc.)
+        - Configure Alembic for migrations
+        - Create seed script for Organizations and Users
       </tasks>
     </step>
 
     <step number="3">
-      <title>Program Review Template Engine</title>
+      <title>Gemini Integration</title>
       <tasks>
-        - Create dynamic form renderer for templates
-        - Implement section navigation stepper
-        - Build rich text editor for narratives
-        - Add save draft functionality
-        - Implement template versioning
-        - Pre-population from previous cycles
+        - Implement `GeminiService` class using `google-genai`
+        - Create script to upload ACCJC PDFs to Gemini File Search
+        - Save `file_search_store_name` to .env
       </tasks>
     </step>
 
     <step number="4">
-      <title>Data Visualization Widgets</title>
+      <title>Backend API Core</title>
       <tasks>
-        - Build data fetching from mock/eLumen sources
-        - Create Chart.js/Recharts visualizations
-        - Implement disaggregation toggles
-        - Build SLO heatmap component
-        - Add curriculum currency widget
-        - Create trend line displays
+        - Implement Firebase Token verification dependency
+        - Build CRUD endpoints for Program Reviews
+        - Implement JSONB handling for review content
       </tasks>
     </step>
 
     <step number="5">
-      <title>AI Integration - Gemini</title>
+      <title>Frontend Foundation</title>
       <tasks>
-        - Set up Vertex AI API connection
-        - Implement "Analyze Trends" feature
-        - Build "Expand to Narrative" functionality
-        - Create "Equity Check" analysis
-        - Add AI suggestion highlighting in editor
-        - Implement streaming responses
+        - Setup Next.js with Tailwind
+        - Create Firebase Login page
+        - Build Dashboard layout
       </tasks>
     </step>
 
     <step number="6">
-      <title>Compliance Copilot (RAG)</title>
+      <title>Feature: Program Review Editor</title>
       <tasks>
-        - Set up Vertex AI Agent Builder
-        - Index institutional documents (ISMP, Handbook)
-        - Build sidebar chat interface
-        - Implement document search with citations
-        - Add context from current review section
+        - Build dynamic form renderer
+        - Connect "Smart Context" AI features
+        - Implement "Save Draft" (PATCH JSON content)
       </tasks>
     </step>
 
     <step number="7">
-      <title>Action Plans and Resource Requests</title>
+      <title>Feature: Resource & Planning</title>
       <tasks>
-        - Create Action Plan CRUD
-        - Build Goal Mapping interface to Strategic Initiatives
-        - Implement Resource Request "shopping cart"
-        - Add object code validation
-        - Build TCO calculator
-        - Create prioritization workflow for committees
-      </tasks>
-    </step>
-
-    <step number="8">
-      <title>Workflow and Validation</title>
-      <tasks>
-        - Implement workflow state machine
-        - Build status transitions with role checks
-        - Create Validator's Cockpit (split-screen)
-        - Add PROC rubric scoring
-        - Implement AI Pre-Score
-        - Build audit trail logging
-      </tasks>
-    </step>
-
-    <step number="9">
-      <title>Polish and Accessibility</title>
-      <tasks>
-        - Mobile responsive optimization
-        - Keyboard navigation
-        - ARIA labels and accessibility
-        - Dark mode implementation
-        - Performance optimization
-        - Error handling and loading states
-        - Export functionality (PDF, JSON)
+        - Build Action Plan & Resource Request tables/UI
+        - Implement "Golden Thread" linking logic
       </tasks>
     </step>
   </implementation_steps>
-
-  <success_criteria>
-    <functionality>
-      - AI-assisted narrative drafting works smoothly
-      - Data widgets display accurate disaggregated data
-      - Workflow routing operates correctly by role
-      - Goal -> Resource Request linkage enforced
-      - Equity Check identifies gaps accurately
-      - Document search returns relevant citations
-    </functionality>
-
-    <user_experience>
-      - Faculty can complete Annual Update in under 2 hours
-      - Data analysis cognitive load significantly reduced
-      - Clear visual feedback for all actions
-      - Intuitive navigation between sections
-      - Mobile-friendly interface
-    </user_experience>
-
-    <compliance>
-      - All ACCJC Standards mappable to system features
-      - Audit trail complete and exportable
-      - Institution-Set Standards enforced
-      - Equity analysis embedded in workflow
-    </compliance>
-
-    <technical_quality>
-      - Clean, maintainable code structure
-      - Proper error handling throughout
-      - Secure API key management
-      - Efficient Firestore queries
-      - Streaming AI responses without lag
-    </technical_quality>
-  </success_criteria>
 </project_specification>
