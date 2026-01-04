@@ -1,0 +1,111 @@
+// Firestore Security Rules for Luminous Platform
+// Note: Luminous primarily uses PostgreSQL, but these rules apply if Firestore is used
+// for any auxiliary features (e.g., real-time chat, notifications)
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // Helper Functions
+    // =========================================================================
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user has a specific role
+    function hasRole(role) {
+      return isAuthenticated() && request.auth.token.role == role;
+    }
+
+    // Check if user has one of the specified roles
+    function hasAnyRole(roles) {
+      return isAuthenticated() && request.auth.token.role in roles;
+    }
+
+    // Check if user is admin
+    function isAdmin() {
+      return hasRole('Admin');
+    }
+
+    // Check if user can review (Chair, Dean, Admin, PROC)
+    function canReview() {
+      return hasAnyRole(['Chair', 'Dean', 'Admin', 'PROC']);
+    }
+
+    // Check if user can edit (Faculty and above)
+    function canEdit() {
+      return hasAnyRole(['Faculty', 'Chair', 'Dean', 'Admin']);
+    }
+
+    // =========================================================================
+    // User Documents
+    // =========================================================================
+
+    // User profiles - users can only read/write their own profile
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if isAdmin();
+    }
+
+    // =========================================================================
+    // Chat Messages (for Mission-Bot / Compliance Copilot)
+    // =========================================================================
+
+    // Chat sessions - users can only access their own chat sessions
+    match /chatSessions/{sessionId} {
+      allow read, write: if isAuthenticated() &&
+                            resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid;
+    }
+
+    // Chat messages within sessions
+    match /chatSessions/{sessionId}/messages/{messageId} {
+      allow read: if isAuthenticated() &&
+                     get(/databases/$(database)/documents/chatSessions/$(sessionId)).data.userId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+                       get(/databases/$(database)/documents/chatSessions/$(sessionId)).data.userId == request.auth.uid;
+    }
+
+    // =========================================================================
+    // Real-time Notifications
+    // =========================================================================
+
+    // Notifications - users can only read/update their own notifications
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() &&
+                     resource.data.recipientId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+                       resource.data.recipientId == request.auth.uid &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']);
+      allow delete: if isAuthenticated() &&
+                       resource.data.recipientId == request.auth.uid;
+      // Only system can create notifications
+      allow create: if false;
+    }
+
+    // =========================================================================
+    // Audit Logs (Read-only)
+    // =========================================================================
+
+    // Audit logs - only admins can read, nobody can write (system only)
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // =========================================================================
+    // Default Deny
+    // =========================================================================
+
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,43 @@
+# Alembic Migrations for Luminous Backend
+
+This directory contains database migration scripts managed by Alembic.
+
+## Commands
+
+### Generate a new migration
+```bash
+cd backend
+alembic revision --autogenerate -m "description of changes"
+```
+
+### Apply migrations
+```bash
+alembic upgrade head
+```
+
+### Rollback one migration
+```bash
+alembic downgrade -1
+```
+
+### Show current revision
+```bash
+alembic current
+```
+
+### Show migration history
+```bash
+alembic history
+```
+
+## Environment Variables
+
+- `DATABASE_URL`: Database connection string (required for PostgreSQL)
+  - Example: `postgresql://user:password@localhost:5432/luminous`
+  - Default: `sqlite:///./luminous_dev.db` (for local development)
+
+## Notes
+
+- Migrations are auto-generated from SQLModel models in `models/`
+- Always review generated migrations before applying
+- For production, run migrations as part of deployment pipeline

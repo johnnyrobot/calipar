@@ -1,214 +1,155 @@
-# Autonomous Coding Agent (Linear-Integrated)
+# CALIPAR Platform
 
-A minimal harness demonstrating long-running autonomous coding with the Claude Agent SDK. This agent uses **Linear** for project management, giving you real-time visibility into progress.
+AI-Enhanced Program Review and Integrated Planning Platform for California Community Colleges.
 
-## To Run the Agent
+![CALIPAR](https://img.shields.io/badge/CALIPAR-v1.0-blue)
+![Next.js](https://img.shields.io/badge/Next.js-14+-black)
+![Python](https://img.shields.io/badge/Python-3.11+-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
+
+## Overview
+
+CALIPAR is a comprehensive platform for program review, strategic planning, and resource management. It features:
+
+- **Smart Context Editor** - AI-assisted program review writing with data injection
+- **Golden Thread** - Mission → ISMP Goals → Program Goals → Action Plans → Resource Requests
+- **Data Analytics** - Enrollment metrics, success rates, equity analysis
+- **Resource Requests** - Budget planning with TCO and Amazon Cart UX
+- **Mission-Bot** - AI compliance copilot for ACCJC/ISMP guidance
+- **Demo Mode** - Sandbox environment for prospective users
+
+## Quick Start
+
+### Using Docker (Recommended)
 
 ```bash
-cd autonomous-coding
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/calipar.git
+cd calipar
 
-# 1. Set up your Claude OAuth token
-claude setup-token
-export CLAUDE_CODE_OAUTH_TOKEN='your-oauth-token'
+# Copy environment template
+cp .env.example .env
 
-# 2. Get your Linear API key from https://linear.app/YOUR-TEAM/settings/api
-export LINEAR_API_KEY='lin_api_xxxxxxxxxxxxx'
+# Edit .env with your configuration (see Configuration section)
+nano .env
 
-# 3. Run the agent
-python autonomous_agent_demo.py --project-dir ./luminous_app
+# Start all services
+docker-compose up -d
+
+# Access the app
+open http://localhost:3000
 ```
 
-## What Happens
+### Without Docker
 
-1. **First run**: Creates a Linear project with 50 issues based on `app_spec.txt`
-2. **Subsequent runs**: Agent queries Linear, picks highest-priority Todo issue, implements it, marks Done
-3. **You can watch**: Open your Linear workspace to see real-time progress
-
-## Prerequisites
-
+**Backend:**
 ```bash
-# Install Claude Code CLI (latest version required)
-npm install -g @anthropic-ai/claude-code
-
-# Install Python dependencies
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
+
+# Set DATABASE_URL in .env
+uvicorn main:app --reload
 ```
 
-Verify your installations:
+**Frontend:**
 ```bash
-claude --version  # Should be latest version
-pip show claude-code-sdk  # Check SDK is installed
-```
-
-## Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `CLAUDE_CODE_OAUTH_TOKEN` | Claude Code OAuth token (from `claude setup-token`) | Yes |
-| `LINEAR_API_KEY` | Linear API key for project management | Yes |
-
-## Command Line Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--project-dir` | Directory for the generated project | `./autonomous_demo_project` |
-| `--max-iterations` | Max agent iterations | Unlimited |
-| `--model` | Claude model to use | `claude-opus-4-5-20251101` |
-
-## How It Works
-
-### Linear-Centric Workflow
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    LINEAR-INTEGRATED WORKFLOW               │
-├─────────────────────────────────────────────────────────────┤
-│  app_spec.txt ──► Initializer Agent ──► Linear Issues (50) │
-│                                              │               │
-│                    ┌─────────────────────────▼──────────┐   │
-│                    │        LINEAR WORKSPACE            │   │
-│                    │  ┌────────────────────────────┐    │   │
-│                    │  │ Issue: Auth - Login flow   │    │   │
-│                    │  │ Status: Todo → In Progress │    │   │
-│                    │  │ Comments: [session notes]  │    │   │
-│                    │  └────────────────────────────┘    │   │
-│                    └────────────────────────────────────┘   │
-│                                              │               │
-│                    Coding Agent queries Linear              │
-│                    ├── Search for Todo issues               │
-│                    ├── Update status to In Progress         │
-│                    ├── Implement & test with Puppeteer      │
-│                    ├── Add comment with implementation notes│
-│                    └── Update status to Done                │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Two-Agent Pattern
-
-1. **Initializer Agent (Session 1):**
-   - Reads `app_spec.txt`
-   - Lists teams and creates a new Linear project
-   - Creates 50 Linear issues with detailed test steps
-   - Creates a META issue for session tracking
-   - Sets up project structure, `init.sh`, and git
-
-2. **Coding Agent (Sessions 2+):**
-   - Queries Linear for highest-priority Todo issue
-   - Runs verification tests on previously completed features
-   - Claims issue (status → In Progress)
-   - Implements the feature
-   - Tests via Puppeteer browser automation
-   - Adds implementation comment to issue
-   - Marks complete (status → Done)
-   - Updates META issue with session summary
-
-### Session Handoff via Linear
-
-Instead of local text files, agents communicate through:
-- **Issue Comments**: Implementation details, blockers, context
-- **META Issue**: Session summaries and handoff notes
-- **Issue Status**: Todo / In Progress / Done workflow
-
-## Project Structure
-
-```
-autonomous-coding/
-├── autonomous_agent_demo.py  # Main entry point
-├── agent.py                  # Agent session logic
-├── client.py                 # Claude SDK + MCP client configuration
-├── security.py               # Bash command allowlist and validation
-├── progress.py               # Progress tracking utilities
-├── prompts.py                # Prompt loading utilities
-├── linear_config.py          # Linear configuration constants
-├── prompts/
-│   ├── app_spec.txt          # Luminous application specification
-│   ├── initializer_prompt.md # First session prompt (creates Linear issues)
-│   └── coding_prompt.md      # Continuation session prompt (works issues)
-├── ACCJC/                    # Accreditation standards (reference data)
-├── reference_data/           # Course data and PRD documents
-└── requirements.txt          # Python dependencies
-```
-
-## Generated Project Structure
-
-After running, your project directory will contain:
-
-```
-luminous_app/
-├── .linear_project.json      # Linear project state (marker file)
-├── app_spec.txt              # Copied specification
-├── init.sh                   # Environment setup script
-├── .claude_settings.json     # Security settings
-└── [application files]       # Generated application code
-```
-
-## MCP Servers Used
-
-| Server | Transport | Purpose |
-|--------|-----------|---------|
-| **Linear** | HTTP (Streamable HTTP) | Project management - issues, status, comments |
-| **Puppeteer** | stdio | Browser automation for UI testing |
-
-## Security Model
-
-This demo uses defense-in-depth security (see `security.py` and `client.py`):
-
-1. **OS-level Sandbox:** Bash commands run in an isolated environment
-2. **Filesystem Restrictions:** File operations restricted to project directory
-3. **Bash Allowlist:** Only specific commands permitted (npm, node, git, etc.)
-4. **MCP Permissions:** Tools explicitly allowed in security settings
-
-## Running the Generated Application
-
-After the agent completes (or pauses), you can run the generated application:
-
-```bash
-cd generations/luminous_app
-
-# Run the setup script created by the agent
-./init.sh
-
-# Or manually (typical for Node.js apps):
+cd frontend
 npm install
 npm run dev
 ```
 
-## Customization
+## Configuration
 
-### Changing the Application
+Create a `.env` file from `.env.example`:
 
-Edit `prompts/app_spec.txt` to specify a different application to build.
+```bash
+# Database (Docker defaults)
+DATABASE_URL=postgresql://calipar:calipar_dev_password@db:5432/calipar
 
-### Adjusting Issue Count
+# Demo Mode (optional)
+DEMO_MODE_ENABLED=true
+DEMO_DATABASE_URL=sqlite:///./calipar_demo.db
 
-Edit `prompts/initializer_prompt.md` and change "50 issues" to your desired count.
+# Google AI (for AI features)
+GOOGLE_API_KEY=your_api_key_here
 
-### Modifying Allowed Commands
+# Firebase (for authentication)
+FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+# ... (see .env.example for full list)
+```
 
-Edit `security.py` to add or remove commands from `ALLOWED_COMMANDS`.
+See [docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md) for detailed Firebase setup.
 
-## Troubleshooting
+## Demo Mode
 
-**"CLAUDE_CODE_OAUTH_TOKEN not set"**
-Run `claude setup-token` to generate a token, then export it.
+Enable demo mode to let users explore the app without affecting production data:
 
-**"LINEAR_API_KEY not set"**
-Get your API key from `https://linear.app/YOUR-TEAM/settings/api`
+```bash
+# In .env
+DEMO_MODE_ENABLED=true
+DEMO_USER_PREFIX=demo
+```
 
-**"Appears to hang on first run"**
-Normal behavior. The initializer is creating a Linear project and 50 issues with detailed descriptions. Watch for `[Tool: mcp__linear__create_issue]` output.
+Demo users (with "demo" in email) get:
+- Separate demo database
+- Automatic daily reset at midnight
+- Pre-seeded demo data
 
-**"Command blocked by security hook"**
-The agent tried to run a disallowed command. Add it to `ALLOWED_COMMANDS` in `security.py` if needed.
+See [docs/DEMO_MODE.md](docs/DEMO_MODE.md) for details.
 
-**"MCP server connection failed"**
-Verify your `LINEAR_API_KEY` is valid and has appropriate permissions. The Linear MCP server uses HTTP transport at `https://mcp.linear.app/mcp`.
+## Development
 
-## Viewing Progress
+**Login with demo accounts:**
+- Faculty: `demo-faculty@lamc.edu`
+- Chair: `demo-chair@lamc.edu`
+- Dean: `demo-dean@lamc.edu`
+- Admin: `demo-admin@lamc.edu`
+- PROC: `demo-proc@lamc.edu`
 
-Open your Linear workspace to see:
-- The project created by the initializer agent
-- All 50 issues organized under the project
-- Real-time status changes (Todo → In Progress → Done)
-- Implementation comments on each issue
-- Session summaries on the META issue
+**API Documentation:**
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+## Deployment
+
+For production deployment on VPS (Hetzner, AWS, DigitalOcean):
+
+```bash
+# See full deployment guide
+cat docs/DEPLOYMENT.md
+```
+
+## Documentation
+
+- [DEPLOYMENT.md](docs/DEPLOYMENT.md) - VPS deployment guide
+- [DEMO_MODE.md](docs/DEMO_MODE.md) - Demo mode configuration
+- [FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md) - Firebase authentication setup
+
+## Tech Stack
+
+**Frontend:**
+- Next.js 14+ with App Router
+- TypeScript
+- Tailwind CSS
+- Firebase SDK
+
+**Backend:**
+- Python FastAPI
+- SQLModel / SQLAlchemy
+- PostgreSQL 16
+- Firebase Admin SDK
+
+**Infrastructure:**
+- Docker Compose
+- Nginx (production)
+
+## License
+
+Copyright © 2025 California Community Colleges. All rights reserved.
+
+## Support
+
+For issues or questions, please open a GitHub issue.

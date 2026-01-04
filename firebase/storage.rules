@@ -1,0 +1,104 @@
+// Firebase Storage Security Rules for Luminous Platform
+// Handles file uploads for evidence documents, profile images, etc.
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // =========================================================================
+    // Helper Functions
+    // =========================================================================
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check file size (max 10MB)
+    function isValidFileSize() {
+      return request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // Check if file is an allowed document type
+    function isAllowedDocumentType() {
+      return request.resource.contentType.matches('application/pdf')
+          || request.resource.contentType.matches('application/msword')
+          || request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.*')
+          || request.resource.contentType.matches('text/plain')
+          || request.resource.contentType.matches('text/csv');
+    }
+
+    // Check if file is an allowed image type
+    function isAllowedImageType() {
+      return request.resource.contentType.matches('image/jpeg')
+          || request.resource.contentType.matches('image/png')
+          || request.resource.contentType.matches('image/gif')
+          || request.resource.contentType.matches('image/webp');
+    }
+
+    // =========================================================================
+    // User Profile Images
+    // =========================================================================
+
+    match /profiles/{userId}/{fileName} {
+      // Users can read any profile image
+      allow read: if isAuthenticated();
+
+      // Users can only write their own profile image
+      allow write: if isAuthenticated()
+                   && request.auth.uid == userId
+                   && isAllowedImageType()
+                   && request.resource.size < 5 * 1024 * 1024; // 5MB max for images
+    }
+
+    // =========================================================================
+    // Evidence Documents (for Program Reviews)
+    // =========================================================================
+
+    // Evidence files uploaded by users
+    match /evidence/{userId}/{reviewId}/{fileName} {
+      // Any authenticated user can read evidence
+      allow read: if isAuthenticated();
+
+      // Users can upload evidence to their own folder
+      allow write: if isAuthenticated()
+                   && request.auth.uid == userId
+                   && isAllowedDocumentType()
+                   && isValidFileSize();
+
+      // Users can delete their own uploads
+      allow delete: if isAuthenticated()
+                    && request.auth.uid == userId;
+    }
+
+    // =========================================================================
+    // Shared Documents (Institutional)
+    // =========================================================================
+
+    // ACCJC and ISMP documents (public read, admin write)
+    match /institutional/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only backend service account can write
+    }
+
+    // =========================================================================
+    // Temporary Upload Folder
+    // =========================================================================
+
+    // Temporary uploads (auto-deleted after processing)
+    match /temp/{userId}/{fileName} {
+      allow read, write: if isAuthenticated()
+                         && request.auth.uid == userId
+                         && isValidFileSize();
+    }
+
+    // =========================================================================
+    // Default Deny
+    // =========================================================================
+
+    // Deny all other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
