@@ -22,7 +22,7 @@ class GEPattern(str, Enum):
 
 class Course(SQLModel, table=True):
     """
-    Course model for California Community College curriculum.
+    Course model for community college curriculum.
 
     Stores course metadata including:
     - Basic course info (subject, number, title, units)

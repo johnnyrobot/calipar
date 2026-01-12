@@ -80,7 +80,7 @@ export default function Home() {
               </div>
               <div>
                 <h1 className="text-xl font-bold">CALIPAR</h1>
-                <p className="text-xs text-blue-200">California Community College</p>
+                <p className="text-xs text-blue-200">Educational Institution</p>
               </div>
             </div>
             <nav className="hidden md:flex items-center gap-6">
@@ -133,7 +133,7 @@ export default function Home() {
           </h2>
           <p className="text-xl text-gray-600 mb-8">
             AI-enhanced platform transforming compliance-driven reviews into
-            meaningful institutional improvement for California Community College.
+            meaningful institutional improvement for educational institutions.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
@@ -223,7 +223,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-50 py-8 px-4 border-t">
         <div className="max-w-6xl mx-auto text-center text-sm text-gray-500">
-          <p>&copy; 2024 California Community College. CALIPAR v1.0.0</p>
+          <p>&copy; 2024 CALIPAR v1.0.0</p>
           <p className="mt-2">
             Powered by AI for Institutional Excellence
           </p>

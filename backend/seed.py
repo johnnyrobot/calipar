@@ -506,7 +506,7 @@ def seed_program_reviews(session: Session):
             "review_type": ReviewType.COMPREHENSIVE,
             "status": ReviewStatus.DRAFT,
             "content": {
-                "program_overview": "The Biology Department at California Community College offers a comprehensive curriculum designed to prepare students for transfer to four-year institutions and careers in the life sciences. Our program emphasizes hands-on laboratory experience and critical thinking skills. We serve approximately 1,200 students annually across our course offerings.",
+                "program_overview": "The Biology Department offers a comprehensive curriculum designed to prepare students for transfer to four-year institutions and careers in the life sciences. Our program emphasizes hands-on laboratory experience and critical thinking skills. We serve approximately 1,200 students annually across our course offerings.",
                 "student_success": "",
                 "curriculum": "",
                 "equity_analysis": "",
@@ -538,7 +538,7 @@ def seed_program_reviews(session: Session):
             "review_type": ReviewType.COMPREHENSIVE,
             "status": ReviewStatus.VALIDATED,
             "content": {
-                "program_overview": "The California Community College Nursing Program is a Board of Registered Nursing (BRN) approved program preparing students for the NCLEX-RN examination. Our program maintains strong partnerships with local healthcare facilities for clinical rotations.",
+                "program_overview": "The Nursing Program is a Board of Registered Nursing (BRN) approved program preparing students for the NCLEX-RN examination. Our program maintains strong partnerships with local healthcare facilities for clinical rotations.",
                 "student_success": "NCLEX pass rates remain at 89%, above the state average of 82%. First-attempt pass rates improved 3% from the previous year through enhanced test preparation support.",
                 "curriculum": "Curriculum was updated to incorporate simulation-based learning and telehealth competencies. All course SLOs achieved above 70% mastery rates.",
                 "equity_analysis": "The program serves a diverse student population with 68% Hispanic/Latino enrollment. No significant equity gaps identified across demographic groups.",

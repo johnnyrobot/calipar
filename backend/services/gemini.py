@@ -105,7 +105,7 @@ class GeminiService:
         if not self.is_available:
             return self._mock_expand_response(bullets)
 
-        prompt = f"""You are a higher education professional helping faculty write program review narratives for California Community College (CCC), a Hispanic-Serving Institution (HSI) in the California Community College system.
+        prompt = f"""You are a higher education professional helping faculty write program review narratives for a community college, a Hispanic-Serving Institution (HSI).
 
 Context: {context or 'Program Review narrative section'}
 Tone: {tone}
@@ -158,7 +158,7 @@ Write the narrative:"""
         if not self.is_available:
             return self._mock_equity_response()
 
-        prompt = f"""You are an equity-minded education analyst reviewing program review content for California Community College (CCC), a Hispanic-Serving Institution.
+        prompt = f"""You are an equity-minded education analyst reviewing program review content for a community college, a Hispanic-Serving Institution.
 
 Analyze the following content for:
 1. Mentions of student equity and disproportionate impact
@@ -226,11 +226,11 @@ Respond in JSON format:
                 content = msg.get("content", "")
                 history_context += f"{role.upper()}: {content}\n"
 
-        prompt = f"""You are Mission-Bot, a helpful AI assistant for California Community College (CCC) faculty and staff.
+        prompt = f"""You are Mission-Bot, a helpful AI assistant for community college faculty and staff.
 
 You have access to indexed institutional documents including:
 - ACCJC Accreditation Standards (2024)
-- CCC Integrated Strategic Master Plan (ISMP) 2019-2024
+- Integrated Strategic Master Plan (ISMP)
 - Various ACCJC policy documents
 
 Key institutional context:
@@ -340,11 +340,11 @@ Response:"""
                 content = msg.get("content", "")
                 history_context += f"{role.upper()}: {content}\n"
 
-        prompt = f"""You are Mission-Bot, a helpful AI assistant for California Community College (CCC) faculty and staff.
+        prompt = f"""You are Mission-Bot, a helpful AI assistant for community college faculty and staff.
 
 You have access to indexed institutional documents including:
 - ACCJC Accreditation Standards (2024)
-- CCC Integrated Strategic Master Plan (ISMP) 2019-2024
+- Integrated Strategic Master Plan (ISMP)
 - Various ACCJC policy documents
 
 Key institutional context:
@@ -413,7 +413,7 @@ Provide a helpful, accurate response with markdown formatting."""
         if not self.is_available:
             return self._mock_socratic_response(section_key)
 
-        prompt = f"""You are a supportive faculty mentor helping a colleague complete their program review at California Community College.
+        prompt = f"""You are a supportive faculty mentor helping a colleague complete their program review at a community college.
 
 Section being worked on: {section_key}
 Current content: {current_content or 'Not started yet'}
@@ -459,7 +459,7 @@ Respond in JSON format:
         """Build prompt for data analysis."""
         focus_str = ", ".join(focus_areas) if focus_areas else "overall trends"
 
-        return f"""You are an institutional researcher analyzing data for California Community College (CCC) program review.
+        return f"""You are an institutional researcher analyzing data for a community college program review.
 
 Context: {context or 'General program analysis'}
 Focus areas: {focus_str}

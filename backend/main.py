@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="CALIPAR API",
-    description="AI-Enhanced Program Review and Integrated Planning Platform for California Community Colleges",
+    description="AI-Enhanced Program Review and Integrated Planning Platform for Educational Institutions",
     version="1.0.0",
     lifespan=lifespan,
 )

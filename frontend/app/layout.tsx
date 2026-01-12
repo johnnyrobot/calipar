@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'CALIPAR - Program Review & Integrated Planning',
-  description: 'AI-Enhanced Program Review and Integrated Planning Platform for California Community Colleges',
+  description: 'AI-Enhanced Program Review and Integrated Planning Platform for Educational Institutions',
 };
 
 export default function RootLayout({

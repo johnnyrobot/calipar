@@ -158,18 +158,18 @@ Each goal has specific objectives and performance measures. Which goal would you
 **Retention Rate**
 - Target: 85%
 
-These targets align with the California Community Colleges Chancellor's Office Vision for Success goals and are tracked annually in the Student Achievement data.
+These targets align with institutional Vision for Success goals and are tracked annually in the Student Achievement data.
 
 Your program review should compare your program's metrics against these institutional targets and explain any variances.`;
       citations = [
         { source: '2019-2024-CCC-ISMP.pdf', page: 58, text: 'Appendix 5: Performance Measures' },
       ];
     } else if (lowerInput.includes('mission') || lowerInput.includes('vision')) {
-      content = `**CCC College Mission:**
-California Community College provides a student-centered learning environment that is committed to fostering a socially responsible, diverse, and inclusive community. CCC offers educational pathways that contribute to the intellectual development, personal growth, economic mobility, and transfer readiness of its students.
+      content = `**College Mission:**
+Our institution provides a student-centered learning environment that is committed to fostering a socially responsible, diverse, and inclusive community. We offer educational pathways that contribute to the intellectual development, personal growth, economic mobility, and transfer readiness of our students.
 
 **College Vision:**
-California Community College aspires to offer relevant and high quality educational experiences in an innovative, equitable, supportive, and engaging environment that promotes diversity, social consciousness, and positive change.
+Our institution aspires to offer relevant and high quality educational experiences in an innovative, equitable, supportive, and engaging environment that promotes diversity, social consciousness, and positive change.
 
 **Core Values (LICE²S):**
 - **L**earning

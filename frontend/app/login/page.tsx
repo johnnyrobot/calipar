@@ -106,7 +106,7 @@ function LoginForm() {
             </div>
             <div>
               <h1 className="text-xl font-bold">CALIPAR</h1>
-              <p className="text-xs text-blue-200">California Community College</p>
+              <p className="text-xs text-blue-200">Educational Institution</p>
             </div>
           </Link>
         </div>

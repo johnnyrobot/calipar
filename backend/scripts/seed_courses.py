@@ -1,7 +1,7 @@
 """
 Course Data Seed Script
 
-Parses course data from the California Community College PPM Export CSV file
+Parses course data from the community college PPM Export CSV file
 and seeds the courses table in the database.
 
 Usage:

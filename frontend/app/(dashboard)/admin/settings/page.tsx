@@ -54,8 +54,8 @@ export default function SystemSettingsPage() {
 
   // General settings state
   const [generalSettings, setGeneralSettings] = useState({
-    institutionName: 'California Community College',
-    institutionCode: 'CCC',
+    institutionName: 'Community College',
+    institutionCode: 'CC',
     academicYear: '2024-2025',
     timezone: 'America/Los_Angeles',
     emailFromName: 'CALIPAR Platform',

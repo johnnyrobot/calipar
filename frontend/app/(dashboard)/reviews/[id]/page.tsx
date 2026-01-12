@@ -171,7 +171,7 @@ export default function ReviewDetailPage() {
     review_type: 'comprehensive',
     status: 'draft',
     content: {
-      program_overview: 'The Biology Department at California Community College offers a comprehensive curriculum designed to prepare students for transfer to four-year institutions and careers in the life sciences. Our program emphasizes hands-on laboratory experience and critical thinking skills.',
+      program_overview: 'The Biology Department offers a comprehensive curriculum designed to prepare students for transfer to four-year institutions and careers in the life sciences. Our program emphasizes hands-on laboratory experience and critical thinking skills.',
       student_success: '',
     },
     created_at: '2024-11-15T10:00:00Z',
