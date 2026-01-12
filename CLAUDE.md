@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**CALIPAR** (California Integrated Planning & Review) is an AI-enhanced Program Review and Integrated Planning Platform for California Community Colleges. This is a full-stack web application with a Next.js 14 frontend, FastAPI backend, and PostgreSQL database.
+**CALIPAR** (California Integrated Planning & Review) is an AI-enhanced Program Review and Integrated Planning Platform for educational institutions. This is a full-stack web application with a Next.js 14 frontend, FastAPI backend, and PostgreSQL database.
 
-**Core Purpose:** Streamline program review processes, strategic planning ("Golden Thread"), and resource allocation for community colleges with AI-powered assistance.
+**Core Purpose:** Streamline program review processes, strategic planning ("Golden Thread"), and resource allocation for educational institutions with AI-powered assistance.
 
 ## Running the Application
 
