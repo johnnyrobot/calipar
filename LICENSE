@@ -41,7 +41,7 @@ the user interface, UNLESS one of the following exemptions applies:
 
 EXEMPTIONS:
 
-1. SMALL DEPLOYMENTS: Your deployment serves 50 or fewer users in any 30-day
+1. SMALL DEPLOYMENTS: Your deployment serves fewer than 5 users in any 30-day
    rolling period.
 
 2. SIGNIFICANT CONTRIBUTORS: You have made consistent, substantive contributions
