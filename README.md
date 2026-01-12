@@ -1,6 +1,6 @@
 # CALIPAR Platform
 
-AI-Enhanced Program Review and Integrated Planning Platform for California Community Colleges.
+AI-Enhanced Program Review and Integrated Planning Platform for educational institutions.
 
 ![CALIPAR](https://img.shields.io/badge/CALIPAR-v1.0-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-14+-black)
@@ -148,7 +148,11 @@ cat docs/DEPLOYMENT.md
 
 ## License
 
-Copyright © 2025 California Community Colleges. All rights reserved.
+This project is licensed under the BSD 3-Clause License with additional branding requirements.
+
+See [LICENSE](LICENSE) for full details.
+
+Copyright © 2025 Johnny Phung. All rights reserved.
 
 ## Support
 
