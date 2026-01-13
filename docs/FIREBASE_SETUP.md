@@ -172,11 +172,11 @@ service firebase.storage {
 
 | Role | Email | Purpose |
 |------|-------|---------|
-| Admin | admin@lamc.edu | System administrator |
-| Dean | dean@lamc.edu | Academic dean |
-| Chair | chair@lamc.edu | Department chair |
-| Faculty | faculty@lamc.edu | Faculty member |
-| PROC | proc@lamc.edu | Program Review Oversight Committee |
+| Admin | admin@college.edu | System administrator |
+| Dean | dean@college.edu | Academic dean |
+| Chair | chair@college.edu | Department chair |
+| Faculty | faculty@college.edu | Faculty member |
+| PROC | proc@college.edu | Program Review Oversight Committee |
 
 ### Via Backend Seed Script
 

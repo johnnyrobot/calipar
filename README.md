@@ -103,11 +103,11 @@ See [docs/DEMO_MODE.md](docs/DEMO_MODE.md) for details.
 ## Development
 
 **Login with demo accounts:**
-- Faculty: `demo-faculty@lamc.edu`
-- Chair: `demo-chair@lamc.edu`
-- Dean: `demo-dean@lamc.edu`
-- Admin: `demo-admin@lamc.edu`
-- PROC: `demo-proc@lamc.edu`
+- Faculty: `demo-faculty@college.edu`
+- Chair: `demo-chair@college.edu`
+- Dean: `demo-dean@college.edu`
+- Admin: `demo-admin@college.edu`
+- PROC: `demo-proc@college.edu`
 
 **API Documentation:**
 - Swagger UI: http://localhost:8000/docs

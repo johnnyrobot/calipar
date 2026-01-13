@@ -208,11 +208,11 @@ These demo accounts will be created automatically:
 
 | Email | Role | Department |
 |-------|------|------------|
-| demo-faculty@lamc.edu | Faculty | Mathematics |
-| demo-chair@lamc.edu | Chair | Mathematics |
-| demo-dean@lamc.edu | Dean | - |
-| demo-admin@lamc.edu | Admin | - |
-| demo-proc@lamc.edu | PROC | - |
+| demo-faculty@college.edu | Faculty | Mathematics |
+| demo-chair@college.edu | Chair | Mathematics |
+| demo-dean@college.edu | Dean | - |
+| demo-admin@college.edu | Admin | - |
+| demo-proc@college.edu | PROC | - |
 
 Users can log in with these credentials using Firebase Auth (you'll need to create these users in Firebase Console).
 

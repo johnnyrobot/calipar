@@ -55,11 +55,11 @@ The following demo accounts are automatically created when demo mode is enabled:
 
 | Email | Role | Department |
 |-------|------|------------|
-| `demo-faculty@lamc.edu` | Faculty | Mathematics |
-| `demo-chair@lamc.edu` | Chair | Mathematics |
-| `demo-dean@lamc.edu` | Dean | - |
-| `demo-admin@lamc.edu` | Admin | - |
-| `demo-proc@lamc.edu` | PROC | - |
+| `demo-faculty@college.edu` | Faculty | Mathematics |
+| `demo-chair@college.edu` | Chair | Mathematics |
+| `demo-dean@college.edu` | Dean | - |
+| `demo-admin@college.edu` | Admin | - |
+| `demo-proc@college.edu` | PROC | - |
 
 **To use demo mode:**
 1. Any user with "demo" in their email is automatically a demo user
@@ -206,7 +206,7 @@ Response:
   "accounts": [
     {
       "firebase_uid": "demo-faculty-001",
-      "email": "demo-faculty@lamc.edu",
+      "email": "demo-faculty@college.edu",
       "full_name": "Demo Faculty User",
       "role": "FACULTY",
       "department": "Mathematics"
