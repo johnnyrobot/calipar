@@ -11,6 +11,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from pydantic import BaseModel, EmailStr
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from database import get_session
@@ -131,10 +132,19 @@ async def get_current_user(
                     role=UserRole.FACULTY,
                 )
                 session.add(user)
-                session.commit()
-                session.refresh(user)
-                logger.info(f"Auto-provisioned new user via token: {email} (role=FACULTY)")
-                return user
+                try:
+                    session.commit()
+                    session.refresh(user)
+                    logger.info(f"Auto-provisioned new user via token: {email} (role=FACULTY)")
+                    return user
+                except IntegrityError:
+                    # Concurrent request already created this user; fetch and return it.
+                    session.rollback()
+                    user = session.exec(
+                        select(User).where(User.firebase_uid == firebase_uid)
+                    ).first()
+                    if user:
+                        return user
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
