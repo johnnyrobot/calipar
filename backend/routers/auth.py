@@ -79,6 +79,7 @@ async def get_current_user(
 
     token = authorization[7:]
     firebase_uid = None
+    decoded_token = None
 
     # Try Firebase token verification if available
     if firebase.is_available:
@@ -118,6 +119,23 @@ async def get_current_user(
             except Exception:
                 pass
 
+        # Auto-provision user on first Firebase login
+        if decoded_token:
+            email = decoded_token.get("email")
+            if email:
+                full_name = decoded_token.get("name") or email.split("@")[0].replace(".", " ").title()
+                user = User(
+                    firebase_uid=firebase_uid,
+                    email=email,
+                    full_name=full_name,
+                    role=UserRole.FACULTY,
+                )
+                session.add(user)
+                session.commit()
+                session.refresh(user)
+                logger.info(f"Auto-provisioned new user via token: {email} (role=FACULTY)")
+                return user
+
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or expired token",
@@ -141,6 +159,7 @@ async def login(
     - Accepts firebase_uid directly (no verification)
     """
     firebase_uid = None
+    decoded_token = None
 
     # Try Firebase token verification if available
     if firebase.is_available:
@@ -171,10 +190,25 @@ async def login(
     ).first()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found. Please contact administrator.",
+        # Auto-provision user on first Firebase login
+        email = decoded_token.get("email") if decoded_token else None
+        if not email:
+            # Dev mode or no email in token — can't auto-provision
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found. Please contact administrator.",
+            )
+        full_name = decoded_token.get("name") or email.split("@")[0].replace(".", " ").title()
+        user = User(
+            firebase_uid=firebase_uid,
+            email=email,
+            full_name=full_name,
+            role=UserRole.FACULTY,
         )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        logger.info(f"Auto-provisioned new user: {email} (role=FACULTY)")
 
     # Check if this is a demo user
     demo_user = is_demo_user(user.email, user.firebase_uid)
