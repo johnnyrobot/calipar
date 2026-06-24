@@ -57,6 +57,9 @@ function ForgotPasswordForm() {
       }
 
       // Send password reset email via Firebase
+      if (!auth) {
+        throw new Error('Authentication service is not available.');
+      }
       await sendPasswordResetEmail(auth, email, {
         // URL to redirect to after password reset
         url: `${window.location.origin}/login`,

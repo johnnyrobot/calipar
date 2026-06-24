@@ -1,0 +1,40 @@
+# Secrets & environment
+.env
+.env.*
+*.env
+serviceAccountKey.json
+firebase-service-account.json
+*-service-account.json
+*.pem
+*.key
+
+# Version control
+.git
+.gitignore
+
+# Python caches & virtualenvs
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Tests & docs
+tests/
+docs/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+*.log

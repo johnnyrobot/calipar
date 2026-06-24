@@ -180,7 +180,7 @@ export default function UserManagementPage() {
 
   const getRoleBadge = (role: User['role']) => {
     const roleConfig = {
-      admin: { label: 'Admin', variant: 'danger' as const },
+      admin: { label: 'Admin', variant: 'error' as const },
       dean: { label: 'Dean', variant: 'info' as const },
       chair: { label: 'Chair', variant: 'warning' as const },
       faculty: { label: 'Faculty', variant: 'default' as const },
