@@ -35,8 +35,7 @@ class Settings(BaseSettings):
     firebase_enabled: bool = False  # Set to True only when Firebase is properly configured
 
     # App settings
-    debug: bool = True
-    secret_key: str = "calipar-dev-secret-key-change-in-production"
+    debug: bool = False
 
     class Config:
         env_file = ".env"
