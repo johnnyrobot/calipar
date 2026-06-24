@@ -37,9 +37,23 @@ class Settings(BaseSettings):
     # App settings
     debug: bool = False
 
+    # CORS — comma-separated list of browser origins allowed to call the API.
+    # Dev default covers the Next.js dev server. In production the API is served
+    # cross-origin (separate api subdomain), so set CORS_ALLOW_ORIGINS to the
+    # app's public origin(s), e.g. "https://app.your-domain.com".
+    cors_allow_origins: str = os.getenv(
+        "CORS_ALLOW_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000",
+    )
+
     class Config:
         env_file = ".env"
         extra = "ignore"
+
+    @property
+    def cors_origins(self) -> list[str]:
+        """Allowed CORS origins, parsed from the comma-separated setting."""
+        return [o.strip() for o in self.cors_allow_origins.split(",") if o.strip()]
 
 
 @lru_cache()

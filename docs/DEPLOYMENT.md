@@ -72,7 +72,7 @@ sudo usermod -aG docker calipar
 cd /opt
 sudo git clone https://github.com/YOUR_USERNAME/calipar.git
 sudo chown -R calipar:calipar calipar
-cd calipar/generations/calipar_app
+cd calipar
 ```
 
 ### 2. Configure Environment Variables
@@ -108,28 +108,34 @@ FIREBASE_PROJECT_ID=your_firebase_project_id
 
 # Production Settings
 DEBUG=false
-SECRET_KEY=CHANGE_THIS_TO_A_RANDOM_STRING_MIN_32_CHARS
-NEXT_PUBLIC_API_URL=https://your-domain.com
+# CORS: this guide assumes the app and API run on separate hosts (cross-origin),
+# so allow the app's public origin. Comma-separate multiple origins.
+CORS_ALLOW_ORIGINS=https://app.your-domain.com
+# Backend API URL the frontend calls (separate api subdomain)
+NEXT_PUBLIC_API_URL=https://api.your-domain.com
 ```
 
 ### 3. Set Up Firebase Service Account
 
 ```bash
-# Create directory for service account
-mkdir -p backend/secrets
+# Create the config directory that docker-compose.prod.yml mounts from
+mkdir -p config
 
-# Upload your Firebase serviceAccountKey.json
+# Upload your Firebase service account key and place it here
 # (Download from Firebase Console > Project Settings > Service Accounts)
-# Place it at: backend/secrets/serviceAccountKey.json
+mv serviceAccountKey.json config/firebase-service-account.json
 
 # Set proper permissions
-chmod 600 backend/secrets/serviceAccountKey.json
+chmod 600 config/firebase-service-account.json
 ```
 
-Update `.env` to point to the service account:
+`docker-compose.prod.yml` mounts this host file to `/app/serviceAccountKey.json`
+inside the backend container, where the app auto-discovers it — no extra env var
+is required. To store the key at a different host path, set `FIREBASE_CREDENTIALS_PATH`
+in `.env` (it defaults to `./config/firebase-service-account.json`):
 
 ```bash
-FIREBASE_SERVICE_ACCOUNT_PATH=./backend/secrets/serviceAccountKey.json
+FIREBASE_CREDENTIALS_PATH=./config/firebase-service-account.json
 ```
 
 ---
@@ -160,8 +166,8 @@ NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789012:web:abc123
 
 1. Firebase Console → Project Settings → Service Accounts
 2. Click "Generate new private key"
-3. Save as `serviceAccountKey.json`
-4. Upload to server at `backend/secrets/serviceAccountKey.json`
+3. Save as `firebase-service-account.json`
+4. Upload to server at `config/firebase-service-account.json` (mounted into the backend container by `docker-compose.prod.yml`)
 
 ---
 
@@ -249,6 +255,16 @@ sudo certbot renew --dry-run
 
 Create systemd services for automatic startup.
 
+> **Production compose:** these units run `docker compose -f docker-compose.prod.yml`
+> with the production service names **`calipar-backend`** and **`calipar-frontend`**.
+> Without the `-f docker-compose.prod.yml` flag, `docker compose` would launch the dev
+> `docker-compose.yml` (which runs uvicorn with `--reload` and a dev DB password) — not
+> what you want in production. Note the production compose does **not** bundle a `db`
+> service; provision PostgreSQL separately (a managed instance or a dedicated stack) and
+> point `DATABASE_URL` at it. Other commands in this guide that call
+> `docker-compose ... db/backend/frontend` assume the dev stack — for prod, add
+> `-f docker-compose.prod.yml` and use the `calipar-*` service names.
+
 ### 1. Backend Service
 
 ```bash
@@ -264,9 +280,9 @@ Requires=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-WorkingDirectory=/opt/calipar/generations/calipar_app
-ExecStart=/usr/bin/docker-compose up -d backend
-ExecStop=/usr/bin/docker-compose stop backend
+WorkingDirectory=/opt/calipar
+ExecStart=/usr/bin/docker compose -f docker-compose.prod.yml up -d calipar-backend
+ExecStop=/usr/bin/docker compose -f docker-compose.prod.yml stop calipar-backend
 Restart=on-failure
 
 [Install]
@@ -288,9 +304,9 @@ Requires=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-WorkingDirectory=/opt/calipar/generations/calipar_app
-ExecStart=/usr/bin/docker-compose up -d frontend
-ExecStop=/usr/bin/docker-compose stop frontend
+WorkingDirectory=/opt/calipar
+ExecStart=/usr/bin/docker compose -f docker-compose.prod.yml up -d calipar-frontend
+ExecStop=/usr/bin/docker compose -f docker-compose.prod.yml stop calipar-frontend
 Restart=on-failure
 
 [Install]
@@ -319,7 +335,7 @@ crontab -e
 Add this line (resets at 7 AM UTC = midnight PST):
 
 ```cron
-0 7 * * * cd /opt/calipar/generations/calipar_app && /usr/bin/docker-compose exec -T backend python /app/scripts/reset_demo.py >> /var/log/calipar_demo_reset.log 2>&1
+0 7 * * * cd /opt/calipar && /usr/bin/docker compose -f docker-compose.prod.yml exec -T calipar-backend python /app/scripts/reset_demo.py >> /var/log/calipar_demo_reset.log 2>&1
 ```
 
 ---
@@ -468,8 +484,8 @@ docker exec -it calipar-db psql -U calipar
 curl https://your-domain.com/api/auth/demo-status
 
 # Manually trigger reset
-cd /opt/calipar/generations/calipar_app
-docker-compose exec -T backend python /app/scripts/reset_demo.py
+cd /opt/calipar
+docker compose -f docker-compose.prod.yml exec -T calipar-backend python /app/scripts/reset_demo.py
 ```
 
 ---

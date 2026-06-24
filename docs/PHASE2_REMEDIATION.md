@@ -1,9 +1,10 @@
 # CALIPAR — Phase 2 Remediation Plan
 
-**Date:** 2026-06-23 (Wave 1 executed 2026-06-24)
+**Date:** 2026-06-23 (Waves 1–2 executed 2026-06-24)
 **Author:** Claude Code session (user: CALIPAR Engineering)
-**Status:** **Wave 1 executed** in this PR (branch `fix/nextjs-cve-and-config-hardening`,
-off `main`). Waves 0/2/3/4 remain plan-only, awaiting greenlight.
+**Status:** **Wave 1 merged** (PR #4, into `main`). **Wave 2 executed** in this PR
+(branch `fix/cors-and-deployment-config`, off `main`). Waves 3/4 remain plan-only,
+awaiting greenlight.
 **Basis:** Phase 1 Gap Analysis of the local codebase against the verified upstream
 "Source of Truth" (see §Provenance). Every gap is primary-source-verified and carries
 file:line evidence.
@@ -107,6 +108,32 @@ is added, so the bump is still the right first move.
 | 6 | **G2** 🟠 | Repoint DEPLOYMENT.md systemd units + commands to **`docker-compose.prod.yml`** (currently launch the *dev* compose → `--reload` + dev DB password in prod). Fix the stale `calipar/generations/calipar_app` path. | `docs/DEPLOYMENT.md:75,267-269,291-293` |
 | 7 | **G7** | Reconcile Firebase creds: guide says `FIREBASE_SERVICE_ACCOUNT_PATH=./backend/secrets/…`; real compose reads **`FIREBASE_CREDENTIALS_PATH=./config/firebase-service-account.json`**. Make doc + `.env.example` match the compose. | `docs/DEPLOYMENT.md:129-133`, `.env.example` |
 | 7b | (adjacent) | Flag for ops: prod compose services carry **no reverse-proxy routing labels** on the external `proxy` network — confirm routing is defined elsewhere, else the proxy can't reach them. | `docker-compose.prod.yml:42-44` |
+
+### Wave 2 — execution result (2026-06-24)
+
+- **Topology decision (Wave 0.3):** confirmed **cross-origin** (app + api on separate
+  hosts), so prod CORS must allow the app origin explicitly.
+- **G5 — env-driven CORS:** added `cors_allow_origins` (a **comma-separated `str`**, not a
+  list field — avoids pydantic-settings' JSON-list parsing footgun) + a `cors_origins`
+  property that trims/strips empties; `main.py` now feeds `settings.cors_origins` to
+  `CORSMiddleware`. Dev default unchanged (`localhost:3000,127.0.0.1:3000`). Verified by
+  import test: env override `"https://app.calipar.site, https://calipar.site ,"` →
+  `["https://app.calipar.site","https://calipar.site"]`.
+- **G2 — DEPLOYMENT.md:** both systemd units repointed to
+  `docker compose -f docker-compose.prod.yml ... calipar-backend/-frontend` (were launching
+  the dev stack → `--reload` + dev DB password); stale `generations/calipar_app` path fixed
+  everywhere (clone, units, cron, troubleshooting); added a "Production compose" note.
+- **G7 — Firebase creds:** corrected a subtlety the plan under-specified — `FIREBASE_SERVICE_ACCOUNT_PATH`
+  (read by `firebase.py:54`) is an **in-process** path, while `FIREBASE_CREDENTIALS_PATH`
+  (compose-only) is the **host** path mounted to `/app/serviceAccountKey.json` (auto-discovered).
+  Docs now use `config/firebase-service-account.json` + `FIREBASE_CREDENTIALS_PATH`; the old
+  `backend/secrets/...` + `FIREBASE_SERVICE_ACCOUNT_PATH=<host path>` (never mounted in) is gone.
+- **7b:** added an ops note in `docker-compose.prod.yml` about the missing proxy routing labels.
+- **Adjacent cleanup:** removed the now-dead `SECRET_KEY` from `.env.example` + DEPLOYMENT.md
+  (Wave 1 deleted its only consumer).
+- **Known remaining (out of scope):** the prod compose defines **no `db` service**, so the
+  guide's demo-DB/backup commands that target a `db`/`calipar-db` container still assume the
+  dev stack — flagged in the new note; a full DB-provisioning rewrite is deferred.
 
 ---
 

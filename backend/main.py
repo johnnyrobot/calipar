@@ -9,6 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database import create_db_and_tables
 from routers import auth, reviews, ai, data, planning, resources, validation
+from config import get_settings
+
+settings = get_settings()
 
 
 @asynccontextmanager
@@ -27,13 +30,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configure CORS
+# Configure CORS — origins come from the CORS_ALLOW_ORIGINS env var
+# (comma-separated). See config.Settings.cors_origins.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
