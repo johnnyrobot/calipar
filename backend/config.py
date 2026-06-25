@@ -2,29 +2,29 @@
 Application configuration using Pydantic Settings.
 """
 
-import os
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables."""
+    """Application settings loaded from environment variables.
+
+    Each field is populated from the matching upper-cased environment variable
+    (e.g. ``database_url`` <- ``DATABASE_URL``) or the ``.env`` file; the values
+    below are the fallback defaults. Types are coerced by pydantic-settings.
+    """
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     # Database - defaults to SQLite for local development
-    database_url: str = os.getenv(
-        "DATABASE_URL",
-        "sqlite:///./calipar_dev.db"
-    )
-    # Demo database URL (separate schema/database for demo users)
-    demo_database_url: str = os.getenv(
-        "DEMO_DATABASE_URL",
-        ""  # Empty means demo mode disabled
-    )
+    database_url: str = "sqlite:///./calipar_dev.db"
+    # Demo database URL (separate schema/database for demo users); empty disables demo mode
+    demo_database_url: str = ""
 
     # Demo Mode Settings
-    demo_mode_enabled: bool = os.getenv("DEMO_MODE_ENABLED", "false").lower() == "true"
-    demo_reset_hour_utc: int = int(os.getenv("DEMO_RESET_HOUR_UTC", "7"))  # 7 AM UTC = midnight PST
-    demo_user_prefix: str = os.getenv("DEMO_USER_PREFIX", "demo")
+    demo_mode_enabled: bool = False
+    demo_reset_hour_utc: int = 7  # 7 AM UTC = midnight PST
+    demo_user_prefix: str = "demo"
 
     # Google AI
     google_api_key: str = ""
@@ -41,14 +41,7 @@ class Settings(BaseSettings):
     # Dev default covers the Next.js dev server. In production the API is served
     # cross-origin (separate api subdomain), so set CORS_ALLOW_ORIGINS to the
     # app's public origin(s), e.g. "https://app.your-domain.com".
-    cors_allow_origins: str = os.getenv(
-        "CORS_ALLOW_ORIGINS",
-        "http://localhost:3000,http://127.0.0.1:3000",
-    )
-
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
+    cors_allow_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     @property
     def cors_origins(self) -> list[str]:

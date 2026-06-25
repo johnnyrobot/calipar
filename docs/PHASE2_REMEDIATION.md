@@ -1,10 +1,11 @@
 # CALIPAR — Phase 2 Remediation Plan
 
-**Date:** 2026-06-23 (Waves 1–2 executed 2026-06-24)
+**Plan authored:** 2026-06-23 · **Execution:** Waves 1–2 on 2026-06-24, Wave 3a on 2026-06-25
 **Author:** Claude Code session (user: CALIPAR Engineering)
-**Status:** **Wave 1 merged** (PR #4, into `main`). **Wave 2 executed** in this PR
-(branch `fix/cors-and-deployment-config`, off `main`). Waves 3/4 remain plan-only,
-awaiting greenlight.
+**Status:** **Waves 1–2 merged** (PRs #4, #5, into `main`). **Wave 3 split by risk:**
+**3a executed** in this PR (branch `fix/pydantic-config-and-frontend-currency`, off
+`main`) — the locally-verifiable subset. **3b** (backend major dep bumps) and **Wave 4**
+remain pending.
 **Basis:** Phase 1 Gap Analysis of the local codebase against the verified upstream
 "Source of Truth" (see §Provenance). Every gap is primary-source-verified and carries
 file:line evidence.
@@ -147,6 +148,29 @@ is added, so the bump is still the right first move.
 
 > Keep Step 9's dependency bumps **separate from Wave 1's security fix** so a regression
 > in a routine bump can't block the CVE patch.
+
+### Wave 3 — split by risk (execution, 2026-06-25)
+
+The major backend dep bumps (G9) carry real breaking-change risk (esp. firebase-admin
+6→7) and this repo has **no backend test suite**, so Wave 3 is split:
+
+**Wave 3a (this PR) — locally-verifiable subset:**
+- **G6 — Pydantic migration:** `class Config` → `model_config = SettingsConfigDict(...)`;
+  dropped the redundant `os.getenv(...)` wrappers (pydantic-settings reads each field from
+  its upper-cased env var natively) and the now-unused `import os`. **Verified** with a
+  settings smoke-test: defaults, env override, type coercion (bool/int/CORS), `.env`
+  reading, and `extra="ignore"` all preserved. *Behavioral nuance:* bool parsing is now
+  native — more lenient (`1`/`yes`/`on` → True) and fails fast on a genuinely invalid bool
+  rather than silently `False`.
+- **G11 — DnD libs:** removed both `react-beautiful-dnd` and `@hello-pangea/dnd`
+  (grep-confirmed zero imports). `npm run build` ✅, First-Load JS dropped ~2 kB/route.
+- **G9 (frontend only):** `firebase` `^12.6.0` → `^12.15.0` (resolves to 12.15.0).
+  `npm run build` ✅, `tsc --noEmit` ✅.
+
+**Wave 3b (next PR) — backend major bumps (G9 backend):** FastAPI `0.109.2` → current,
+firebase-admin `6.4.0` → `7.x` (review 7.0 breaking notes), pydantic / pydantic-settings to
+latest 2.x. Verified against a **Python 3.11 venv smoke-test** (matches the Docker base) +
+a firebase-admin 7 breaking-change review — isolated so a regression can't block 3a.
 
 ---
 
