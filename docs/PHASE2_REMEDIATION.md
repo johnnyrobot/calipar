@@ -2,9 +2,9 @@
 
 **Plan authored:** 2026-06-23 · **Execution:** Waves 1–2 on 2026-06-24, Wave 3 on 2026-06-25
 **Author:** Claude Code session (user: CALIPAR Engineering)
-**Status:** **Waves 1–3 merged** (PRs #4–#7, into `main`). **Wave 4 split:** **4a
-(Next 15 + React 19) executed** in this PR (branch `fix/nextjs-15-react-19`, off `main`) —
-clears the residual Next.js advisory wall. **4b (Next 15 → 16)** remains pending.
+**Status:** **Waves 1–4a merged** (PRs #4–#8, into `main`). **Wave 4b (Next 16) executed**
+in this PR (branch `fix/nextjs-16`, off `main`) — the final plan item. All 11 Phase-1 gaps
+are now addressed.
 **Basis:** Phase 1 Gap Analysis of the local codebase against the verified upstream
 "Source of Truth" (see §Provenance). Every gap is primary-source-verified and carries
 file:line evidence.
@@ -225,9 +225,33 @@ wall, the stated goal); **4b = Next 15 → 16** (future-proofing) deferred.
 - **Caveat:** verified via build + SSG + `next start`; full E2E/runtime with backend + Firebase
   is the final confirmation. First-Load JS rose ~10 kB/route (expected for R19/Next 15 runtime).
 
-**Wave 4b (next):** Next `15.5.19` → `16.2.9` — the sync dynamic-API fallback is **removed**
-(mandatory migration; low-impact here given no server dynamic-API usage) and review the
-uncached-by-default fetch caching change. No longer security-urgent now the wall is cleared.
+### Wave 4b — execution result (2026-06-25)
+
+Next `15.5.19` → **`16.2.9`** (React stays 19.2.7 — Next 16 uses React 19.2).
+
+- **Breaking-change review** (official Next 16 blog/upgrade guide) vs CALIPAR — almost all N/A:
+  no `next/headers`/server `params` (sync-dynamic-API removal moot — app is client-only),
+  no `middleware.ts` (→`proxy.ts` moot), no `next/image`, no parallel routes (`default.js`
+  moot), no AMP / `serverRuntimeConfig` / `experimental.ppr`. Node 22 ✅, TS 5.3 ✅, React 19.2 ✅.
+- **The one real breaking change:** `next lint` is **removed** + eslint-config-next 16 needs
+  **eslint ≥9** with **flat config**. Migrated: `eslint` `^8` → `^9`, `eslint-config-next` →
+  `16.2.9`, new `eslint.config.mjs` spreading eslint-config-next's **native flat-config array**
+  (no `FlatCompat` — that pattern hit a circular-JSON bug under ESLint 9), `lint` script
+  `next lint` → `eslint`. The repo had **no prior ESLint config**, so the strict React Compiler
+  rules now surface **25 pre-existing findings** (9 `no-unescaped-entities`, 12 React-Compiler
+  advisories, 4 `exhaustive-deps`) — **downgraded to warnings** so the upgrade isn't blocked on
+  unrelated cleanup (`npm run lint` exits 0). A dedicated lint-cleanup pass is the follow-up.
+- **Turbopack is now the default bundler.** Verified `next build` (Turbopack) produces correct
+  **`output: 'standalone''** — `server.js` is nested under the monorepo tracing root locally, but
+  the Docker build runs in an isolated `./frontend` context so it lands top-level as the
+  Dockerfile expects (unchanged behavior, not a regression). Kept the Turbopack default.
+- **Auto-updated by Next 16** (committed): `tsconfig.json` (`jsx: preserve` → `react-jsx`,
+  `.next/dev/types`), `next-env.d.ts`.
+- **Verification:** `tsc --noEmit` **0 errors**; `next build` (Turbopack) ✅ all routes; the
+  **standalone `node server.js` boots** and serves `/`, `/login`, `/dashboard` (all 200) — the
+  exact prod path; `npm run lint` exits 0. `npm audit`: no Next.js runtime advisories (the only
+  `next` flag is transitive via postcss — CSS tooling).
+- **Caveat:** final confirmation is a Docker image rebuild in CI (not run here).
 
 ---
 
