@@ -235,12 +235,17 @@ Next `15.5.19` → **`16.2.9`** (React stays 19.2.7 — Next 16 uses React 19.2)
   moot), no AMP / `serverRuntimeConfig` / `experimental.ppr`. Node 22 ✅, TS 5.3 ✅, React 19.2 ✅.
 - **The one real breaking change:** `next lint` is **removed** + eslint-config-next 16 needs
   **eslint ≥9** with **flat config**. Migrated: `eslint` `^8` → `^9`, `eslint-config-next` →
-  `16.2.9`, new `eslint.config.mjs` spreading eslint-config-next's **native flat-config array**
-  (no `FlatCompat` — that pattern hit a circular-JSON bug under ESLint 9), `lint` script
-  `next lint` → `eslint`. The repo had **no prior ESLint config**, so the strict React Compiler
-  rules now surface **25 pre-existing findings** (9 `no-unescaped-entities`, 12 React-Compiler
-  advisories, 4 `exhaustive-deps`) — **downgraded to warnings** so the upgrade isn't blocked on
-  unrelated cleanup (`npm run lint` exits 0). A dedicated lint-cleanup pass is the follow-up.
+  `16.2.9`, new `eslint.config.mjs` spreading eslint-config-next's **native flat-config arrays**
+  — both `core-web-vitals` *and* the separate `/typescript` preset (the default export only
+  registers the TS parser; the typescript-eslint recommended rules need the `/typescript`
+  spread — caught in review). No `FlatCompat` (that pattern hit a circular-JSON bug under
+  ESLint 9). `lint` script `next lint` → `eslint`. The repo had **no prior ESLint config**, so
+  first-time linting (core-web-vitals + typescript-eslint + React Compiler rules) surfaces
+  **~115 pre-existing findings** (66 `no-unused-vars`, 24 `no-explicit-any`, 9
+  `no-unescaped-entities`, 12 React-Compiler advisories, 4 `exhaustive-deps`) — **ratcheted to
+  warnings** so the upgrade isn't blocked on unrelated cleanup; the one genuine error (a
+  `prefer-const` in `Pagination.tsx`) was fixed. `npm run lint` exits 0; a dedicated lint-cleanup
+  pass is the follow-up.
 - **Turbopack is now the default bundler.** Verified `next build` (Turbopack) produces correct
   **`output: 'standalone''** — `server.js` is nested under the monorepo tracing root locally, but
   the Docker build runs in an isolated `./frontend` context so it lands top-level as the
