@@ -6,8 +6,10 @@ AI-Enhanced Program Review and Integrated Planning Platform
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
-from database import create_db_and_tables
+from database import create_db_and_tables, engine
 from routers import auth, reviews, ai, data, planning, resources, validation
 from config import get_settings
 
@@ -17,7 +19,12 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
-    # Startup: Create database tables
+    # Startup: create tables directly from the SQLModel metadata.
+    # NOTE: production should manage schema via Alembic (`alembic upgrade head`)
+    # rather than create_all, but the existing migration chain currently FAILS on a
+    # fresh Postgres DB (duplicate `auditaction` ENUM in 0002_add_audit_trail) and
+    # the migrations are Postgres-only (CREATE TYPE ... ENUM won't run on SQLite).
+    # Fix + verify the migrations before switching this over. Tracked as a follow-up.
     create_db_and_tables()
     yield
     # Shutdown: cleanup if needed
@@ -62,5 +69,23 @@ async def root():
 
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint."""
-    return {"status": "healthy", "service": "calipar-backend"}
+    """Health check — confirms the API is up and the database is reachable.
+
+    Returns 503 (and ``status: unhealthy``) if the DB can't be reached, so
+    container orchestrators / load balancers stop routing to a broken instance.
+    """
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        database = "ok"
+    except Exception:
+        database = "unreachable"
+
+    payload = {
+        "status": "healthy" if database == "ok" else "unhealthy",
+        "service": "calipar-backend",
+        "database": database,
+    }
+    if database != "ok":
+        return JSONResponse(status_code=503, content=payload)
+    return payload
