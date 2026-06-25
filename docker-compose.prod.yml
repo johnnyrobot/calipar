@@ -39,6 +39,11 @@ services:
     networks:
       - proxy
 
+# NOTE: services join the external `proxy` network but declare NO routing labels
+# (Traefik/nginx-proxy/etc.) and publish no ports. The reverse proxy that terminates
+# TLS and routes the app + api hostnames to `calipar-frontend`/`calipar-backend` must be
+# configured outside this file. If the proxy relies on per-service labels, add them here,
+# otherwise these containers will be unreachable.
 networks:
   proxy:
     external: true
