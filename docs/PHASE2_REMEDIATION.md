@@ -1,11 +1,10 @@
 # CALIPAR — Phase 2 Remediation Plan
 
-**Plan authored:** 2026-06-23 · **Execution:** Waves 1–2 on 2026-06-24, Wave 3a on 2026-06-25
+**Plan authored:** 2026-06-23 · **Execution:** Waves 1–2 on 2026-06-24, Wave 3 on 2026-06-25
 **Author:** Claude Code session (user: CALIPAR Engineering)
-**Status:** **Waves 1–2 merged** (PRs #4, #5, into `main`). **Wave 3 split by risk:**
-**3a executed** in this PR (branch `fix/pydantic-config-and-frontend-currency`, off
-`main`) — the locally-verifiable subset. **3b** (backend major dep bumps) and **Wave 4**
-remain pending.
+**Status:** **Waves 1–3a merged** (PRs #4, #5, #6, into `main`). **Wave 3b executed** in
+this PR (branch `fix/backend-dependency-currency`, off `main`) — the backend major dep
+bumps. **Wave 4** remains pending.
 **Basis:** Phase 1 Gap Analysis of the local codebase against the verified upstream
 "Source of Truth" (see §Provenance). Every gap is primary-source-verified and carries
 file:line evidence.
@@ -167,10 +166,27 @@ The major backend dep bumps (G9) carry real breaking-change risk (esp. firebase-
 - **G9 (frontend only):** `firebase` `^12.6.0` → `^12.15.0` (resolves to 12.15.0).
   `npm run build` ✅, `tsc --noEmit` ✅.
 
-**Wave 3b (next PR) — backend major bumps (G9 backend):** FastAPI `0.109.2` → current,
-firebase-admin `6.4.0` → `7.x` (review 7.0 breaking notes), pydantic / pydantic-settings to
-latest 2.x. Verified against a **Python 3.11 venv smoke-test** (matches the Docker base) +
-a firebase-admin 7 breaking-change review — isolated so a regression can't block 3a.
+### Wave 3b — execution result (2026-06-25)
+
+Backend major dependency bumps, in `backend/requirements.txt`:
+- **fastapi** `0.109.2` → `0.138.1`, **firebase-admin** `6.4.0` → `7.4.0`,
+  **pydantic[email]** `2.6.1` → `2.13.4`, **pydantic-settings** `2.1.0` → `2.14.2`.
+- **Forced consequences:** **sqlmodel** `0.0.14` → `0.0.39` (0.0.14 caps pydantic);
+  **httpx** `0.26.0` → `0.28.1` (firebase-admin 7.4.0 hard-pins `httpx==0.28.1`).
+  Also dropped a redundant bare `httpx` line.
+- **firebase-admin 7.0 breaking-change review** (GitHub releases, primary source): the
+  real 7.0 breaks are *requires Python 3.10+* (CALIPAR runs 3.11 ✅), dropped AutoML,
+  removed FCM `send_all()`/`send_multicast()`, dropped `google-api-python-client` — **none
+  used here**. The auth surface the code depends on is unchanged. (A widely-cited "removed
+  module-level exceptions" note is from a *much older* major, not 7.0 — verified against the
+  releases page, not the conflated paginated changelog.)
+- **Verification — Python 3.11 venv smoke-test** (no backend test suite exists): full set
+  resolves + installs; `firebase_admin.auth` exposes all used exceptions/functions; the whole
+  app imports under the new fastapi/pydantic/sqlmodel; settings load; `TestClient` boots the
+  lifespan (SQLite table creation) and `/api/health` + `/api/auth/demo-status` both return 200.
+- **Caveats:** smoke-test used SQLite (dep-version risk is DB-agnostic; psycopg2-binary 2.9.9
+  cp311 wheel installs clean). A `StarletteDeprecationWarning` (`httpx`→`httpx2`) is
+  **TestClient-only**, not shipped. Final confirmation = a Docker image rebuild in CI.
 
 ---
 

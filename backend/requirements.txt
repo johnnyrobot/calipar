@@ -1,10 +1,11 @@
 # FastAPI and server
-fastapi==0.109.2
+fastapi==0.138.1
 uvicorn[standard]==0.27.1
 python-multipart==0.0.9
 
 # Database
-sqlmodel==0.0.14
+# sqlmodel bumped to 0.0.39 for pydantic 2.13.x compatibility (0.0.14 caps pydantic)
+sqlmodel==0.0.39
 psycopg2-binary==2.9.9
 alembic==1.13.1
 
@@ -12,13 +13,14 @@ alembic==1.13.1
 google-genai>=1.0.0
 
 # Firebase Admin
-firebase-admin==6.4.0
+firebase-admin==7.4.0
 
 # Utilities
 python-dotenv==1.0.1
-pydantic[email]==2.6.1
-pydantic-settings==2.1.0
-httpx==0.26.0
+pydantic[email]==2.13.4
+pydantic-settings==2.14.2
+# httpx pinned to match firebase-admin 7.4.0 (which requires httpx==0.28.1)
+httpx==0.28.1
 
 # Data processing
 pandas==2.2.0
@@ -27,4 +29,3 @@ openpyxl==3.1.2
 # Testing
 pytest==8.0.0
 pytest-asyncio==0.21.1
-httpx
