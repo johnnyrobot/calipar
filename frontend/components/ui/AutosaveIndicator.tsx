@@ -1,6 +1,6 @@
 'use client';
 
-import { Cloud, CloudOff, Check, Loader2, AlertCircle } from 'lucide-react';
+import { Cloud, Check, Loader2, AlertCircle } from 'lucide-react';
 import { AutosaveStatus, formatLastSaved } from '@/lib/useAutosave';
 
 interface AutosaveIndicatorProps {

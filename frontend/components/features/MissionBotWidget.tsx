@@ -7,9 +7,7 @@ import {
   X,
   Minimize2,
   Maximize2,
-  MessageSquare,
   FileText,
-  ExternalLink,
   Sparkles,
 } from 'lucide-react';
 import { Button, Spinner } from '@/components/ui';

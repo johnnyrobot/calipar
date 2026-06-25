@@ -4,16 +4,12 @@ import { useState, useMemo } from 'react';
 import {
   Users,
   Search,
-  Filter,
   UserPlus,
   Edit2,
   Trash2,
-  Mail,
   Shield,
   CheckCircle2,
   XCircle,
-  MoreVertical,
-  ChevronDown,
   AlertTriangle,
   Building,
   Clock,
@@ -251,7 +247,7 @@ export default function UserManagementPage() {
         <div className="text-center">
           <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
-          <p className="text-gray-500">You don't have permission to access this page.</p>
+          <p className="text-gray-500">You don&apos;t have permission to access this page.</p>
         </div>
       </div>
     );

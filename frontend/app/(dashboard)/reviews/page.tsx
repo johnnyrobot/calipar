@@ -5,15 +5,13 @@ import Link from 'next/link';
 import {
   Plus,
   Search,
-  Filter,
   FileText,
   ChevronRight,
   Calendar,
   User,
-  MoreVertical,
 } from 'lucide-react';
 import { Header } from '@/components/layout';
-import { Button, Card, StatusBadge, Input, Spinner } from '@/components/ui';
+import { Button, Card, StatusBadge, Spinner } from '@/components/ui';
 import { useAuthStore, useReviewsStore } from '@/lib/store';
 import api from '@/lib/api';
 
@@ -33,7 +31,7 @@ interface Review {
 }
 
 export default function ReviewsPage() {
-  const { user, token } = useAuthStore();
+  const { token } = useAuthStore();
   const { reviews, setReviews, setLoading, isLoading } = useReviewsStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -151,21 +149,6 @@ export default function ReviewsPage() {
 
     return matchesSearch && matchesStatus && matchesType;
   });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return 'default';
-      case 'in_review':
-        return 'warning';
-      case 'validated':
-        return 'info';
-      case 'approved':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

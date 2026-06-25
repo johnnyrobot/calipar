@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -16,8 +16,6 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  ChevronDown,
-  ChevronRight,
   Wand2,
   Upload,
   Eye,
@@ -25,7 +23,7 @@ import {
   Scale,
 } from 'lucide-react';
 import { Header } from '@/components/layout';
-import { Button, Card, Badge, StatusBadge, Modal, Spinner, RichTextEditor, AutosaveIndicator } from '@/components/ui';
+import { Button, Card, StatusBadge, Modal, Spinner, RichTextEditor, AutosaveIndicator } from '@/components/ui';
 import { EquityLens, DataInjectionPanel } from '@/components/features';
 import { useAuthStore } from '@/lib/store';
 import { useAutosave } from '@/lib/useAutosave';
@@ -57,7 +55,6 @@ interface Review {
 
 export default function ReviewDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const { user, token } = useAuthStore();
   const reviewId = params.id as string;
 

@@ -71,8 +71,8 @@ const adminNavItems: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut, isLoading } = useAuth();
-  const { role, displayName, isAdmin, canValidate } = useCurrentRole();
+  const { user, signOut } = useAuth();
+  const { role, displayName, isAdmin } = useCurrentRole();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 

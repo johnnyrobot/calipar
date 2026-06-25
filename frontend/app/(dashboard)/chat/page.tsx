@@ -9,7 +9,6 @@ import {
   ExternalLink,
   RefreshCw,
   Sparkles,
-  HelpCircle,
 } from 'lucide-react';
 import { Header } from '@/components/layout';
 import { Button, Card, Spinner } from '@/components/ui';
@@ -38,7 +37,7 @@ const suggestedQuestions = [
 ];
 
 export default function ChatPage() {
-  const { messages, addMessage, clearMessages, isLoading, setLoading } = useChatStore();
+  const { isLoading, setLoading } = useChatStore();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

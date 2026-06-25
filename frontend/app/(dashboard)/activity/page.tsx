@@ -10,9 +10,7 @@ import {
   Clock,
   User,
   Calendar,
-  Filter,
   Search,
-  ChevronRight,
   Send,
   Edit3,
   Eye,
@@ -20,8 +18,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { Header } from '@/components/layout';
-import { Card, Button, Badge, Input } from '@/components/ui';
-import { useAuthStore } from '@/lib/store';
+import { Card, Badge } from '@/components/ui';
 
 type ActivityType =
   | 'review_updated'
@@ -53,7 +50,6 @@ interface Activity {
 }
 
 export default function ActivityPage() {
-  const { user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');

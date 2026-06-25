@@ -4,7 +4,6 @@ import { useState } from 'react';
 import {
   Scale,
   AlertTriangle,
-  CheckCircle2,
   ChevronDown,
   ChevronRight,
   Target,
@@ -48,8 +47,6 @@ interface EquityLensProps {
 export function EquityLens({
   isOpen,
   onClose,
-  reviewId,
-  sectionKey,
   onApplySuggestion,
 }: EquityLensProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -238,7 +235,7 @@ export function EquityLens({
                 <h4 className="font-medium text-blue-800 text-sm">ISMP Target</h4>
               </div>
               <p className="text-sm text-blue-700">
-                Your program's overall success rate (68.5%) is{' '}
+                Your program&apos;s overall success rate (68.5%) is{' '}
                 <strong>below the ISMP target (67%)</strong>. Consider addressing
                 this in your action plan.
               </p>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   FileText,
@@ -14,7 +14,7 @@ import {
   Users,
 } from 'lucide-react';
 import { Header } from '@/components/layout';
-import { Card, StatCard, Badge, StatusBadge, Spinner } from '@/components/ui';
+import { Card, StatCard, Badge } from '@/components/ui';
 import { useAuthStore } from '@/lib/store';
 
 interface DashboardStats {
@@ -35,13 +35,13 @@ interface RecentActivity {
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
-  const [stats, setStats] = useState<DashboardStats>({
+  const [stats] = useState<DashboardStats>({
     activeReviews: 3,
     pendingApproval: 2,
     completedThisYear: 15,
     upcomingDeadlines: 4,
   });
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([
+  const [recentActivity] = useState<RecentActivity[]>([
     {
       id: '1',
       type: 'review_updated',

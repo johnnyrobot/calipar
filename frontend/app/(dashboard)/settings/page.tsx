@@ -12,7 +12,6 @@ import {
   Building,
   Key,
   CheckCircle2,
-  AlertCircle,
 } from 'lucide-react';
 import { Header } from '@/components/layout';
 import { Card, Button, Input, Textarea, Badge, Spinner } from '@/components/ui';
@@ -374,7 +373,7 @@ export default function SettingsPage() {
                   <Card>
                     <h2 className="text-lg font-semibold text-gray-900 mb-2">Login Sessions</h2>
                     <p className="text-sm text-gray-500 mb-6">
-                      Manage devices where you're logged in.
+                      Manage devices where you&apos;re logged in.
                     </p>
 
                     <div className="space-y-3">

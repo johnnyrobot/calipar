@@ -112,14 +112,14 @@ function ForgotPasswordForm() {
               </h2>
 
               <p className="text-gray-600 mb-6">
-                We've sent a password reset link to{' '}
+                We&apos;ve sent a password reset link to{' '}
                 <span className="font-medium text-gray-900">{email}</span>.
                 Please check your inbox and follow the instructions to reset your password.
               </p>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
                 <p className="text-sm text-blue-800">
-                  <strong>Didn't receive the email?</strong>
+                  <strong>Didn&apos;t receive the email?</strong>
                 </p>
                 <ul className="text-sm text-blue-700 mt-2 space-y-1">
                   <li>• Check your spam or junk folder</li>
@@ -177,7 +177,7 @@ function ForgotPasswordForm() {
                 Forgot Password?
               </h2>
               <p className="text-gray-600 mt-2">
-                Enter your email address and we'll send you a link to reset your password.
+                Enter your email address and we&apos;ll send you a link to reset your password.
               </p>
             </div>
 

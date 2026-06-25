@@ -11,18 +11,16 @@ const eslintConfig = [
     ignores: [".next/**", "node_modules/**", "e2e/**"],
   },
   {
-    // This project had no ESLint config before Next 16 (the `next lint` command was
-    // removed). Now that linting (core-web-vitals + typescript-eslint + the React
-    // Compiler rules) runs for the first time, it surfaces ~115 pre-existing findings.
-    // Ratchet approach: downgrade them to warnings so the framework upgrade isn't
-    // blocked on unrelated cleanup — they stay visible and should be fixed in a
-    // dedicated lint pass. (The React Compiler itself is not enabled; those are advisory.)
+    // First-time linting (Next 16 removed `next lint`; this repo had no ESLint config)
+    // surfaced ~115 pre-existing findings. The safe, compiler-checkable ones —
+    // no-unused-vars and no-unescaped-entities — have been fixed and are now enforced
+    // as errors (eslint-config-next defaults). The rules below remain warnings pending a
+    // dedicated pass: `no-explicit-any` needs real type design, and the React Compiler
+    // rules change hook/render behavior (the Compiler itself is not enabled — advisory).
     rules: {
-      "react/no-unescaped-entities": "warn",
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/static-components": "warn",
       "react-hooks/preserve-manual-memoization": "warn",
-      "@typescript-eslint/no-unused-vars": "warn",
       "@typescript-eslint/no-explicit-any": "warn",
     },
   },
