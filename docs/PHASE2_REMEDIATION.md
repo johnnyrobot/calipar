@@ -2,9 +2,9 @@
 
 **Plan authored:** 2026-06-23 · **Execution:** Waves 1–2 on 2026-06-24, Wave 3 on 2026-06-25
 **Author:** Claude Code session (user: CALIPAR Engineering)
-**Status:** **Waves 1–3a merged** (PRs #4, #5, #6, into `main`). **Wave 3b executed** in
-this PR (branch `fix/backend-dependency-currency`, off `main`) — the backend major dep
-bumps. **Wave 4** remains pending.
+**Status:** **Waves 1–3 merged** (PRs #4–#7, into `main`). **Wave 4 split:** **4a
+(Next 15 + React 19) executed** in this PR (branch `fix/nextjs-15-react-19`, off `main`) —
+clears the residual Next.js advisory wall. **4b (Next 15 → 16)** remains pending.
 **Basis:** Phase 1 Gap Analysis of the local codebase against the verified upstream
 "Source of Truth" (see §Provenance). Every gap is primary-source-verified and carries
 file:line evidence.
@@ -196,6 +196,38 @@ Backend major dependency bumps, in `backend/requirements.txt`:
 |---|-----|-------|-------|
 | 11 | **G1-full / G10** | **Next 14.2 → 15 → 16** + **React 18 → 19** via `npx @next/codemod@canary upgrade`. | App Router adopts React 19; async-dynamic-API codemod is low-impact here (client-heavy), **but Next 16 *removes* the sync fallback** so the migration becomes mandatory at 16. Review the uncached-by-default caching change. Multi-day. |
 | 12 | Optional hardening (adjacent, not in verified gaps) | (a) gunicorn-managed uvicorn workers vs current `--workers 2`; (b) **Alembic migrations** instead of `create_db_and_tables()` at startup (`backend/main.py:18`); (c) `/api/health` checks DB connectivity (HANDOFF §6). | Load-test (a) before changing. |
+
+### Wave 4 — split, 4a executed (2026-06-25)
+
+The major upgrade was split: **4a = Next 14.2 → 15 + React 18 → 19** (clears the security
+wall, the stated goal); **4b = Next 15 → 16** (future-proofing) deferred.
+
+**Wave 4a (this PR):**
+- **Versions:** `next`/`eslint-config-next` `14.2.35` → **`15.5.19`** (latest 15.x, ≥ the
+  15.5.16 advisory-wall fix), `react`/`react-dom` `^18.2.0` → **`^19.2.0`** (19.2.7).
+  Peer-compat bumps: `recharts` → `^2.15.4` (stays on 2.x — avoids the 3.x chart rewrite),
+  `lucide-react` → `^1.21.0` (0.331 capped at R18), `@types/react(-dom)` → `^19`.
+  `react-markdown` (peer `>=18`) and `zustand` (peer `>=16.8`) already allowed R19 — untouched.
+- **Migration surface was tiny** (app is ~all client components): the dynamic-API breaking
+  change only hits *Server Component* `cookies()/headers()/params`, of which there are **none**
+  (no `next/headers`); the `useSearchParams`/`useParams`/`useRouter` in use are client hooks,
+  unchanged. `useSearchParams` Suspense boundaries already present. `forwardRef` (Button/Input)
+  still works in R19. No codemod needed.
+- **Verification:** clean install — **single deduped `react@19.2.7`** (no duplicate React);
+  `tsc --noEmit` **0 errors**; `npm run build` ✅ (18/18 routes SSG'd through the R19 server
+  renderer); `next start` boots, `/`, `/login`, `/dashboard` all **200**.
+- **Security payoff:** `npm audit` — `next` drops **high → moderate**; the entire high-severity
+  Next.js DoS/XSS/SSRF wall is **gone**. The lone residual "next moderate" is transitive via
+  **postcss** (CSS-tooling XSS, GHSA-qx2v-qp2m-jg93), *not* Next.js runtime. (The other
+  high/critical audit rows are the puppeteer/axios **dev/test** toolchain — separate cleanup.)
+- **Auto-updated by Next 15** (committed): `tsconfig.json` (`target: ES2017` + reformat),
+  `next-env.d.ts` (typed-routes reference).
+- **Caveat:** verified via build + SSG + `next start`; full E2E/runtime with backend + Firebase
+  is the final confirmation. First-Load JS rose ~10 kB/route (expected for R19/Next 15 runtime).
+
+**Wave 4b (next):** Next `15.5.19` → `16.2.9` — the sync dynamic-API fallback is **removed**
+(mandatory migration; low-impact here given no server dynamic-API usage) and review the
+uncached-by-default fetch caching change. No longer security-urgent now the wall is cleared.
 
 ---
 
