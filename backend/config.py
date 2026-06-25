@@ -52,8 +52,18 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> list[str]:
-        """Allowed CORS origins, parsed from the comma-separated setting."""
-        return [o.strip() for o in self.cors_allow_origins.split(",") if o.strip()]
+        """Allowed CORS origins, parsed from the comma-separated setting.
+
+        Each entry is whitespace-trimmed and stripped of a trailing slash so it
+        matches the browser ``Origin`` header (which carries no path or trailing
+        slash). Values are operator-supplied trusted config and CORSMiddleware
+        matches exactly, so a malformed entry fails closed rather than widening access.
+        """
+        return [
+            o
+            for o in (raw.strip().rstrip("/") for raw in self.cors_allow_origins.split(","))
+            if o
+        ]
 
 
 @lru_cache()

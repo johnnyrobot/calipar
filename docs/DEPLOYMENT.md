@@ -328,14 +328,18 @@ sudo systemctl start calipar-backend calipar-frontend
 Set up automatic daily reset of demo database.
 
 ```bash
-# Edit crontab
+# Run as the calipar user (which owns /opt/calipar). Create a writable log dir first
+# — a user crontab cannot write to /var/log:
+mkdir -p /opt/calipar/logs
+
+# Edit the crontab
 crontab -e
 ```
 
 Add this line (resets at 7 AM UTC = midnight PST):
 
 ```cron
-0 7 * * * cd /opt/calipar && /usr/bin/docker compose -f docker-compose.prod.yml exec -T calipar-backend python /app/scripts/reset_demo.py >> /var/log/calipar_demo_reset.log 2>&1
+0 7 * * * cd /opt/calipar && /usr/bin/docker compose -f docker-compose.prod.yml exec -T calipar-backend python /app/scripts/reset_demo.py >> /opt/calipar/logs/calipar_demo_reset.log 2>&1
 ```
 
 ---
@@ -355,7 +359,7 @@ docker-compose logs -f frontend
 docker-compose logs -f db
 
 # Demo reset logs
-tail -f /var/log/calipar_demo_reset.log
+tail -f /opt/calipar/logs/calipar_demo_reset.log
 ```
 
 ### Health Check Endpoint
