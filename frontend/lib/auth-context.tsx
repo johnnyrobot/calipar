@@ -191,7 +191,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Auth state change listener will handle the rest
         setFirebaseUser(result.user);
       } catch (err) {
-        const errorMessage = getFirebaseErrorMessage((err as { code?: string }).code ?? '');
+        const errorMessage = getFirebaseErrorMessage((err as { code?: string } | null)?.code ?? '');
         setError(errorMessage);
         throw new Error(errorMessage);
       } finally {
