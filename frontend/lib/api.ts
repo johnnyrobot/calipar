@@ -86,7 +86,10 @@ class ApiClient {
       const parts = token.split('.');
       if (parts.length !== 3) return null;
 
-      const payload = JSON.parse(atob(parts[1]));
+      // Normalize base64url -> base64 (+ padding) so atob handles valid JWT payloads.
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+      const payload = JSON.parse(atob(padded));
       if (payload.exp) {
         // exp is in seconds, convert to milliseconds
         return payload.exp * 1000;
@@ -305,7 +308,7 @@ class ApiClient {
 
   // Reviews endpoints
   async listReviews(orgId?: string) {
-    const params = orgId ? `?org_id=${orgId}` : '';
+    const params = orgId ? `?org_id=${encodeURIComponent(orgId)}` : '';
     return this.request(`/api/reviews${params}`);
   }
 
@@ -466,7 +469,7 @@ class ApiClient {
   }
 
   async listResources(actionPlanId?: string) {
-    const params = actionPlanId ? `?action_plan_id=${actionPlanId}` : '';
+    const params = actionPlanId ? `?action_plan_id=${encodeURIComponent(actionPlanId)}` : '';
     return this.request(`/api/resources${params}`);
   }
 

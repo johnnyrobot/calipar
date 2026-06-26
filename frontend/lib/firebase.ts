@@ -30,7 +30,8 @@ const firebaseConfig = {
 const hasRequiredConfig = Boolean(
   firebaseConfig.apiKey &&
   firebaseConfig.authDomain &&
-  firebaseConfig.projectId
+  firebaseConfig.projectId &&
+  firebaseConfig.appId
 );
 
 // Initialize Firebase - prevent duplicate initialization

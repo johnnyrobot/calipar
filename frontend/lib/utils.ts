@@ -27,7 +27,8 @@ export function formatDate(date: string | Date): string {
  * Format date with time
  */
 export function formatDateTime(date: string | Date): string {
-  return new Date(date).toLocaleDateString('en-US', {
+  // toLocaleString (not toLocaleDateString) so the hour/minute options actually render.
+  return new Date(date).toLocaleString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
