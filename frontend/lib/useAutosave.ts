@@ -40,45 +40,52 @@ export function useAutosave<T = unknown>({
 
   const contentRef = useRef<T | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const resetTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isSavingRef = useRef(false);
 
-  // Clear timeout on unmount
+  // Clear pending timers on unmount
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
     };
+  }, []);
+
+  // Schedule the status -> 'idle' reset, cancelling any previous one so an old timer
+  // can't reset the status during a newer save.
+  const scheduleStatusReset = useCallback((delay: number) => {
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = setTimeout(() => setStatus('idle'), delay);
   }, []);
 
   const performSave = useCallback(async () => {
     if (isSavingRef.current || contentRef.current === null) return;
 
+    const snapshot = contentRef.current;
     isSavingRef.current = true;
+    // Cancel any pending status reset so a previous save's timer can't flip us to
+    // 'idle' during this in-flight save.
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
     setStatus('saving');
 
     try {
-      await onSave(contentRef.current);
-      setStatus('saved');
+      await onSave(snapshot);
       setLastSaved(new Date());
-      setHasUnsavedChanges(false);
-
-      // Reset to idle after showing "saved" for 2 seconds
-      setTimeout(() => {
-        setStatus('idle');
-      }, 2000);
+      // Only mark clean if no newer edit arrived while saving — otherwise the pending
+      // debounce from registerChange will persist the newer content.
+      if (contentRef.current === snapshot) {
+        setHasUnsavedChanges(false);
+      }
+      setStatus('saved');
+      scheduleStatusReset(2000);
     } catch (error) {
       console.error('Autosave failed:', error);
       setStatus('error');
-
-      // Reset to idle after showing "error" for 3 seconds
-      setTimeout(() => {
-        setStatus('idle');
-      }, 3000);
+      scheduleStatusReset(3000);
     } finally {
       isSavingRef.current = false;
     }
-  }, [onSave]);
+  }, [onSave, scheduleStatusReset]);
 
   const registerChange = useCallback((content: T) => {
     if (!enabled) return;
