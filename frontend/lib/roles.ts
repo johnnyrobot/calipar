@@ -8,8 +8,12 @@
 // User role enum matching backend
 export type UserRole = 'faculty' | 'chair' | 'dean' | 'admin' | 'proc';
 
-// Role hierarchy (higher index = more permissions)
-export const ROLE_HIERARCHY: UserRole[] = ['faculty', 'chair', 'dean', 'proc', 'admin'];
+// Linear management hierarchy (higher index = more management authority), used by
+// `roleAtLeast`. `proc` is deliberately NOT in this chain — it is a specialized
+// validation role (Program Review Oversight Committee), not a dean superset. It is
+// handled explicitly in roleAtLeast, and its real capabilities come from
+// ROLE_PERMISSIONS (validate/view), checked via roleHasPermission.
+export const ROLE_HIERARCHY: UserRole[] = ['faculty', 'chair', 'dean', 'admin'];
 
 // Permission types for different actions
 export type Permission =
@@ -121,6 +125,13 @@ export function roleHasPermission(role: UserRole | string | undefined, permissio
 export function roleAtLeast(userRole: UserRole | string | undefined, minRole: UserRole): boolean {
   if (!userRole) return false;
   const normalizedRole = userRole.toLowerCase() as UserRole;
+
+  // `proc` is a specialized validation role, not part of the linear management rank:
+  // it satisfies only the faculty baseline, and no rank counts as "proc-or-higher".
+  // (PROC's real access is granted via ROLE_PERMISSIONS / roleHasPermission.)
+  if (normalizedRole === 'proc') return minRole === 'faculty';
+  if (minRole === 'proc') return false;
+
   const userRoleIndex = ROLE_HIERARCHY.indexOf(normalizedRole);
   const minRoleIndex = ROLE_HIERARCHY.indexOf(minRole);
 
