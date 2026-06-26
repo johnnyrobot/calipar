@@ -20,11 +20,11 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     # Startup: create tables directly from the SQLModel metadata.
-    # NOTE: production should manage schema via Alembic (`alembic upgrade head`)
-    # rather than create_all, but the existing migration chain currently FAILS on a
-    # fresh Postgres DB (duplicate `auditaction` ENUM in 0002_add_audit_trail) and
-    # the migrations are Postgres-only (CREATE TYPE ... ENUM won't run on SQLite).
-    # Fix + verify the migrations before switching this over. Tracked as a follow-up.
+    # NOTE: the Alembic chain now applies cleanly to a fresh Postgres (the duplicate
+    # `auditaction` ENUM bug in 0002 is fixed and verified), BUT it does not yet cover
+    # every model — `ai_usage` and `rate_limit_config` have no migration. Generate
+    # migrations for those, then switch production to `alembic upgrade head`; until then
+    # create_all (which covers all models) remains the startup mechanism.
     create_db_and_tables()
     yield
     # Shutdown: cleanup if needed
