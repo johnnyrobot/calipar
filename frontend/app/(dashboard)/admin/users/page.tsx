@@ -188,9 +188,9 @@ export default function UserManagementPage() {
 
   const getStatusBadge = (status: User['status']) => {
     const statusConfig = {
-      active: { icon: CheckCircle2, className: 'text-green-600' },
-      inactive: { icon: XCircle, className: 'text-gray-400' },
-      pending: { icon: Clock, className: 'text-amber-500' },
+      active: { icon: CheckCircle2, className: 'text-status-approved' },
+      inactive: { icon: XCircle, className: 'text-brand-muted' },
+      pending: { icon: Clock, className: 'text-status-review' },
     };
     const config = statusConfig[status];
     const Icon = config.icon;
@@ -245,9 +245,9 @@ export default function UserManagementPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
-          <p className="text-gray-500">You don&apos;t have permission to access this page.</p>
+          <Shield className="w-16 h-16 text-brand-muted mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-brand-ink font-display tracking-tight mb-2">Access Denied</h2>
+          <p className="text-brand-muted">You don&apos;t have permission to access this page.</p>
         </div>
       </div>
     );
@@ -265,51 +265,51 @@ export default function UserManagementPage() {
         <div className="grid grid-cols-4 gap-4 mb-6">
           <Card className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-lamc-light rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-lamc-blue" />
+              <div className="w-12 h-12 bg-brand-primary-bg rounded-lg flex items-center justify-center">
+                <Users className="w-6 h-6 text-brand-ink" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{users.length}</p>
-                <p className="text-sm text-gray-500">Total Users</p>
+                <p className="text-2xl font-bold text-brand-ink font-mono tabular-nums">{users.length}</p>
+                <p className="text-sm text-brand-muted">Total Users</p>
               </div>
             </div>
           </Card>
           <Card className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-green-500" />
+              <div className="w-12 h-12 bg-brand-success-bg rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-status-approved" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-brand-ink font-mono tabular-nums">
                   {users.filter((u) => u.status === 'active').length}
                 </p>
-                <p className="text-sm text-gray-500">Active Users</p>
+                <p className="text-sm text-brand-muted">Active Users</p>
               </div>
             </div>
           </Card>
           <Card className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center">
-                <Clock className="w-6 h-6 text-amber-500" />
+              <div className="w-12 h-12 bg-brand-review-bg rounded-lg flex items-center justify-center">
+                <Clock className="w-6 h-6 text-status-review" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-brand-ink font-mono tabular-nums">
                   {users.filter((u) => u.status === 'pending').length}
                 </p>
-                <p className="text-sm text-gray-500">Pending Approval</p>
+                <p className="text-sm text-brand-muted">Pending Approval</p>
               </div>
             </div>
           </Card>
           <Card className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
-                <Shield className="w-6 h-6 text-red-500" />
+              <div className="w-12 h-12 bg-brand-primary-bg rounded-lg flex items-center justify-center">
+                <Shield className="w-6 h-6 text-brand-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-brand-ink font-mono tabular-nums">
                   {users.filter((u) => u.role === 'admin').length}
                 </p>
-                <p className="text-sm text-gray-500">Administrators</p>
+                <p className="text-sm text-brand-muted">Administrators</p>
               </div>
             </div>
           </Card>
@@ -320,20 +320,20 @@ export default function UserManagementPage() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-1">
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
                 <input
                   type="text"
                   placeholder="Search users by name, email, or department..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                  className="w-full pl-10 pr-4 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
                 />
               </div>
 
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                className="px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               >
                 {roleOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -345,7 +345,7 @@ export default function UserManagementPage() {
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                className="px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               >
                 {statusOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -366,44 +366,44 @@ export default function UserManagementPage() {
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-surface-2 border-b border-brand-line">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-brand-muted uppercase tracking-wider">
                     User
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-brand-muted uppercase tracking-wider">
                     Role
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-brand-muted uppercase tracking-wider">
                     Department
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-brand-muted uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-brand-muted uppercase tracking-wider">
                     Last Login
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-brand-muted uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-brand-line">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={user.id} className="hover:bg-surface-2 transition-colors">
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
+                          className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
                             user.role === 'admin'
-                              ? 'bg-red-500'
+                              ? 'bg-brand-primary text-white'
                               : user.role === 'dean'
-                              ? 'bg-blue-500'
+                              ? 'bg-brand-ink text-brand-on-ink'
                               : user.role === 'chair'
-                              ? 'bg-amber-500'
+                              ? 'bg-brand-ink text-brand-on-ink'
                               : user.role === 'proc'
-                              ? 'bg-green-500'
-                              : 'bg-gray-500'
+                              ? 'bg-[#F3E7FB] text-[#7A3FA0]'
+                              : 'bg-brand-ink text-brand-accent'
                           }`}
                         >
                           {user.fullName
@@ -412,20 +412,20 @@ export default function UserManagementPage() {
                             .join('')}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{user.fullName}</p>
-                          <p className="text-sm text-gray-500">{user.email}</p>
+                          <p className="font-medium text-brand-ink">{user.fullName}</p>
+                          <p className="text-sm text-brand-muted">{user.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-4">{getRoleBadge(user.role)}</td>
                     <td className="px-4 py-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Building className="w-4 h-4 text-gray-400" />
+                      <div className="flex items-center gap-2 text-sm text-brand-muted">
+                        <Building className="w-4 h-4 text-brand-muted" />
                         {user.department}
                       </div>
                     </td>
                     <td className="px-4 py-4">{getStatusBadge(user.status)}</td>
-                    <td className="px-4 py-4 text-sm text-gray-500">
+                    <td className="px-4 py-4 text-sm text-brand-muted">
                       {formatDate(user.lastLogin)}
                     </td>
                     <td className="px-4 py-4">
@@ -435,7 +435,7 @@ export default function UserManagementPage() {
                             setSelectedUser(user);
                             setShowEditModal(true);
                           }}
-                          className="p-2 text-gray-400 hover:text-lamc-blue hover:bg-gray-100 rounded-lg transition-colors"
+                          className="p-2 text-brand-muted hover:text-brand-primary hover:bg-surface-2 rounded-lg transition-colors"
                           title="Edit user"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -445,7 +445,7 @@ export default function UserManagementPage() {
                             setSelectedUser(user);
                             setShowDeleteModal(true);
                           }}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 text-brand-muted hover:text-destructive hover:bg-[#FBEAEA] rounded-lg transition-colors"
                           title="Delete user"
                           disabled={user.role === 'admin'}
                         >
@@ -461,8 +461,8 @@ export default function UserManagementPage() {
 
           {filteredUsers.length === 0 && (
             <div className="text-center py-12">
-              <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No users found matching your criteria</p>
+              <Users className="w-12 h-12 text-brand-muted mx-auto mb-3" />
+              <p className="text-brand-muted">No users found matching your criteria</p>
             </div>
           )}
         </Card>
@@ -472,16 +472,16 @@ export default function UserManagementPage() {
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add New User">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-brand-text mb-1">Full Name</label>
             <Input placeholder="Enter full name" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <label className="block text-sm font-medium text-brand-text mb-1">Email Address</label>
             <Input type="email" placeholder="user@ccc.edu" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue">
+            <label className="block text-sm font-medium text-brand-text mb-1">Role</label>
+            <select className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg">
               <option value="faculty">Faculty</option>
               <option value="chair">Department Chair</option>
               <option value="dean">Dean</option>
@@ -490,11 +490,11 @@ export default function UserManagementPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+            <label className="block text-sm font-medium text-brand-text mb-1">Department</label>
             <Input placeholder="Enter department name" />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-brand-line">
             <Button variant="outline" onClick={() => setShowAddModal(false)}>
               Cancel
             </Button>
@@ -518,18 +518,18 @@ export default function UserManagementPage() {
         {selectedUser && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              <label className="block text-sm font-medium text-brand-text mb-1">Full Name</label>
               <Input defaultValue={selectedUser.fullName} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+              <label className="block text-sm font-medium text-brand-text mb-1">Email Address</label>
               <Input type="email" defaultValue={selectedUser.email} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <label className="block text-sm font-medium text-brand-text mb-1">Role</label>
               <select
                 defaultValue={selectedUser.role}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               >
                 <option value="faculty">Faculty</option>
                 <option value="chair">Department Chair</option>
@@ -539,14 +539,14 @@ export default function UserManagementPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+              <label className="block text-sm font-medium text-brand-text mb-1">Department</label>
               <Input defaultValue={selectedUser.department} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className="block text-sm font-medium text-brand-text mb-1">Status</label>
               <select
                 defaultValue={selectedUser.status}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
@@ -554,7 +554,7 @@ export default function UserManagementPage() {
               </select>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <div className="flex justify-end gap-3 pt-4 border-t border-brand-line">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -584,21 +584,21 @@ export default function UserManagementPage() {
       >
         {selectedUser && (
           <div className="space-y-4">
-            <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 p-4 bg-[#FBEAEA] border border-destructive rounded-lg">
+              <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium text-red-800">Are you sure you want to delete this user?</p>
-                <p className="text-sm text-red-700 mt-1">
+                <p className="font-medium text-destructive">Are you sure you want to delete this user?</p>
+                <p className="text-sm text-destructive mt-1">
                   This action cannot be undone. All associated data will be permanently removed.
                 </p>
               </div>
             </div>
 
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-surface-2 rounded-lg">
               <div className="flex items-center gap-3">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
-                    selectedUser.role === 'admin' ? 'bg-red-500' : 'bg-gray-500'
+                    selectedUser.role === 'admin' ? 'bg-brand-primary' : 'bg-brand-ink'
                   }`}
                 >
                   {selectedUser.fullName
@@ -607,13 +607,13 @@ export default function UserManagementPage() {
                     .join('')}
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">{selectedUser.fullName}</p>
-                  <p className="text-sm text-gray-500">{selectedUser.email}</p>
+                  <p className="font-medium text-brand-ink">{selectedUser.fullName}</p>
+                  <p className="text-sm text-brand-muted">{selectedUser.email}</p>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <div className="flex justify-end gap-3 pt-4 border-t border-brand-line">
               <Button
                 variant="outline"
                 onClick={() => {

@@ -83,17 +83,17 @@ function ForgotPasswordForm() {
   // Success state
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-lamc-light to-white flex flex-col">
+      <div className="min-h-screen bg-gradient-to-b from-brand-primary-bg to-white flex flex-col">
         {/* Header */}
-        <header className="bg-lamc-blue text-white py-4">
+        <header className="bg-brand-ink text-white py-4">
           <div className="max-w-7xl mx-auto px-4">
             <Link href="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-lamc-gold rounded-lg flex items-center justify-center">
-                <span className="text-lamc-blue font-bold text-xl">L</span>
+              <div className="w-10 h-10 bg-brand-accent rounded-lg flex items-center justify-center">
+                <span className="text-brand-ink font-bold text-xl">L</span>
               </div>
               <div>
                 <h1 className="text-xl font-bold">CALIPAR</h1>
-                <p className="text-xs text-blue-200">Educational Institution</p>
+                <p className="text-xs text-brand-on-ink-muted">Educational Institution</p>
               </div>
             </Link>
           </div>
@@ -102,26 +102,26 @@ function ForgotPasswordForm() {
         {/* Success Message */}
         <main className="flex-1 flex items-center justify-center p-4">
           <div className="w-full max-w-md">
-            <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-10 h-10 text-green-600" />
+            <div className="bg-surface rounded-xl shadow-lg p-8 text-center">
+              <div className="w-16 h-16 bg-brand-success-bg rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-10 h-10 text-status-approved" />
               </div>
 
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold font-display tracking-tight text-brand-ink mb-2">
                 Check Your Email
               </h2>
 
-              <p className="text-gray-600 mb-6">
+              <p className="text-brand-muted mb-6">
                 We&apos;ve sent a password reset link to{' '}
-                <span className="font-medium text-gray-900">{email}</span>.
+                <span className="font-medium text-brand-ink">{email}</span>.
                 Please check your inbox and follow the instructions to reset your password.
               </p>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
-                <p className="text-sm text-blue-800">
+              <div className="bg-brand-primary-bg border border-brand-primary rounded-lg p-4 mb-6 text-left">
+                <p className="text-sm text-brand-primary">
                   <strong>Didn&apos;t receive the email?</strong>
                 </p>
-                <ul className="text-sm text-blue-700 mt-2 space-y-1">
+                <ul className="text-sm text-brand-primary mt-2 space-y-1">
                   <li>• Check your spam or junk folder</li>
                   <li>• Make sure you entered the correct email</li>
                   <li>• Wait a few minutes and try again</li>
@@ -140,17 +140,17 @@ function ForgotPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-lamc-light to-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-brand-primary-bg to-white flex flex-col">
       {/* Header */}
-      <header className="bg-lamc-blue text-white py-4">
+      <header className="bg-brand-ink text-white py-4">
         <div className="max-w-7xl mx-auto px-4">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-lamc-gold rounded-lg flex items-center justify-center">
-              <span className="text-lamc-blue font-bold text-xl">L</span>
+            <div className="w-10 h-10 bg-brand-accent rounded-lg flex items-center justify-center">
+              <span className="text-brand-ink font-bold text-xl">L</span>
             </div>
             <div>
               <h1 className="text-xl font-bold">CALIPAR</h1>
-              <p className="text-xs text-blue-200">California Community College</p>
+              <p className="text-xs text-brand-on-ink-muted">California Community College</p>
             </div>
           </Link>
         </div>
@@ -159,32 +159,32 @@ function ForgotPasswordForm() {
       {/* Reset Form */}
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="bg-surface rounded-xl shadow-lg p-8">
             {/* Back Link */}
             <Link
               href="/login"
-              className="inline-flex items-center text-sm text-gray-500 hover:text-lamc-blue mb-6 transition-colors"
+              className="inline-flex items-center text-sm text-brand-muted hover:text-brand-primary mb-6 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />
               Back to Login
             </Link>
 
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-lamc-light rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-8 h-8 text-lamc-blue" />
+              <div className="w-16 h-16 bg-brand-primary-bg rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-8 h-8 text-brand-ink" />
               </div>
-              <h2 className="text-2xl font-bold text-lamc-blue">
+              <h2 className="text-2xl font-bold font-display tracking-tight text-brand-ink">
                 Forgot Password?
               </h2>
-              <p className="text-gray-600 mt-2">
+              <p className="text-brand-muted mt-2">
                 Enter your email address and we&apos;ll send you a link to reset your password.
               </p>
             </div>
 
             {/* Development Mode Notice */}
             {!isFirebaseEnabled && (
-              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
+              <div className="mb-6 p-4 bg-brand-review-bg border border-brand-line rounded-lg">
+                <p className="text-sm text-status-review">
                   <strong>Development Mode:</strong> Firebase is not configured.
                   Password reset emails will be simulated.
                 </p>
@@ -192,9 +192,9 @@ function ForgotPasswordForm() {
             )}
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="mb-6 p-4 bg-[#FBEAEA] border border-destructive rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
 
@@ -202,7 +202,7 @@ function ForgotPasswordForm() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-brand-text mb-1"
                 >
                   Email Address
                 </label>
@@ -234,20 +234,20 @@ function ForgotPasswordForm() {
             </form>
 
             {/* Additional Help */}
-            <p className="text-center text-sm text-gray-500 mt-6">
+            <p className="text-center text-sm text-brand-muted mt-6">
               Remember your password?{' '}
-              <Link href="/login" className="text-lamc-blue hover:underline">
+              <Link href="/login" className="text-brand-primary hover:underline">
                 Sign In
               </Link>
             </p>
           </div>
 
           {/* Footer Link */}
-          <p className="text-center text-sm text-gray-500 mt-6">
+          <p className="text-center text-sm text-brand-muted mt-6">
             Need help?{' '}
             <a
               href="mailto:support@ccc.edu"
-              className="text-lamc-blue hover:underline"
+              className="text-brand-primary hover:underline"
             >
               Contact Support
             </a>
@@ -281,10 +281,10 @@ function getFirebaseErrorMessage(code: string): string {
 // Loading fallback for Suspense boundary
 function ForgotPasswordLoading() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-lamc-light to-white flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-b from-brand-primary-bg to-white flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
         <Spinner size="lg" />
-        <p className="text-sm text-gray-600">Loading...</p>
+        <p className="text-sm text-brand-muted">Loading...</p>
       </div>
     </div>
   );

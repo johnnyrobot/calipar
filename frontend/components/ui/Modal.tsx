@@ -92,7 +92,7 @@ export function Modal({
       {/* Modal Content */}
       <div
         className={cn(
-          'relative w-full bg-white rounded-xl shadow-xl',
+          'relative w-full bg-surface rounded-xl shadow-xl',
           'animate-in zoom-in-95 fade-in duration-200',
           sizeStyles[size],
           className
@@ -100,12 +100,12 @@ export function Modal({
       >
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-start justify-between p-4 border-b border-gray-200">
+          <div className="flex items-start justify-between p-4 border-b border-brand-line">
             <div>
               {title && (
                 <h2
                   id="modal-title"
-                  className="text-lg font-semibold text-gray-900"
+                  className="text-lg font-semibold text-brand-ink font-display tracking-tight"
                 >
                   {title}
                 </h2>
@@ -113,7 +113,7 @@ export function Modal({
               {description && (
                 <p
                   id="modal-description"
-                  className="mt-1 text-sm text-gray-500"
+                  className="mt-1 text-sm text-brand-muted"
                 >
                   {description}
                 </p>
@@ -122,7 +122,7 @@ export function Modal({
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
+                className="p-1 rounded-md text-brand-muted hover:text-brand-ink hover:bg-surface-2 transition-colors"
                 aria-label="Close modal"
               >
                 <X className="h-5 w-5" />
@@ -138,7 +138,7 @@ export function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+          <div className="flex items-center justify-end gap-3 p-4 border-t border-brand-line bg-surface-2 rounded-b-xl">
             {footer}
           </div>
         )}
@@ -182,7 +182,7 @@ export function ConfirmDialog({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-brand-text bg-surface border border-brand-line rounded-lg hover:bg-surface-2 disabled:opacity-50"
           >
             {cancelText}
           </button>
@@ -192,8 +192,8 @@ export function ConfirmDialog({
             className={cn(
               'px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50',
               variant === 'danger'
-                ? 'bg-red-600 hover:bg-red-700'
-                : 'bg-lamc-blue hover:bg-blue-800'
+                ? 'bg-destructive hover:bg-destructive'
+                : 'bg-brand-primary hover:bg-brand-primary-hover'
             )}
           >
             {isLoading ? 'Loading...' : confirmText}
@@ -201,7 +201,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <p className="text-gray-600">{message}</p>
+      <p className="text-brand-muted">{message}</p>
     </Modal>
   );
 }

@@ -34,10 +34,10 @@ interface ProtectedRouteProps {
  */
 function DefaultLoadingFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-lamc-light">
+    <div className="min-h-screen flex items-center justify-center bg-brand-primary-bg">
       <div className="text-center">
         <Spinner size="lg" className="mx-auto mb-4" />
-        <p className="text-gray-600">Verifying authentication...</p>
+        <p className="text-brand-muted">Verifying authentication...</p>
       </div>
     </div>
   );
@@ -50,11 +50,11 @@ function AccessDenied({ requiredRoles }: { requiredRoles: string[] }) {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-lamc-light">
+    <div className="min-h-screen flex items-center justify-center bg-brand-primary-bg">
       <div className="text-center max-w-md mx-auto p-6">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 bg-[#FBEAEA] rounded-full flex items-center justify-center mx-auto mb-4">
           <svg
-            className="w-8 h-8 text-red-500"
+            className="w-8 h-8 text-destructive"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -67,8 +67,8 @@ function AccessDenied({ requiredRoles }: { requiredRoles: string[] }) {
             />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Access Denied</h2>
-        <p className="text-gray-600 mb-4">
+        <h2 className="text-xl font-bold text-brand-ink font-display tracking-tight mb-2">Access Denied</h2>
+        <p className="text-brand-muted mb-4">
           You don&apos;t have permission to access this page.
           {requiredRoles.length > 0 && (
             <span className="block mt-1 text-sm">
@@ -78,7 +78,7 @@ function AccessDenied({ requiredRoles }: { requiredRoles: string[] }) {
         </p>
         <button
           onClick={() => router.push('/dashboard')}
-          className="px-4 py-2 bg-lamc-blue text-white rounded-lg hover:bg-blue-800 transition-colors"
+          className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary-hover transition-colors"
         >
           Go to Dashboard
         </button>

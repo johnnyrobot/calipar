@@ -275,8 +275,8 @@ export function RichTextEditor({
         title={button.label}
         className={`p-1.5 rounded transition-colors ${
           isActive
-            ? 'bg-lamc-blue text-white'
-            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            ? 'bg-brand-primary text-white'
+            : 'text-brand-muted hover:bg-surface-2 hover:text-brand-ink'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <Icon className="w-4 h-4" />
@@ -284,19 +284,19 @@ export function RichTextEditor({
     );
   };
 
-  const Divider = () => <div className="w-px h-6 bg-gray-200 mx-1" />;
+  const Divider = () => <div className="w-px h-6 bg-surface-2 mx-1" />;
 
   return (
-    <div className={`border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-lamc-blue focus-within:border-transparent ${className}`}>
+    <div className={`border border-brand-line rounded-lg overflow-hidden focus-within:border-brand-primary focus-within:ring-[3px] focus-within:ring-brand-primary-bg ${className}`}>
       {/* Toolbar */}
-      <div className="flex items-center gap-0.5 px-2 py-1.5 bg-gray-50 border-b border-gray-200 flex-wrap">
+      <div className="flex items-center gap-0.5 px-2 py-1.5 bg-surface-2 border-b border-brand-line flex-wrap">
         {/* Undo/Redo */}
         <button
           type="button"
           onClick={handleUndo}
           disabled={disabled || !canUndo}
           title="Undo (Ctrl+Z)"
-          className={`p-1.5 rounded transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900 ${
+          className={`p-1.5 rounded transition-colors text-brand-muted hover:bg-surface-2 hover:text-brand-ink ${
             (!canUndo || disabled) ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
@@ -307,7 +307,7 @@ export function RichTextEditor({
           onClick={handleRedo}
           disabled={disabled || !canRedo}
           title="Redo (Ctrl+Y)"
-          className={`p-1.5 rounded transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900 ${
+          className={`p-1.5 rounded transition-colors text-brand-muted hover:bg-surface-2 hover:text-brand-ink ${
             (!canRedo || disabled) ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
@@ -350,7 +350,7 @@ export function RichTextEditor({
           onClick={insertLink}
           disabled={disabled}
           title="Insert Link"
-          className={`p-1.5 rounded transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900 ${
+          className={`p-1.5 rounded transition-colors text-brand-muted hover:bg-surface-2 hover:text-brand-ink ${
             disabled ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
@@ -361,7 +361,7 @@ export function RichTextEditor({
           onClick={removeLink}
           disabled={disabled}
           title="Remove Link"
-          className={`p-1.5 rounded transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900 ${
+          className={`p-1.5 rounded transition-colors text-brand-muted hover:bg-surface-2 hover:text-brand-ink ${
             disabled ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
@@ -381,7 +381,7 @@ export function RichTextEditor({
           onPaste={handlePaste}
           onSelect={updateActiveFormats}
           className={`px-4 py-3 outline-none prose prose-sm max-w-none ${
-            disabled ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'
+            disabled ? 'bg-surface-2 cursor-not-allowed' : 'bg-surface'
           }`}
           style={{ minHeight }}
           suppressContentEditableWarning
@@ -389,7 +389,7 @@ export function RichTextEditor({
 
         {/* Placeholder */}
         {(!value || value === '<br>' || value === '') && !isFocused && (
-          <div className="absolute top-3 left-4 text-gray-400 pointer-events-none">
+          <div className="absolute top-3 left-4 text-brand-muted pointer-events-none">
             {placeholder}
           </div>
         )}
@@ -402,14 +402,14 @@ export function RichTextEditor({
           font-weight: 600;
           margin-top: 1rem;
           margin-bottom: 0.5rem;
-          color: #111827;
+          color: #0D2236;
         }
         .prose h3 {
           font-size: 1.1rem;
           font-weight: 600;
           margin-top: 0.75rem;
           margin-bottom: 0.5rem;
-          color: #374151;
+          color: #1B3A57;
         }
         .prose p {
           margin-bottom: 0.5rem;
@@ -425,21 +425,21 @@ export function RichTextEditor({
           list-style-type: decimal;
         }
         .prose blockquote {
-          border-left: 3px solid #d1a63c;
+          border-left: 3px solid #E0A100;
           padding-left: 1rem;
           margin: 0.75rem 0;
           font-style: italic;
-          color: #4b5563;
-          background-color: #fef9e7;
+          color: #5B6B80;
+          background-color: #FBF1DE;
           padding: 0.5rem 1rem;
           border-radius: 0 0.25rem 0.25rem 0;
         }
         .prose a {
-          color: #003366;
+          color: #1F5BD0;
           text-decoration: underline;
         }
         .prose a:hover {
-          color: #002244;
+          color: #1A4FB5;
         }
       `}</style>
     </div>

@@ -281,15 +281,15 @@ Could you provide more details about what specific aspect you'd like to explore?
                 }`}
               >
                 {message.role === 'assistant' && (
-                  <div className="w-8 h-8 bg-lamc-blue rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center flex-shrink-0">
                     <Bot className="w-5 h-5 text-white" />
                   </div>
                 )}
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                     message.role === 'user'
-                      ? 'bg-lamc-blue text-white rounded-br-md'
-                      : 'bg-gray-100 text-gray-900 rounded-bl-md'
+                      ? 'bg-brand-primary text-white rounded-br-md'
+                      : 'bg-surface-2 text-brand-text rounded-bl-md'
                   }`}
                 >
                   <div className="prose prose-sm max-w-none">
@@ -302,18 +302,18 @@ Could you provide more details about what specific aspect you'd like to explore?
                     ))}
                   </div>
                   {message.citations && message.citations.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-xs font-medium text-gray-500 mb-2">Sources:</p>
+                    <div className="mt-3 pt-3 border-t border-brand-line">
+                      <p className="text-xs font-medium text-brand-muted mb-2">Sources:</p>
                       <div className="space-y-1">
                         {message.citations.map((citation, i) => (
                           <div
                             key={i}
-                            className="flex items-center gap-2 text-xs text-gray-600 hover:text-lamc-blue cursor-pointer"
+                            className="flex items-center gap-2 text-xs text-brand-muted hover:text-brand-primary cursor-pointer"
                           >
                             <FileText className="w-3 h-3" />
                             <span>{citation.source}</span>
                             {citation.page && (
-                              <span className="text-gray-400">p. {citation.page}</span>
+                              <span className="text-brand-muted">p. {citation.page}</span>
                             )}
                             <ExternalLink className="w-3 h-3" />
                           </div>
@@ -323,8 +323,8 @@ Could you provide more details about what specific aspect you'd like to explore?
                   )}
                 </div>
                 {message.role === 'user' && (
-                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                    <User className="w-5 h-5 text-gray-600" />
+                  <div className="w-8 h-8 bg-surface-2 rounded-full flex items-center justify-center flex-shrink-0">
+                    <User className="w-5 h-5 text-brand-muted" />
                   </div>
                 )}
               </div>
@@ -332,13 +332,13 @@ Could you provide more details about what specific aspect you'd like to explore?
 
             {isLoading && (
               <div className="flex gap-3 justify-start">
-                <div className="w-8 h-8 bg-lamc-blue rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center flex-shrink-0">
                   <Bot className="w-5 h-5 text-white" />
                 </div>
-                <div className="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3">
+                <div className="bg-surface-2 rounded-2xl rounded-bl-md px-4 py-3">
                   <div className="flex items-center gap-2">
                     <Spinner size="sm" />
-                    <span className="text-sm text-gray-500">Thinking...</span>
+                    <span className="text-sm text-brand-muted">Thinking...</span>
                   </div>
                 </div>
               </div>
@@ -351,7 +351,7 @@ Could you provide more details about what specific aspect you'd like to explore?
         {/* Suggested Questions */}
         {localMessages.length <= 2 && (
           <div className="mb-4">
-            <p className="text-sm text-gray-500 mb-2 flex items-center gap-2">
+            <p className="text-sm text-brand-muted mb-2 flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
               Suggested questions:
             </p>
@@ -360,7 +360,7 @@ Could you provide more details about what specific aspect you'd like to explore?
                 <button
                   key={i}
                   onClick={() => handleSuggestedQuestion(question)}
-                  className="px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-full hover:border-lamc-blue hover:text-lamc-blue transition-colors"
+                  className="px-3 py-1.5 text-sm bg-surface border border-brand-line rounded-full hover:border-brand-primary hover:text-brand-primary transition-colors"
                 >
                   {question}
                 </button>
@@ -378,13 +378,13 @@ Could you provide more details about what specific aspect you'd like to explore?
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Ask about ACCJC standards, ISMP goals, or program review guidance..."
-              className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-lamc-blue focus:border-transparent"
+              className="w-full px-4 py-3 pr-12 border border-brand-line bg-surface rounded-xl focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               disabled={isLoading}
             />
             <button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-lamc-blue hover:bg-lamc-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-brand-primary hover:bg-brand-primary-bg rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-5 h-5" />
             </button>
@@ -398,7 +398,7 @@ Could you provide more details about what specific aspect you'd like to explore?
           </Button>
         </div>
 
-        <p className="text-xs text-center text-gray-400 mt-3">
+        <p className="text-xs text-center text-brand-muted mt-3">
           Mission-Bot uses RAG to retrieve information from ACCJC standards and CCC institutional documents.
           Always verify critical information with official sources.
         </p>

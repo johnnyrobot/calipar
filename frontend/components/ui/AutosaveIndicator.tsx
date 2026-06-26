@@ -19,16 +19,16 @@ export function AutosaveIndicator({
   const getIcon = () => {
     switch (status) {
       case 'saving':
-        return <Loader2 className="w-4 h-4 animate-spin text-lamc-blue" />;
+        return <Loader2 className="w-4 h-4 animate-spin text-brand-primary" />;
       case 'saved':
-        return <Check className="w-4 h-4 text-green-500" />;
+        return <Check className="w-4 h-4 text-status-approved" />;
       case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
+        return <AlertCircle className="w-4 h-4 text-destructive" />;
       default:
         if (hasUnsavedChanges) {
-          return <Cloud className="w-4 h-4 text-amber-500" />;
+          return <Cloud className="w-4 h-4 text-status-review" />;
         }
-        return <Cloud className="w-4 h-4 text-gray-400" />;
+        return <Cloud className="w-4 h-4 text-brand-muted" />;
     }
   };
 
@@ -51,16 +51,16 @@ export function AutosaveIndicator({
   const getStatusClasses = () => {
     switch (status) {
       case 'saving':
-        return 'text-lamc-blue bg-blue-50';
+        return 'text-brand-primary bg-brand-primary-bg';
       case 'saved':
-        return 'text-green-600 bg-green-50';
+        return 'text-status-approved bg-brand-success-bg';
       case 'error':
-        return 'text-red-600 bg-red-50';
+        return 'text-destructive bg-[#FBEAEA]';
       default:
         if (hasUnsavedChanges) {
-          return 'text-amber-600 bg-amber-50';
+          return 'text-status-review bg-brand-review-bg';
         }
-        return 'text-gray-500 bg-gray-50';
+        return 'text-brand-muted bg-surface-2';
     }
   };
 

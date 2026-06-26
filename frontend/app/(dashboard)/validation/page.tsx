@@ -278,23 +278,23 @@ export default function ValidationPage() {
 
       <div className="flex h-[calc(100vh-8rem)]">
         {/* Left Panel - Review List */}
-        <aside className="w-80 bg-white border-r border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-200">
+        <aside className="w-80 bg-surface border-r border-brand-line flex flex-col">
+          <div className="p-4 border-b border-brand-line">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
               <input
                 type="text"
                 placeholder="Search reviews..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                className="w-full pl-10 pr-4 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               />
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto">
             <div className="p-4">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              <h3 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">
                 Awaiting Validation ({pendingReviews.length})
               </h3>
               <div className="space-y-2">
@@ -304,20 +304,20 @@ export default function ValidationPage() {
                     onClick={() => setSelectedReview(review)}
                     className={`w-full p-3 rounded-lg text-left transition-colors ${
                       selectedReview?.id === review.id
-                        ? 'bg-lamc-light border-2 border-lamc-blue'
-                        : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
+                        ? 'bg-brand-primary-bg border-2 border-brand-primary'
+                        : 'bg-surface-2 border border-brand-line hover:border-brand-line'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{review.orgName}</p>
-                        <p className="text-xs text-gray-500">{review.authorName}</p>
+                        <p className="font-medium text-brand-ink truncate">{review.orgName}</p>
+                        <p className="text-xs text-brand-muted">{review.authorName}</p>
                       </div>
                       <Badge variant="warning" className="text-xs flex-shrink-0">
                         {review.reviewType === 'comprehensive' ? '6-Year' : 'Annual'}
                       </Badge>
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">
+                    <p className="text-xs text-brand-muted mt-2">
                       Submitted {new Date(review.submittedAt).toLocaleDateString()}
                     </p>
                   </button>
@@ -326,21 +326,21 @@ export default function ValidationPage() {
 
               {filteredReviews.filter(r => r.status === 'validated').length > 0 && (
                 <>
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-3">
+                  <h3 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mt-6 mb-3">
                     Recently Validated
                   </h3>
                   <div className="space-y-2">
                     {filteredReviews.filter(r => r.status === 'validated').map((review) => (
                       <div
                         key={review.id}
-                        className="p-3 rounded-lg bg-green-50 border border-green-200"
+                        className="p-3 rounded-lg bg-brand-success-bg border border-brand-line"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{review.orgName}</p>
-                            <p className="text-xs text-gray-500">{review.authorName}</p>
+                            <p className="font-medium text-brand-ink truncate">{review.orgName}</p>
+                            <p className="text-xs text-brand-muted">{review.authorName}</p>
                           </div>
-                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <CheckCircle2 className="w-4 h-4 text-status-approved flex-shrink-0" />
                         </div>
                       </div>
                     ))}
@@ -352,15 +352,15 @@ export default function ValidationPage() {
         </aside>
 
         {/* Right Panel - Rubric Scoring */}
-        <main className="flex-1 overflow-y-auto bg-gray-50">
+        <main className="flex-1 overflow-y-auto bg-surface-2">
           {selectedReview ? (
             <div className="p-6">
               {/* Review Header */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+              <div className="bg-surface rounded-lg border border-brand-line p-4 mb-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">{selectedReview.orgName}</h2>
-                    <p className="text-sm text-gray-500">
+                    <h2 className="text-xl font-bold text-brand-ink font-display tracking-tight">{selectedReview.orgName}</h2>
+                    <p className="text-sm text-brand-muted">
                       {selectedReview.cycleYear} {selectedReview.reviewType === 'comprehensive' ? 'Comprehensive' : 'Annual'} Review by {selectedReview.authorName}
                     </p>
                   </div>
@@ -375,12 +375,12 @@ export default function ValidationPage() {
                 </div>
 
                 {/* Score Summary */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="mt-4 pt-4 border-t border-brand-line">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-500">Total Score</p>
-                      <p className="text-3xl font-bold text-lamc-blue">
-                        {getTotalScore()} <span className="text-lg text-gray-400">/ {getMaxScore()}</span>
+                      <p className="text-sm text-brand-muted">Total Score</p>
+                      <p className="text-3xl font-bold text-brand-ink font-mono tabular-nums">
+                        {getTotalScore()} <span className="text-lg text-brand-muted">/ {getMaxScore()}</span>
                       </p>
                     </div>
                     <div className="flex gap-4">
@@ -389,17 +389,17 @@ export default function ValidationPage() {
                         const percentage = max > 0 ? (earned / max) * 100 : 0;
                         return (
                           <div key={cat.id} className="text-center">
-                            <p className="text-xs text-gray-500 mb-1">{cat.title.split(' ')[0]}</p>
-                            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <p className="text-xs text-brand-muted mb-1">{cat.title.split(' ')[0]}</p>
+                            <div className="w-16 h-2 bg-surface-2 rounded-full overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all ${
-                                  percentage >= 75 ? 'bg-green-500' :
-                                  percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                                  percentage >= 75 ? 'bg-status-approved' :
+                                  percentage >= 50 ? 'bg-status-review' : 'bg-destructive'
                                 }`}
                                 style={{ width: `${percentage}%` }}
                               />
                             </div>
-                            <p className="text-xs font-medium mt-1">{earned}/{max}</p>
+                            <p className="text-xs font-medium mt-1 font-mono tabular-nums">{earned}/{max}</p>
                           </div>
                         );
                       })}
@@ -419,37 +419,37 @@ export default function ValidationPage() {
                     <Card key={category.id} className="overflow-hidden">
                       <button
                         onClick={() => toggleCategory(category.id)}
-                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                        className="w-full flex items-center justify-between p-4 hover:bg-surface-2 transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-lamc-light rounded-lg flex items-center justify-center">
-                            <category.icon className="w-5 h-5 text-lamc-blue" />
+                          <div className="w-10 h-10 bg-brand-primary-bg rounded-lg flex items-center justify-center">
+                            <category.icon className="w-5 h-5 text-brand-ink" />
                           </div>
                           <div className="text-left">
-                            <h3 className="font-semibold text-gray-900">{category.title}</h3>
-                            <p className="text-sm text-gray-500">
+                            <h3 className="font-semibold text-brand-ink font-display tracking-tight">{category.title}</h3>
+                            <p className="text-sm text-brand-muted">
                               {categoryCriteria.length} criteria &bull; {earned}/{max} points
                             </p>
                           </div>
                         </div>
                         {isExpanded ? (
-                          <ChevronDown className="w-5 h-5 text-gray-400" />
+                          <ChevronDown className="w-5 h-5 text-brand-muted" />
                         ) : (
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                          <ChevronRight className="w-5 h-5 text-brand-muted" />
                         )}
                       </button>
 
                       {isExpanded && (
-                        <div className="border-t border-gray-200">
+                        <div className="border-t border-brand-line">
                           {categoryCriteria.map((criterion, index) => (
                             <div
                               key={criterion.id}
-                              className={`p-4 ${index !== categoryCriteria.length - 1 ? 'border-b border-gray-100' : ''}`}
+                              className={`p-4 ${index !== categoryCriteria.length - 1 ? 'border-b border-brand-line' : ''}`}
                             >
                               <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="font-medium text-gray-900">{criterion.criterion}</h4>
+                                    <h4 className="font-medium text-brand-ink">{criterion.criterion}</h4>
                                     {criterion.accjcStandard && (
                                       <Badge variant="info" className="text-xs">ACCJC {criterion.accjcStandard}</Badge>
                                     )}
@@ -457,7 +457,7 @@ export default function ValidationPage() {
                                       <Badge variant="warning" className="text-xs">ISMP Goal {criterion.ismpGoal}</Badge>
                                     )}
                                   </div>
-                                  <p className="text-sm text-gray-500">{criterion.description}</p>
+                                  <p className="text-sm text-brand-muted">{criterion.description}</p>
                                 </div>
 
                                 {/* Score Buttons */}
@@ -466,10 +466,10 @@ export default function ValidationPage() {
                                     <button
                                       key={score}
                                       onClick={() => handleScoreChange(criterion.id, score)}
-                                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                                      className={`w-8 h-8 rounded-lg text-sm font-medium font-mono tabular-nums transition-colors ${
                                         scores[criterion.id]?.score === score
-                                          ? 'bg-lamc-blue text-white'
-                                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                          ? 'bg-brand-primary text-brand-on-ink'
+                                          : 'bg-surface-2 text-brand-muted hover:bg-surface-2'
                                       }`}
                                     >
                                       {score}
@@ -481,13 +481,13 @@ export default function ValidationPage() {
                               {/* Comment Input */}
                               <div className="mt-3">
                                 <div className="relative">
-                                  <MessageSquare className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                                  <MessageSquare className="absolute left-3 top-2.5 w-4 h-4 text-brand-muted" />
                                   <input
                                     type="text"
                                     placeholder="Add feedback for this criterion..."
                                     value={scores[criterion.id]?.comment || ''}
                                     onChange={(e) => handleCommentChange(criterion.id, e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                                    className="w-full pl-10 pr-4 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
                                   />
                                 </div>
                               </div>
@@ -502,7 +502,7 @@ export default function ValidationPage() {
 
               {/* Overall Comments */}
               <Card className="mt-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Overall Comments</h3>
+                <h3 className="font-semibold text-brand-ink font-display tracking-tight mb-3">Overall Comments</h3>
                 <Textarea
                   value={overallComments}
                   onChange={(e) => setOverallComments(e.target.value)}
@@ -525,9 +525,9 @@ export default function ValidationPage() {
           ) : (
             /* No Review Selected */
             <div className="flex flex-col items-center justify-center h-full text-center p-8">
-              <ClipboardCheck className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Select a Review</h3>
-              <p className="text-gray-500 max-w-md">
+              <ClipboardCheck className="w-16 h-16 text-brand-muted mb-4" />
+              <h3 className="text-xl font-semibold text-brand-ink font-display tracking-tight mb-2">Select a Review</h3>
+              <p className="text-brand-muted max-w-md">
                 Choose a program review from the left panel to begin the PROC validation process.
                 Each review is scored against the rubric aligned with ACCJC standards and ISMP goals.
               </p>
@@ -543,30 +543,30 @@ export default function ValidationPage() {
         title="Submit Validation"
       >
         <div className="space-y-4">
-          <p className="text-gray-600">
+          <p className="text-brand-muted">
             Are you sure you want to submit this validation? This will update the review status
             to &quot;Validated&quot; and notify the author.
           </p>
 
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-surface-2 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500">Final Score</span>
-              <span className="text-2xl font-bold text-lamc-blue">{getTotalScore()}/{getMaxScore()}</span>
+              <span className="text-sm text-brand-muted">Final Score</span>
+              <span className="text-2xl font-bold text-brand-ink font-mono tabular-nums">{getTotalScore()}/{getMaxScore()}</span>
             </div>
-            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-surface-2 rounded-full overflow-hidden">
               <div
-                className="h-full bg-lamc-blue rounded-full transition-all"
+                className="h-full bg-brand-primary rounded-full transition-all"
                 style={{ width: `${(getTotalScore() / getMaxScore()) * 100}%` }}
               />
             </div>
           </div>
 
           {Object.values(scores).filter(s => s.score < 2).length > 0 && (
-            <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 p-3 bg-brand-review-bg border border-brand-line rounded-lg">
+              <AlertCircle className="w-5 h-5 text-status-review flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium text-amber-800">Low Scores Detected</p>
-                <p className="text-sm text-amber-700">
+                <p className="font-medium text-status-review">Low Scores Detected</p>
+                <p className="text-sm text-status-review">
                   {Object.values(scores).filter(s => s.score < 2).length} criteria received scores below 2.
                   Consider adding specific feedback for improvement areas.
                 </p>

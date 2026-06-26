@@ -121,26 +121,26 @@ export default function NewReviewPage() {
         {/* Back Link */}
         <Link
           href="/reviews"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-lamc-blue transition-colors mb-6"
+          className="inline-flex items-center gap-2 text-brand-muted hover:text-brand-primary transition-colors mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Reviews</span>
         </Link>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-700">{error}</p>
+          <div className="mb-6 p-4 bg-[#FBEAEA] border border-brand-line rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-destructive">{error}</p>
           </div>
         )}
 
         {/* Step 1: Select Department */}
         <Card className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-lamc-blue text-white rounded-full flex items-center justify-center font-semibold text-sm">
+            <div className="w-8 h-8 bg-brand-primary text-white rounded-full flex items-center justify-center font-semibold text-sm">
               1
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Select Department</h2>
+            <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight">Select Department</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -150,24 +150,24 @@ export default function NewReviewPage() {
                 onClick={() => setSelectedDepartment(dept.id)}
                 className={`flex items-start gap-3 p-4 rounded-lg border-2 text-left transition-all ${
                   selectedDepartment === dept.id
-                    ? 'border-lamc-blue bg-lamc-light'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-brand-primary bg-brand-primary-bg'
+                    : 'border-brand-line hover:border-brand-line'
                 }`}
               >
                 <Building2 className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                  selectedDepartment === dept.id ? 'text-lamc-blue' : 'text-gray-400'
+                  selectedDepartment === dept.id ? 'text-brand-primary' : 'text-brand-muted'
                 }`} />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900">{dept.name}</p>
-                  <p className="text-sm text-gray-500">{dept.type}</p>
+                  <p className="font-medium text-brand-ink">{dept.name}</p>
+                  <p className="text-sm text-brand-muted">{dept.type}</p>
                   {dept.lastReviewYear && (
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-brand-muted mt-1">
                       Last review: {dept.lastReviewYear}
                     </p>
                   )}
                 </div>
                 {selectedDepartment === dept.id && (
-                  <CheckCircle2 className="w-5 h-5 text-lamc-blue flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-brand-primary flex-shrink-0" />
                 )}
               </button>
             ))}
@@ -177,15 +177,15 @@ export default function NewReviewPage() {
         {/* Step 2: Review Cycle */}
         <Card className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-lamc-blue text-white rounded-full flex items-center justify-center font-semibold text-sm">
+            <div className="w-8 h-8 bg-brand-primary text-white rounded-full flex items-center justify-center font-semibold text-sm">
               2
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Review Cycle</h2>
+            <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight">Review Cycle</h2>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-brand-text mb-2">
                 Academic Year
               </label>
               <div className="flex gap-3">
@@ -195,8 +195,8 @@ export default function NewReviewPage() {
                     onClick={() => setCycleYear(year)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
                       cycleYear === year
-                        ? 'border-lamc-blue bg-lamc-light text-lamc-blue'
-                        : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                        ? 'border-brand-primary bg-brand-primary-bg text-brand-primary'
+                        : 'border-brand-line hover:border-brand-line text-brand-text'
                     }`}
                   >
                     <Calendar className="w-4 h-4" />
@@ -207,7 +207,7 @@ export default function NewReviewPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-brand-text mb-2">
                 Review Type
               </label>
               <div className="flex gap-3">
@@ -215,15 +215,15 @@ export default function NewReviewPage() {
                   onClick={() => setReviewType('comprehensive')}
                   className={`flex-1 p-4 rounded-lg border-2 text-left transition-all ${
                     reviewType === 'comprehensive'
-                      ? 'border-lamc-blue bg-lamc-light'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-brand-primary bg-brand-primary-bg'
+                      : 'border-brand-line hover:border-brand-line'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <FileText className={`w-5 h-5 ${reviewType === 'comprehensive' ? 'text-lamc-blue' : 'text-gray-400'}`} />
-                    <span className="font-medium text-gray-900">Comprehensive</span>
+                    <FileText className={`w-5 h-5 ${reviewType === 'comprehensive' ? 'text-brand-primary' : 'text-brand-muted'}`} />
+                    <span className="font-medium text-brand-ink">Comprehensive</span>
                   </div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-brand-muted">
                     Full program review with all sections (required every 6 years)
                   </p>
                 </button>
@@ -232,22 +232,22 @@ export default function NewReviewPage() {
                   onClick={() => setReviewType('annual')}
                   className={`flex-1 p-4 rounded-lg border-2 text-left transition-all ${
                     reviewType === 'annual'
-                      ? 'border-lamc-blue bg-lamc-light'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-brand-primary bg-brand-primary-bg'
+                      : 'border-brand-line hover:border-brand-line'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <FileText className={`w-5 h-5 ${reviewType === 'annual' ? 'text-lamc-blue' : 'text-gray-400'}`} />
-                    <span className="font-medium text-gray-900">Annual Update</span>
+                    <FileText className={`w-5 h-5 ${reviewType === 'annual' ? 'text-brand-primary' : 'text-brand-muted'}`} />
+                    <span className="font-medium text-brand-ink">Annual Update</span>
                   </div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-brand-muted">
                     Brief update on goals and action plans
                   </p>
                 </button>
               </div>
 
               {selectedDept && (
-                <div className="mt-3 flex items-start gap-2 text-sm text-blue-700 bg-blue-50 p-3 rounded-lg">
+                <div className="mt-3 flex items-start gap-2 text-sm text-brand-primary bg-brand-primary-bg border border-brand-line p-3 rounded-lg">
                   <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>
                     Based on the 6-year cycle, a <strong>{getRecommendedType(selectedDept)}</strong> review
@@ -262,57 +262,57 @@ export default function NewReviewPage() {
         {/* Step 3: Template Information */}
         <Card className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-lamc-blue text-white rounded-full flex items-center justify-center font-semibold text-sm">
+            <div className="w-8 h-8 bg-brand-primary text-white rounded-full flex items-center justify-center font-semibold text-sm">
               3
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Review Template</h2>
+            <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight">Review Template</h2>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-medium text-gray-900 mb-3">
+          <div className="bg-surface-2 rounded-lg p-4">
+            <h3 className="font-display tracking-tight font-medium text-brand-ink mb-3">
               {reviewType === 'comprehensive' ? 'Comprehensive Review' : 'Annual Update'} Sections
             </h3>
 
             <div className="grid grid-cols-2 gap-3">
               {reviewType === 'comprehensive' ? (
                 <>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <div className="flex items-center gap-2 text-sm text-brand-text">
+                    <CheckCircle2 className="w-4 h-4 text-status-approved" />
                     Program Overview
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <div className="flex items-center gap-2 text-sm text-brand-text">
+                    <CheckCircle2 className="w-4 h-4 text-status-approved" />
                     Student Success & Outcomes
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <div className="flex items-center gap-2 text-sm text-brand-text">
+                    <CheckCircle2 className="w-4 h-4 text-status-approved" />
                     Curriculum Review
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <div className="flex items-center gap-2 text-sm text-brand-text">
+                    <CheckCircle2 className="w-4 h-4 text-status-approved" />
                     Equity Analysis
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <div className="flex items-center gap-2 text-sm text-brand-text">
+                    <CheckCircle2 className="w-4 h-4 text-status-approved" />
                     Action Plans & Goals
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <div className="flex items-center gap-2 text-sm text-brand-text">
+                    <CheckCircle2 className="w-4 h-4 text-status-approved" />
                     Resource Needs
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <div className="flex items-center gap-2 text-sm text-brand-text">
+                    <CheckCircle2 className="w-4 h-4 text-status-approved" />
                     Progress on Prior Goals
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <div className="flex items-center gap-2 text-sm text-brand-text">
+                    <CheckCircle2 className="w-4 h-4 text-status-approved" />
                     Updated Action Plans
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <div className="flex items-center gap-2 text-sm text-brand-text">
+                    <CheckCircle2 className="w-4 h-4 text-status-approved" />
                     Resource Updates
                   </div>
                 </>
@@ -320,8 +320,8 @@ export default function NewReviewPage() {
             </div>
 
             {selectedDept?.type === 'CTE' && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-sm text-amber-700 flex items-center gap-2">
+              <div className="mt-4 pt-4 border-t border-brand-line">
+                <p className="text-sm text-status-review flex items-center gap-2">
                   <AlertCircle className="w-4 h-4" />
                   CTE programs require additional sections: Labor Market Analysis, Advisory Board Minutes
                 </p>
@@ -332,29 +332,29 @@ export default function NewReviewPage() {
 
         {/* Summary & Create Button */}
         <Card>
-          <h3 className="font-semibold text-gray-900 mb-4">Summary</h3>
+          <h3 className="font-display tracking-tight font-semibold text-brand-ink mb-4">Summary</h3>
 
           {selectedDept ? (
             <div className="space-y-3 mb-6">
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-gray-500">Department</span>
-                <span className="font-medium text-gray-900">{selectedDept.name}</span>
+              <div className="flex items-center justify-between py-2 border-b border-brand-line">
+                <span className="text-brand-muted">Department</span>
+                <span className="font-medium text-brand-ink">{selectedDept.name}</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-gray-500">Academic Year</span>
-                <span className="font-medium text-gray-900">{cycleYear}</span>
+              <div className="flex items-center justify-between py-2 border-b border-brand-line">
+                <span className="text-brand-muted">Academic Year</span>
+                <span className="font-medium text-brand-ink">{cycleYear}</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-gray-500">Review Type</span>
-                <span className="font-medium text-gray-900 capitalize">{reviewType}</span>
+              <div className="flex items-center justify-between py-2 border-b border-brand-line">
+                <span className="text-brand-muted">Review Type</span>
+                <span className="font-medium text-brand-ink capitalize">{reviewType}</span>
               </div>
               <div className="flex items-center justify-between py-2">
-                <span className="text-gray-500">Author</span>
-                <span className="font-medium text-gray-900">{user?.full_name || 'You'}</span>
+                <span className="text-brand-muted">Author</span>
+                <span className="font-medium text-brand-ink">{user?.full_name || 'You'}</span>
               </div>
             </div>
           ) : (
-            <p className="text-gray-500 mb-6">Select a department to continue.</p>
+            <p className="text-brand-muted mb-6">Select a department to continue.</p>
           )}
 
           <div className="flex gap-3">
@@ -391,13 +391,13 @@ export default function NewReviewPage() {
         title="Create Program Review"
       >
         <div className="space-y-4">
-          <p className="text-gray-600">
+          <p className="text-brand-muted">
             You are about to create a new {reviewType} program review for{' '}
             <strong>{selectedDept?.name}</strong> for the {cycleYear} academic year.
           </p>
 
           {selectedDept?.lastReviewYear && (
-            <div className="bg-blue-50 text-blue-700 p-4 rounded-lg text-sm">
+            <div className="bg-brand-primary-bg text-brand-primary border border-brand-line p-4 rounded-lg text-sm">
               <p>
                 <strong>Note:</strong> The previous review for this department was completed in{' '}
                 {selectedDept.lastReviewYear}. Relevant data from that review may be pre-populated

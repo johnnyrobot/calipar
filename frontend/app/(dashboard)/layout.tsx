@@ -20,12 +20,12 @@ export default function DashboardLayout({
   return (
     <ProtectedRoute
       loadingFallback={
-        <div className="flex h-screen bg-gray-50 items-center justify-center">
+        <div className="flex h-screen bg-ground items-center justify-center">
           <FullPageSpinner label="Loading dashboard..." />
         </div>
       }
     >
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen bg-ground">
         <Sidebar />
         <main className="flex-1 overflow-auto">
           {/* Demo Mode Banner - shown at the top of dashboard for demo users */}

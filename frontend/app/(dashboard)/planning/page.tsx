@@ -148,15 +148,15 @@ export default function PlanningPage() {
   const getStatusIcon = (status: ActionPlan['status']) => {
     switch (status) {
       case 'not_started':
-        return <Clock className="w-4 h-4 text-gray-500" />;
+        return <Clock className="w-4 h-4 text-brand-muted" />;
       case 'ongoing':
-        return <AlertCircle className="w-4 h-4 text-amber-500" />;
+        return <AlertCircle className="w-4 h-4 text-status-review" />;
       case 'complete':
-        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+        return <CheckCircle2 className="w-4 h-4 text-status-approved" />;
       case 'institutionalized':
-        return <CheckCircle2 className="w-4 h-4 text-blue-500" />;
+        return <CheckCircle2 className="w-4 h-4 text-brand-primary" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-500" />;
+        return <Clock className="w-4 h-4 text-brand-muted" />;
     }
   };
 
@@ -195,7 +195,7 @@ export default function PlanningPage() {
 
       <div className="p-6 space-y-6">
         {/* Golden Thread Visualization */}
-        <Card className="bg-gradient-to-r from-lamc-blue to-blue-800 text-white">
+        <Card className="bg-gradient-to-r from-brand-ink to-brand-ink-soft text-white">
           <h3 className="text-lg font-semibold mb-4">The Golden Thread</h3>
           <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
             <span className="px-4 py-2 bg-white/20 rounded-full">College Mission</span>
@@ -206,7 +206,7 @@ export default function PlanningPage() {
             <ChevronRight className="w-4 h-4" />
             <span className="px-4 py-2 bg-white/20 rounded-full">Action Plan</span>
             <ChevronRight className="w-4 h-4" />
-            <span className="px-4 py-2 bg-lamc-gold text-lamc-blue rounded-full font-medium">
+            <span className="px-4 py-2 bg-brand-accent text-brand-ink rounded-full font-medium">
               Resource Request
             </span>
           </div>
@@ -214,7 +214,7 @@ export default function PlanningPage() {
 
         {/* ISMP Goals Overview */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">ISMP Strategic Goals</h3>
+          <h3 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-4">ISMP Strategic Goals</h3>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {strategicGoals.map((goal) => (
               <button
@@ -222,18 +222,18 @@ export default function PlanningPage() {
                 onClick={() => setSelectedGoal(selectedGoal === goal.number ? null : goal.number)}
                 className={`p-4 rounded-xl border-2 transition-all text-left ${
                   selectedGoal === goal.number
-                    ? 'border-lamc-blue shadow-md bg-lamc-light'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-brand-primary shadow-md bg-brand-primary-bg'
+                    : 'border-brand-line hover:border-brand-primary'
                 }`}
               >
                 <div className={`w-10 h-10 ${goal.color} rounded-lg flex items-center justify-center text-white font-bold mb-3`}>
                   {goal.number}
                 </div>
-                <h4 className="font-medium text-gray-900 text-sm">{goal.title}</h4>
-                <p className="text-xs text-gray-500 mt-1">
+                <h4 className="font-medium text-brand-ink text-sm">{goal.title}</h4>
+                <p className="text-xs text-brand-muted mt-1">
                   {goal.objectives.length} objectives
                 </p>
-                <p className="text-xs text-lamc-blue font-medium mt-2">
+                <p className="text-xs text-brand-primary font-medium mt-2">
                   {actionPlans.filter(p => p.mappedInitiatives.some(code => code.startsWith(`${goal.number}.`))).length} action plans
                 </p>
               </button>
@@ -249,20 +249,20 @@ export default function PlanningPage() {
                 {selectedGoal}
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-brand-ink font-display tracking-tight">
                   Goal {selectedGoal}: {strategicGoals[selectedGoal - 1].title}
                 </h3>
                 <div className="mt-4 space-y-2">
                   {strategicGoals[selectedGoal - 1].objectives.map((obj) => (
                     <div
                       key={obj.code}
-                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                      className="flex items-center gap-3 p-3 bg-surface-2 rounded-lg"
                     >
-                      <span className="w-10 h-6 flex items-center justify-center bg-gray-200 rounded text-xs font-medium text-gray-700">
+                      <span className="w-10 h-6 flex items-center justify-center bg-surface-2 border border-brand-line rounded text-xs font-medium text-brand-text font-mono tabular-nums">
                         {obj.code}
                       </span>
-                      <span className="text-sm text-gray-700">{obj.title}</span>
-                      <span className="ml-auto text-xs text-gray-500">
+                      <span className="text-sm text-brand-text">{obj.title}</span>
+                      <span className="ml-auto text-xs text-brand-muted">
                         {actionPlans.filter(p => p.mappedInitiatives.includes(obj.code)).length} plans
                       </span>
                     </div>
@@ -276,16 +276,16 @@ export default function PlanningPage() {
         {/* Action Plans */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Action Plans</h3>
+            <h3 className="text-lg font-semibold text-brand-ink font-display tracking-tight">Action Plans</h3>
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
                 <input
                   type="text"
                   placeholder="Search plans..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue w-64"
+                  className="pl-10 pr-4 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg w-64"
                 />
               </div>
               <Button onClick={() => setShowNewPlanModal(true)}>
@@ -298,9 +298,9 @@ export default function PlanningPage() {
           <div className="space-y-4">
             {filteredPlans.length === 0 ? (
               <Card className="text-center py-12">
-                <Target className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <h4 className="text-lg font-medium text-gray-900 mb-2">No action plans found</h4>
-                <p className="text-gray-500 mb-4">
+                <Target className="w-12 h-12 text-brand-muted mx-auto mb-4" />
+                <h4 className="text-lg font-medium text-brand-ink font-display tracking-tight mb-2">No action plans found</h4>
+                <p className="text-brand-muted mb-4">
                   {selectedGoal
                     ? `No plans mapped to Goal ${selectedGoal}`
                     : 'Create your first action plan to get started'}
@@ -320,7 +320,7 @@ export default function PlanningPage() {
                   <Card
                     key={plan.id}
                     className={`transition-all ${
-                      isExpanded ? 'border-lamc-blue shadow-md' : 'hover:border-lamc-blue hover:shadow-md'
+                      isExpanded ? 'border-brand-primary shadow-md' : 'hover:border-brand-primary hover:shadow-md'
                     }`}
                   >
                     {/* Summary View */}
@@ -332,26 +332,26 @@ export default function PlanningPage() {
                         }
                       }}
                     >
-                      <div className="w-10 h-10 bg-lamc-light rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Target className="w-5 h-5 text-lamc-blue" />
+                      <div className="w-10 h-10 bg-brand-primary-bg rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Target className="w-5 h-5 text-brand-ink" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <h4 className="font-semibold text-gray-900">{plan.title}</h4>
-                            <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
+                            <h4 className="font-semibold text-brand-ink font-display tracking-tight">{plan.title}</h4>
+                            <p className="text-sm text-brand-muted mt-1">{plan.description}</p>
                           </div>
                           <div className="flex items-center gap-2">
                             {getStatusIcon(plan.status)}
-                            <span className="text-sm text-gray-600">{getStatusLabel(plan.status)}</span>
+                            <span className="text-sm text-brand-muted">{getStatusLabel(plan.status)}</span>
                           </div>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3 mt-4">
                           {/* Mapped Initiatives */}
                           <div className="flex items-center gap-1">
-                            <LinkIcon className="w-4 h-4 text-gray-400" />
-                            <span className="text-xs text-gray-500">Linked to:</span>
+                            <LinkIcon className="w-4 h-4 text-brand-accent" />
+                            <span className="text-xs text-brand-muted">Linked to:</span>
                             {plan.mappedInitiatives.map((code) => (
                               <Badge key={code} variant="info" className="text-xs">
                                 {code}
@@ -368,27 +368,27 @@ export default function PlanningPage() {
 
                           {/* Resource Requests */}
                           {plan.resourceRequests > 0 && (
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-brand-muted">
                               {plan.resourceRequests} resource request{plan.resourceRequests > 1 ? 's' : ''}
                             </span>
                           )}
                         </div>
                       </div>
                       {isExpanded ? (
-                        <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                        <ChevronDown className="w-5 h-5 text-brand-muted flex-shrink-0" />
                       ) : (
-                        <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                        <ChevronRight className="w-5 h-5 text-brand-muted flex-shrink-0" />
                       )}
                     </div>
 
                     {/* Expanded Detail View */}
                     {isExpanded && (
-                      <div className="mt-6 pt-6 border-t border-gray-200 space-y-6">
+                      <div className="mt-6 pt-6 border-t border-brand-line space-y-6">
                         {isEditing ? (
                           <>
                             {/* Edit Mode */}
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-brand-text mb-2">
                                 Title
                               </label>
                               <input
@@ -397,12 +397,12 @@ export default function PlanningPage() {
                                 onChange={(e) =>
                                   setEditedPlan({ ...displayPlan, title: e.target.value })
                                 }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                                className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
                               />
                             </div>
 
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-brand-text mb-2">
                                 Description
                               </label>
                               <textarea
@@ -411,12 +411,12 @@ export default function PlanningPage() {
                                 onChange={(e) =>
                                   setEditedPlan({ ...displayPlan, description: e.target.value })
                                 }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                                className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
                               />
                             </div>
 
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-brand-text mb-2">
                                 Status
                               </label>
                               <select
@@ -427,7 +427,7 @@ export default function PlanningPage() {
                                     status: e.target.value as ActionPlan['status'],
                                   })
                                 }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                                className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
                               >
                                 <option value="not_started">Not Started</option>
                                 <option value="ongoing">In Progress</option>
@@ -437,15 +437,15 @@ export default function PlanningPage() {
                             </div>
 
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-brand-text mb-2">
                                 Linked ISMP Initiatives
                               </label>
-                              <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                              <div className="space-y-2 max-h-48 overflow-y-auto border border-brand-line rounded-lg p-3">
                                 {strategicGoals.flatMap((goal) =>
                                   goal.objectives.map((obj) => (
                                     <label
                                       key={obj.code}
-                                      className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                      className="flex items-center gap-3 p-2 hover:bg-surface-2 rounded cursor-pointer"
                                     >
                                       <input
                                         type="checkbox"
@@ -459,12 +459,12 @@ export default function PlanningPage() {
                                             mappedInitiatives: newInitiatives,
                                           });
                                         }}
-                                        className="w-4 h-4 text-lamc-blue border-gray-300 rounded focus:ring-lamc-blue"
+                                        className="w-4 h-4 text-brand-primary border-brand-line rounded focus:ring-brand-primary"
                                       />
                                       <Badge variant="info" className="text-xs">
                                         {obj.code}
                                       </Badge>
-                                      <span className="text-sm text-gray-700">{obj.title}</span>
+                                      <span className="text-sm text-brand-text">{obj.title}</span>
                                     </label>
                                   ))
                                 )}
@@ -479,14 +479,14 @@ export default function PlanningPage() {
                                 onChange={(e) =>
                                   setEditedPlan({ ...displayPlan, addressesEquityGap: e.target.checked })
                                 }
-                                className="w-4 h-4 text-lamc-blue border-gray-300 rounded focus:ring-lamc-blue"
+                                className="w-4 h-4 text-brand-primary border-brand-line rounded focus:ring-brand-primary"
                               />
-                              <label htmlFor={`equity-${plan.id}`} className="text-sm text-gray-700">
+                              <label htmlFor={`equity-${plan.id}`} className="text-sm text-brand-text">
                                 This action plan addresses an equity gap
                               </label>
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                            <div className="flex justify-end gap-3 pt-4 border-t border-brand-line">
                               <Button
                                 variant="outline"
                                 onClick={(e) => {
@@ -516,26 +516,26 @@ export default function PlanningPage() {
                           <>
                             {/* View Mode */}
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-brand-text mb-2">
                                 Status
                               </label>
                               <div className="flex items-center gap-2">
                                 {getStatusIcon(plan.status)}
-                                <span className="font-medium text-gray-900">
+                                <span className="font-medium text-brand-ink">
                                   {getStatusLabel(plan.status)}
                                 </span>
                               </div>
                             </div>
 
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-brand-text mb-2">
                                 Description
                               </label>
-                              <p className="text-gray-600">{plan.description}</p>
+                              <p className="text-brand-muted">{plan.description}</p>
                             </div>
 
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-brand-text mb-2">
                                 Linked ISMP Initiatives
                               </label>
                               <div className="flex flex-wrap gap-2">
@@ -546,12 +546,12 @@ export default function PlanningPage() {
                                   return (
                                     <div
                                       key={code}
-                                      className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg"
+                                      className="flex items-center gap-2 px-3 py-2 bg-surface-2 rounded-lg"
                                     >
                                       <Badge variant="info" className="text-xs">
                                         {code}
                                       </Badge>
-                                      <span className="text-sm text-gray-700">{initiative?.title}</span>
+                                      <span className="text-sm text-brand-text">{initiative?.title}</span>
                                     </div>
                                   );
                                 })}
@@ -560,7 +560,7 @@ export default function PlanningPage() {
 
                             {plan.addressesEquityGap && (
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-brand-text mb-2">
                                   Equity Focus
                                 </label>
                                 <Badge variant="warning" className="text-sm">
@@ -570,10 +570,10 @@ export default function PlanningPage() {
                             )}
 
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-brand-text mb-2">
                                 Resource Requests
                               </label>
-                              <p className="text-gray-600">
+                              <p className="text-brand-muted">
                                 {plan.resourceRequests > 0
                                   ? `${plan.resourceRequests} resource request${
                                       plan.resourceRequests > 1 ? 's' : ''
@@ -583,33 +583,33 @@ export default function PlanningPage() {
                               {plan.resourceRequests > 0 && (
                                 <Link
                                   href="/resources"
-                                  className="text-lamc-blue hover:underline text-sm mt-2 inline-block"
+                                  className="text-brand-ink hover:underline text-sm mt-2 inline-block"
                                 >
                                   View resource requests →
                                 </Link>
                               )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-brand-line">
                               <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">
+                                <label className="block text-xs font-medium text-brand-muted mb-1">
                                   Created
                                 </label>
-                                <p className="text-sm text-gray-900">
+                                <p className="text-sm text-brand-ink font-mono tabular-nums">
                                   {new Date(plan.createdAt).toLocaleDateString()}
                                 </p>
                               </div>
                               <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">
+                                <label className="block text-xs font-medium text-brand-muted mb-1">
                                   Last Updated
                                 </label>
-                                <p className="text-sm text-gray-900">
+                                <p className="text-sm text-brand-ink font-mono tabular-nums">
                                   {new Date(plan.updatedAt).toLocaleDateString()}
                                 </p>
                               </div>
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                            <div className="flex justify-end gap-3 pt-4 border-t border-brand-line">
                               <Button
                                 variant="outline"
                                 onClick={(e) => {
@@ -643,25 +643,25 @@ export default function PlanningPage() {
 
         {/* Summary Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-            <p className="text-sm text-gray-500">Total Plans</p>
-            <p className="text-2xl font-bold text-gray-900">{actionPlans.length}</p>
+          <div className="bg-surface rounded-lg border border-brand-line p-4 text-center">
+            <p className="text-sm text-brand-muted">Total Plans</p>
+            <p className="text-2xl font-bold text-brand-ink font-mono tabular-nums">{actionPlans.length}</p>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-            <p className="text-sm text-gray-500">In Progress</p>
-            <p className="text-2xl font-bold text-amber-600">
+          <div className="bg-surface rounded-lg border border-brand-line p-4 text-center">
+            <p className="text-sm text-brand-muted">In Progress</p>
+            <p className="text-2xl font-bold text-status-review font-mono tabular-nums">
               {actionPlans.filter(p => p.status === 'ongoing').length}
             </p>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-            <p className="text-sm text-gray-500">Completed</p>
-            <p className="text-2xl font-bold text-green-600">
+          <div className="bg-surface rounded-lg border border-brand-line p-4 text-center">
+            <p className="text-sm text-brand-muted">Completed</p>
+            <p className="text-2xl font-bold text-status-approved font-mono tabular-nums">
               {actionPlans.filter(p => p.status === 'complete' || p.status === 'institutionalized').length}
             </p>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-            <p className="text-sm text-gray-500">Addressing Equity</p>
-            <p className="text-2xl font-bold text-lamc-blue">
+          <div className="bg-surface rounded-lg border border-brand-line p-4 text-center">
+            <p className="text-sm text-brand-muted">Addressing Equity</p>
+            <p className="text-2xl font-bold text-brand-ink font-mono tabular-nums">
               {actionPlans.filter(p => p.addressesEquityGap).length}
             </p>
           </div>
@@ -676,30 +676,30 @@ export default function PlanningPage() {
       >
         <form className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-brand-text mb-1">
               Action Plan Title
             </label>
             <input
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+              className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               placeholder="Enter a descriptive title"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-brand-text mb-1">
               Description
             </label>
             <textarea
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+              className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               placeholder="Describe the action plan and expected outcomes"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-brand-text mb-1">
               Link to ISMP Initiative
             </label>
-            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue">
+            <select className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg">
               <option value="">Select an initiative...</option>
               {strategicGoals.flatMap(goal =>
                 goal.objectives.map(obj => (
@@ -714,9 +714,9 @@ export default function PlanningPage() {
             <input
               type="checkbox"
               id="equity-gap"
-              className="w-4 h-4 text-lamc-blue border-gray-300 rounded focus:ring-lamc-blue"
+              className="w-4 h-4 text-brand-primary border-brand-line rounded focus:ring-brand-primary"
             />
-            <label htmlFor="equity-gap" className="text-sm text-gray-700">
+            <label htmlFor="equity-gap" className="text-sm text-brand-text">
               This action plan addresses an equity gap
             </label>
           </div>

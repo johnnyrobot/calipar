@@ -21,9 +21,9 @@ const sizeMap = {
 };
 
 const colorMap = {
-  primary: 'text-lamc-blue',
-  white: 'text-white',
-  gray: 'text-gray-400',
+  primary: 'text-brand-primary',
+  white: 'text-brand-on-ink',
+  gray: 'text-brand-muted',
 };
 
 export function Spinner({
@@ -72,10 +72,10 @@ export interface FullPageSpinnerProps {
 
 export function FullPageSpinner({ label = 'Loading...' }: FullPageSpinnerProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/80 backdrop-blur-sm">
       <div className="flex flex-col items-center gap-3">
         <Spinner size="xl" variant="primary" />
-        <p className="text-sm text-gray-600 font-medium">{label}</p>
+        <p className="text-sm text-brand-muted font-medium">{label}</p>
       </div>
     </div>
   );

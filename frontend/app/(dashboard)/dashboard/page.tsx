@@ -125,7 +125,7 @@ export default function DashboardPage() {
       case 'review_submitted':
         return <CheckCircle2 className="w-4 h-4 text-green-500" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-500" />;
+        return <Clock className="w-4 h-4 text-brand-muted" />;
     }
   };
 
@@ -169,21 +169,21 @@ export default function DashboardPage() {
 
         {/* Quick Actions */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {quickActions.map((action) => (
               <Link
                 key={action.href}
                 href={action.href}
-                className="group bg-white rounded-xl border border-gray-200 p-4 hover:border-lamc-blue hover:shadow-md transition-all"
+                className="group bg-surface rounded-xl border border-brand-line p-4 hover:border-brand-primary hover:shadow-md transition-all"
               >
                 <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center mb-3`}>
                   <action.icon className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="font-medium text-gray-900 group-hover:text-lamc-blue transition-colors">
+                <h3 className="font-medium text-brand-ink font-display tracking-tight group-hover:text-brand-primary transition-colors">
                   {action.title}
                 </h3>
-                <p className="text-sm text-gray-500 mt-1">{action.description}</p>
+                <p className="text-sm text-brand-muted mt-1">{action.description}</p>
               </Link>
             ))}
           </div>
@@ -193,10 +193,10 @@ export default function DashboardPage() {
           {/* Recent Activity */}
           <Card>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+              <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight">Recent Activity</h2>
               <Link
                 href="/activity"
-                className="text-sm text-lamc-blue hover:underline flex items-center gap-1"
+                className="text-sm text-brand-ink hover:underline flex items-center gap-1"
               >
                 View all <ChevronRight className="w-4 h-4" />
               </Link>
@@ -205,17 +205,17 @@ export default function DashboardPage() {
               {recentActivity.map((activity) => (
                 <div
                   key={activity.id}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-surface-2 transition-colors"
                 >
-                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-surface-2 rounded-full flex items-center justify-center flex-shrink-0">
                     {getActivityIcon(activity.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-brand-ink truncate">
                       {activity.title}
                     </p>
-                    <p className="text-sm text-gray-500">{activity.description}</p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-sm text-brand-muted">{activity.description}</p>
+                    <p className="text-xs text-brand-muted mt-1">
                       {activity.user} &middot; {activity.timestamp}
                     </p>
                   </div>
@@ -227,10 +227,10 @@ export default function DashboardPage() {
           {/* Upcoming Deadlines */}
           <Card>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Upcoming Deadlines</h2>
+              <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight">Upcoming Deadlines</h2>
               <Link
                 href="/reviews"
-                className="text-sm text-lamc-blue hover:underline flex items-center gap-1"
+                className="text-sm text-brand-primary hover:underline flex items-center gap-1"
               >
                 View all <ChevronRight className="w-4 h-4" />
               </Link>
@@ -239,11 +239,11 @@ export default function DashboardPage() {
               {upcomingDeadlines.map((item, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-lg border border-brand-line hover:border-brand-line transition-colors"
                 >
                   <div>
-                    <p className="font-medium text-gray-900">{item.program}</p>
-                    <p className="text-sm text-gray-500">{item.deadline}</p>
+                    <p className="font-medium text-brand-ink">{item.program}</p>
+                    <p className="text-sm text-brand-muted">{item.deadline}</p>
                   </div>
                   <Badge
                     variant={item.daysLeft <= 30 ? 'error' : item.daysLeft <= 60 ? 'warning' : 'info'}
@@ -258,10 +258,10 @@ export default function DashboardPage() {
 
         {/* ISMP Goals Progress */}
         <Card>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-4">
             ISMP Strategic Goals Alignment
           </h2>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-brand-muted mb-4">
             Action plans mapped to the 5 ISMP Strategic Goals
           </p>
           <div className="space-y-4">
@@ -274,12 +274,12 @@ export default function DashboardPage() {
             ].map((item) => (
               <div key={item.goal}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-700">{item.goal}</span>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm font-medium text-brand-text">{item.goal}</span>
+                  <span className="text-sm text-brand-muted font-mono tabular-nums">
                     {item.count}/{item.total} plans
                   </span>
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
                   <div
                     className={`h-full ${item.color} rounded-full transition-all duration-500`}
                     style={{ width: `${(item.count / item.total) * 100}%` }}

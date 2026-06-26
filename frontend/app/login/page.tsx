@@ -96,17 +96,17 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-lamc-light to-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-brand-primary-bg to-white flex flex-col">
       {/* Header */}
-      <header className="bg-lamc-blue text-white py-4">
+      <header className="bg-brand-ink text-white py-4">
         <div className="max-w-7xl mx-auto px-4">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-lamc-gold rounded-lg flex items-center justify-center">
-              <span className="text-lamc-blue font-bold text-xl">L</span>
+            <div className="w-10 h-10 bg-brand-accent rounded-lg flex items-center justify-center">
+              <span className="text-brand-ink font-bold text-xl">L</span>
             </div>
             <div>
               <h1 className="text-xl font-bold">CALIPAR</h1>
-              <p className="text-xs text-blue-200">Educational Institution</p>
+              <p className="text-xs text-brand-on-ink-muted">Educational Institution</p>
             </div>
           </Link>
         </div>
@@ -115,22 +115,22 @@ function LoginForm() {
       {/* Login Form */}
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="bg-surface rounded-xl shadow-lg p-8">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-lamc-blue">Welcome Back</h2>
-              <p className="text-gray-600 mt-2">Sign in to continue to CALIPAR</p>
+              <h2 className="text-2xl font-bold font-display tracking-tight text-brand-ink">Welcome Back</h2>
+              <p className="text-brand-muted mt-2">Sign in to continue to CALIPAR</p>
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="mb-6 p-4 bg-[#FBEAEA] border border-destructive rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
 
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-brand-text mb-1">
                   Email Address
                 </label>
                 <Input
@@ -146,12 +146,12 @@ function LoginForm() {
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="password" className="block text-sm font-medium text-brand-text">
                     Password
                   </label>
                   <Link
                     href={email ? `/forgot-password?email=${encodeURIComponent(email)}` : '/forgot-password'}
-                    className="text-sm text-lamc-blue hover:underline"
+                    className="text-sm text-brand-primary hover:underline"
                   >
                     Forgot password?
                   </Link>
@@ -170,7 +170,7 @@ function LoginForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-muted hover:text-brand-ink"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -192,8 +192,8 @@ function LoginForm() {
             </form>
 
             {/* Demo Accounts Section */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <p className="text-sm text-gray-500 text-center mb-4">
+            <div className="mt-8 pt-6 border-t border-brand-line">
+              <p className="text-sm text-brand-muted text-center mb-4">
                 Development Mode - Quick Login
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -202,22 +202,22 @@ function LoginForm() {
                     key={account.uid}
                     onClick={() => handleDemoLogin(account.uid)}
                     disabled={isLoading}
-                    className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-lamc-light hover:border-lamc-blue transition-colors disabled:opacity-50"
+                    className="px-3 py-2 text-sm border border-brand-line rounded-lg hover:bg-brand-primary-bg hover:border-brand-primary transition-colors disabled:opacity-50"
                   >
                     {account.role}
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-gray-400 text-center mt-3">
+              <p className="text-xs text-brand-muted text-center mt-3">
                 Click a role to log in as a demo user
               </p>
             </div>
           </div>
 
           {/* Footer Link */}
-          <p className="text-center text-sm text-gray-500 mt-6">
+          <p className="text-center text-sm text-brand-muted mt-6">
             Need help?{' '}
-            <a href="mailto:support@ccc.edu" className="text-lamc-blue hover:underline">
+            <a href="mailto:support@ccc.edu" className="text-brand-primary hover:underline">
               Contact Support
             </a>
           </p>
@@ -230,10 +230,10 @@ function LoginForm() {
 // Loading fallback for Suspense boundary
 function LoginLoading() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-lamc-light to-white flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-b from-brand-primary-bg to-white flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
         <Spinner size="lg" />
-        <p className="text-sm text-gray-600">Loading...</p>
+        <p className="text-sm text-brand-muted">Loading...</p>
       </div>
     </div>
   );

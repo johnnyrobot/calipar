@@ -166,7 +166,7 @@ export default function ActivityPage() {
       case 'deadline_reminder':
         return <Clock className="w-5 h-5 text-red-500" />;
       default:
-        return <FileText className="w-5 h-5 text-gray-500" />;
+        return <FileText className="w-5 h-5 text-brand-muted" />;
     }
   };
 
@@ -271,20 +271,20 @@ export default function ActivityPage() {
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-muted" />
               <input
                 type="text"
                 placeholder="Search activity..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               />
             </div>
             <div className="flex gap-2">
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                className="px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               >
                 <option value="all">All Types</option>
                 <option value="review_updated">Updates</option>
@@ -300,7 +300,7 @@ export default function ActivityPage() {
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                className="px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               >
                 <option value="all">All Time</option>
                 <option value="today">Today</option>
@@ -313,35 +313,35 @@ export default function ActivityPage() {
           {/* Activity Stats */}
           <div className="grid grid-cols-4 gap-4 mb-6">
             <Card className="text-center py-4">
-              <p className="text-2xl font-bold text-gray-900">{activities.length}</p>
-              <p className="text-sm text-gray-500">Total Activities</p>
+              <p className="text-2xl font-bold font-mono tabular-nums text-brand-ink">{activities.length}</p>
+              <p className="text-sm text-brand-muted">Total Activities</p>
             </Card>
             <Card className="text-center py-4">
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-2xl font-bold font-mono tabular-nums text-brand-primary">
                 {activities.filter(a => a.type === 'review_updated').length}
               </p>
-              <p className="text-sm text-gray-500">Updates</p>
+              <p className="text-sm text-brand-muted">Updates</p>
             </Card>
             <Card className="text-center py-4">
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold font-mono tabular-nums text-status-approved">
                 {activities.filter(a => a.type === 'review_approved').length}
               </p>
-              <p className="text-sm text-gray-500">Approved</p>
+              <p className="text-sm text-brand-muted">Approved</p>
             </Card>
             <Card className="text-center py-4">
-              <p className="text-2xl font-bold text-indigo-600">
+              <p className="text-2xl font-bold font-mono tabular-nums text-indigo-600">
                 {activities.filter(a => a.type === 'comment_added').length}
               </p>
-              <p className="text-sm text-gray-500">Comments</p>
+              <p className="text-sm text-brand-muted">Comments</p>
             </Card>
           </div>
 
           {/* Activity Timeline */}
           {filteredActivities.length === 0 ? (
             <Card className="text-center py-12">
-              <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No activity found</h3>
-              <p className="text-gray-500">
+              <Clock className="w-12 h-12 text-brand-muted mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-brand-ink font-display tracking-tight mb-2">No activity found</h3>
+              <p className="text-brand-muted">
                 {searchQuery || typeFilter !== 'all' || dateFilter !== 'all'
                   ? 'Try adjusting your filters'
                   : 'Activity will appear here as you work on reviews'}
@@ -351,7 +351,7 @@ export default function ActivityPage() {
             <div className="space-y-8">
               {Object.entries(groupedActivities).map(([dateKey, dateActivities]) => (
                 <div key={dateKey}>
-                  <h3 className="text-sm font-medium text-gray-500 mb-4 flex items-center gap-2">
+                  <h3 className="text-sm font-medium text-brand-muted mb-4 flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     {dateKey}
                   </h3>
@@ -359,25 +359,25 @@ export default function ActivityPage() {
                     {dateActivities.map((activity) => (
                       <Card
                         key={activity.id}
-                        className="hover:border-lamc-blue transition-colors"
+                        className="hover:border-brand-primary transition-colors"
                       >
                         <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 bg-surface-2 rounded-full flex items-center justify-center flex-shrink-0">
                             {getActivityIcon(activity.type)}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-4">
                               <div>
                                 <div className="flex items-center gap-2 mb-1">
-                                  <h4 className="font-medium text-gray-900">
+                                  <h4 className="font-medium text-brand-ink font-display tracking-tight">
                                     {activity.title}
                                   </h4>
                                   {getActivityBadge(activity.type)}
                                 </div>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-brand-muted">
                                   {activity.description}
                                 </p>
-                                <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                                <div className="flex items-center gap-3 mt-2 text-xs text-brand-muted">
                                   <span className="flex items-center gap-1">
                                     <User className="w-3 h-3" />
                                     {activity.user.name}
@@ -391,7 +391,7 @@ export default function ActivityPage() {
                               {activity.metadata?.reviewId && (
                                 <Link
                                   href={`/reviews/${activity.metadata.reviewId}`}
-                                  className="flex items-center gap-1 text-sm text-lamc-blue hover:underline flex-shrink-0"
+                                  className="flex items-center gap-1 text-sm text-brand-ink hover:underline flex-shrink-0"
                                 >
                                   <Eye className="w-4 h-4" />
                                   View

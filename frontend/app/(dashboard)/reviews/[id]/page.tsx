@@ -317,11 +317,11 @@ The department's fill rate has improved to 78%, exceeding the college target and
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+        return <CheckCircle2 className="w-4 h-4 text-status-approved" />;
       case 'in_progress':
-        return <Clock className="w-4 h-4 text-amber-500" />;
+        return <Clock className="w-4 h-4 text-status-review" />;
       default:
-        return <AlertCircle className="w-4 h-4 text-gray-400" />;
+        return <AlertCircle className="w-4 h-4 text-brand-muted" />;
     }
   };
 
@@ -340,9 +340,9 @@ The department's fill rate has improved to 78%, exceeding the college target and
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="text-center p-8">
-          <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Review Not Found</h2>
-          <p className="text-gray-500 mb-4">The requested review could not be found.</p>
+          <AlertCircle className="w-12 h-12 text-brand-muted mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-2">Review Not Found</h2>
+          <p className="text-brand-muted mb-4">The requested review could not be found.</p>
           <Link href="/reviews">
             <Button variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -355,24 +355,24 @@ The department's fill rate has improved to 78%, exceeding the college target and
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-2">
       <Header
         title={review.org_name}
         subtitle={`${review.cycle_year} ${review.review_type === 'comprehensive' ? 'Comprehensive' : 'Annual'} Review`}
       />
 
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3">
+      <div className="bg-surface border-b border-brand-line px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
               href="/reviews"
-              className="flex items-center gap-2 text-gray-600 hover:text-lamc-blue transition-colors"
+              className="flex items-center gap-2 text-brand-muted hover:text-brand-primary transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="text-sm">Back to Reviews</span>
             </Link>
-            <div className="h-4 w-px bg-gray-300" />
+            <div className="h-4 w-px bg-brand-line" />
             <StatusBadge status={review.status} />
           </div>
 
@@ -386,10 +386,10 @@ The department's fill rate has improved to 78%, exceeding the college target and
 
             {/* Progress */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">{progress}% complete</span>
-              <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <span className="text-sm text-brand-muted font-mono tabular-nums">{progress}% complete</span>
+              <div className="w-24 h-2 bg-surface-2 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-lamc-blue rounded-full transition-all"
+                  className="h-full bg-brand-primary rounded-full transition-all"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -400,7 +400,7 @@ The department's fill rate has improved to 78%, exceeding the college target and
               variant="outline"
               size="sm"
               onClick={() => setShowEquityLens(true)}
-              className="border-amber-300 text-amber-700 hover:bg-amber-50"
+              className="border-brand-line text-status-review hover:bg-brand-review-bg"
             >
               <Scale className="w-4 h-4 mr-2" />
               Equity Check
@@ -428,8 +428,8 @@ The department's fill rate has improved to 78%, exceeding the college target and
 
       <div className="flex">
         {/* Sidebar - Section Navigation */}
-        <aside className="w-72 bg-white border-r border-gray-200 min-h-[calc(100vh-8rem)] p-4">
-          <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
+        <aside className="w-72 bg-surface border-r border-brand-line min-h-[calc(100vh-8rem)] p-4">
+          <h3 className="text-sm font-medium text-brand-muted uppercase tracking-wider mb-4">
             Sections
           </h3>
           <nav className="space-y-1">
@@ -443,16 +443,16 @@ The department's fill rate has improved to 78%, exceeding the college target and
                   onClick={() => setActiveSection(section.key)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
                     isActive
-                      ? 'bg-lamc-light text-lamc-blue'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-brand-primary-bg text-brand-primary'
+                      : 'text-brand-text hover:bg-surface-2'
                   }`}
                 >
-                  <section.icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-lamc-blue' : 'text-gray-400'}`} />
+                  <section.icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-brand-primary' : 'text-brand-muted'}`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium truncate" title={section.title}>{section.title}</span>
                       {section.required && (
-                        <span className="text-red-500 text-xs flex-shrink-0">*</span>
+                        <span className="text-destructive text-xs flex-shrink-0">*</span>
                       )}
                     </div>
                   </div>
@@ -463,19 +463,19 @@ The department's fill rate has improved to 78%, exceeding the college target and
           </nav>
 
           {/* Section Legend */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Legend</p>
-            <div className="space-y-2 text-xs text-gray-600">
+          <div className="mt-6 pt-6 border-t border-brand-line">
+            <p className="text-xs font-medium text-brand-muted uppercase tracking-wider mb-3">Legend</p>
+            <div className="space-y-2 text-xs text-brand-muted">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <CheckCircle2 className="w-4 h-4 text-status-approved" />
                 <span>Completed</span>
               </div>
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-amber-500" />
+                <Clock className="w-4 h-4 text-status-review" />
                 <span>In Progress</span>
               </div>
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-gray-400" />
+                <AlertCircle className="w-4 h-4 text-brand-muted" />
                 <span>Not Started</span>
               </div>
             </div>
@@ -488,10 +488,10 @@ The department's fill rate has improved to 78%, exceeding the college target and
             <div className="max-w-4xl">
               {/* Section Header */}
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-brand-ink font-display tracking-tight">
                   {sections.find(s => s.key === activeSection)?.title}
                 </h2>
-                <p className="text-gray-500 mt-1">
+                <p className="text-brand-muted mt-1">
                   {sections.find(s => s.key === activeSection)?.description}
                 </p>
               </div>
@@ -508,22 +508,22 @@ The department's fill rate has improved to 78%, exceeding the college target and
 
               {/* AI Assistant Response */}
               {showAIAssistant && aiResponse && (
-                <Card className="mb-6 border-lamc-gold bg-amber-50">
+                <Card className="mb-6 border-brand-line bg-brand-review-bg">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-lamc-gold rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 bg-brand-accent rounded-full flex items-center justify-center flex-shrink-0">
                       <Sparkles className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-gray-900">AI Analysis</h4>
+                        <h4 className="font-semibold text-brand-ink font-display tracking-tight">AI Analysis</h4>
                         <button
                           onClick={() => setShowAIAssistant(false)}
-                          className="text-gray-400 hover:text-gray-600 text-sm"
+                          className="text-brand-muted hover:text-brand-ink text-sm"
                         >
                           Dismiss
                         </button>
                       </div>
-                      <div className="prose prose-sm max-w-none text-gray-700">
+                      <div className="prose prose-sm max-w-none text-brand-text">
                         {aiResponse.split('\n').map((line, i) => (
                           <p key={i}>
                             {line.split('**').map((part, j) =>
@@ -550,7 +550,7 @@ The department's fill rate has improved to 78%, exceeding the college target and
               {/* Content Editor */}
               <Card>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900">Narrative</h3>
+                  <h3 className="font-semibold text-brand-ink font-display tracking-tight">Narrative</h3>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm">
                       <Upload className="w-4 h-4 mr-2" />
@@ -570,8 +570,8 @@ The department's fill rate has improved to 78%, exceeding the college target and
                   minHeight="350px"
                 />
 
-                <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-                  <span>
+                <div className="mt-4 flex items-center justify-between text-sm text-brand-muted">
+                  <span className="font-mono tabular-nums">
                     {(sectionContent[activeSection] || '').split(/\s+/).filter(Boolean).length} words
                   </span>
                   <span>
@@ -583,11 +583,11 @@ The department's fill rate has improved to 78%, exceeding the college target and
           ) : (
             /* No Section Selected */
             <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-              <FileText className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <FileText className="w-16 h-16 text-brand-muted mb-4" />
+              <h3 className="text-xl font-semibold text-brand-ink font-display tracking-tight mb-2">
                 Select a Section
               </h3>
-              <p className="text-gray-500 max-w-md">
+              <p className="text-brand-muted max-w-md">
                 Choose a section from the sidebar to begin editing your program review.
                 Required sections are marked with an asterisk (*).
               </p>
@@ -603,24 +603,24 @@ The department's fill rate has improved to 78%, exceeding the college target and
         title="Submit Review for Validation"
       >
         <div className="space-y-4">
-          <p className="text-gray-600">
+          <p className="text-brand-muted">
             Are you ready to submit this program review for validation? Once submitted,
             you will not be able to make further edits until the review is returned.
           </p>
 
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-2">Submission Checklist</h4>
+          <div className="bg-surface-2 rounded-lg p-4">
+            <h4 className="font-display tracking-tight font-medium text-brand-ink mb-2">Submission Checklist</h4>
             <div className="space-y-2">
               {sections.filter(s => s.required).map(section => {
                 const status = getSectionStatus(section.key);
                 return (
                   <div key={section.key} className="flex items-center gap-2 text-sm">
                     {status === 'completed' ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <CheckCircle2 className="w-4 h-4 text-status-approved" />
                     ) : (
-                      <AlertCircle className="w-4 h-4 text-red-500" />
+                      <AlertCircle className="w-4 h-4 text-destructive" />
                     )}
-                    <span className={status === 'completed' ? 'text-gray-700' : 'text-red-600'}>
+                    <span className={status === 'completed' ? 'text-brand-text' : 'text-destructive'}>
                       {section.title}
                     </span>
                   </div>

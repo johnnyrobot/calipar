@@ -217,11 +217,11 @@ export default function DataPage() {
         {/* Filters */}
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-500" />
+            <Filter className="w-5 h-5 text-brand-muted" />
             <select
               value={selectedTerm}
               onChange={(e) => setSelectedTerm(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+              className="px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
             >
               {terms.map(term => (
                 <option key={term} value={term}>{term}</option>
@@ -232,7 +232,7 @@ export default function DataPage() {
           <select
             value={selectedDepartment}
             onChange={(e) => setSelectedDepartment(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+            className="px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
           >
             {departments.map(dept => (
               <option key={dept.value} value={dept.value}>{dept.label}</option>
@@ -242,16 +242,16 @@ export default function DataPage() {
           <div className="flex-1" />
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">View by:</span>
-            <div className="flex bg-gray-100 rounded-lg p-1">
+            <span className="text-sm text-brand-muted">View by:</span>
+            <div className="flex bg-surface-2 rounded-lg p-1">
               {(['overall', 'ethnicity', 'gender', 'pell'] as const).map((option) => (
                 <button
                   key={option}
                   onClick={() => setViewBy(option)}
                   className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                     viewBy === option
-                      ? 'bg-white text-lamc-blue shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-surface text-brand-ink shadow-sm'
+                      : 'text-brand-muted hover:text-brand-ink'
                   }`}
                 >
                   {option === 'pell' ? 'Pell Status' : option.charAt(0).toUpperCase() + option.slice(1)}
@@ -267,13 +267,13 @@ export default function DataPage() {
         </div>
 
         {/* Data Type Tabs */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-brand-line">
           <button
             onClick={() => setActiveTab('enrollment')}
             className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'enrollment'
-                ? 'border-lamc-blue text-lamc-blue'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-brand-primary text-brand-primary'
+                : 'border-transparent text-brand-muted hover:text-brand-ink'
             }`}
           >
             <div className="flex items-center gap-2">
@@ -285,8 +285,8 @@ export default function DataPage() {
             onClick={() => setActiveTab('slo')}
             className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'slo'
-                ? 'border-lamc-blue text-lamc-blue'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-brand-primary text-brand-primary'
+                : 'border-transparent text-brand-muted hover:text-brand-ink'
             }`}
           >
             <div className="flex items-center gap-2">
@@ -303,8 +303,8 @@ export default function DataPage() {
           <Card>
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Enrollment</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
+                <p className="text-sm text-brand-muted">Total Enrollment</p>
+                <p className="text-3xl font-bold text-brand-ink mt-1 font-mono tabular-nums">
                   {currentEnrollment.total.toLocaleString()}
                 </p>
               </div>
@@ -331,8 +331,8 @@ export default function DataPage() {
           <Card>
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-500">Success Rate</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
+                <p className="text-sm text-brand-muted">Success Rate</p>
+                <p className="text-3xl font-bold text-brand-ink mt-1 font-mono tabular-nums">
                   {currentSuccess.successRate}%
                 </p>
               </div>
@@ -359,8 +359,8 @@ export default function DataPage() {
           <Card>
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-500">Retention Rate</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
+                <p className="text-sm text-brand-muted">Retention Rate</p>
+                <p className="text-3xl font-bold text-brand-ink mt-1 font-mono tabular-nums">
                   {currentSuccess.retentionRate}%
                 </p>
               </div>
@@ -387,8 +387,8 @@ export default function DataPage() {
           <Card>
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-500">Fill Rate</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
+                <p className="text-sm text-brand-muted">Fill Rate</p>
+                <p className="text-3xl font-bold text-brand-ink mt-1 font-mono tabular-nums">
                   {currentEnrollment.fillRate}%
                 </p>
               </div>
@@ -397,7 +397,7 @@ export default function DataPage() {
               </div>
             </div>
             <div className="mt-3">
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-purple-500 rounded-full"
                   style={{ width: `${currentEnrollment.fillRate}%` }}
@@ -409,7 +409,7 @@ export default function DataPage() {
 
         {/* Enrollment by Mode */}
         <Card>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <h3 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-4">
             Enrollment by Mode of Instruction
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -442,13 +442,13 @@ export default function DataPage() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-gray-900">
+                    <span className="text-2xl font-bold text-brand-ink font-mono tabular-nums">
                       {Math.round((mode.value / currentEnrollment.total) * 100)}%
                     </span>
                   </div>
                 </div>
-                <p className="font-medium text-gray-900">{mode.label}</p>
-                <p className="text-sm text-gray-500">{mode.value.toLocaleString()} students</p>
+                <p className="font-medium text-brand-ink">{mode.label}</p>
+                <p className="text-sm text-brand-muted">{mode.value.toLocaleString()} students</p>
               </div>
             ))}
           </div>
@@ -458,21 +458,21 @@ export default function DataPage() {
         {viewBy !== 'overall' && (
           <Card>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-brand-ink font-display tracking-tight">
                 Success Rates by {viewBy === 'pell' ? 'Pell Status' : viewBy.charAt(0).toUpperCase() + viewBy.slice(1)}
               </h3>
               <Badge variant="info">ISMP Goal 3.3</Badge>
             </div>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-brand-muted mb-4">
               Comparing against institution-wide success rate of {currentSuccess.successRate}%
             </p>
             <div className="space-y-4">
               {disaggregatedData[viewBy as keyof typeof disaggregatedData].map((item) => (
                 <div key={item.group} className="flex items-center gap-4">
-                  <div className="w-40 text-sm font-medium text-gray-700">{item.group}</div>
+                  <div className="w-40 text-sm font-medium text-brand-text">{item.group}</div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="flex-1 h-4 bg-surface-2 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all ${
                             item.gap < -3 ? 'bg-red-500' : item.gap < 0 ? 'bg-amber-500' : 'bg-green-500'
@@ -480,7 +480,7 @@ export default function DataPage() {
                           style={{ width: `${item.successRate}%` }}
                         />
                       </div>
-                      <span className="w-14 text-sm font-medium text-gray-900">
+                      <span className="w-14 text-sm font-medium text-brand-ink font-mono tabular-nums">
                         {item.successRate}%
                       </span>
                     </div>
@@ -492,15 +492,15 @@ export default function DataPage() {
                       {item.gap > 0 ? '+' : ''}{item.gap}pp
                     </span>
                   </div>
-                  <div className="w-24 text-right text-sm text-gray-500">
+                  <div className="w-24 text-right text-sm text-brand-muted">
                     {item.enrollment.toLocaleString()} students
                   </div>
                 </div>
               ))}
             </div>
             {viewBy === 'ethnicity' && (
-              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-800">
+              <div className="mt-4 p-4 bg-[#FBEAEA] border border-destructive rounded-lg">
+                <p className="text-sm text-destructive">
                   <strong>Equity Alert:</strong> African American students show a 7.0 percentage point gap below the institution average.
                   This should be addressed in your program review per ACCJC Standard I.B.6.
                 </p>
@@ -511,29 +511,29 @@ export default function DataPage() {
 
         {/* Historical Trends */}
         <Card>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <h3 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-4">
             Historical Enrollment Trends
           </h3>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Term</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">Total</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">In-Person</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">Online</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">Hybrid</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">Fill Rate</th>
+                <tr className="border-b border-brand-line">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-brand-muted">Term</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-brand-muted">Total</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-brand-muted">In-Person</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-brand-muted">Online</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-brand-muted">Hybrid</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-brand-muted">Fill Rate</th>
                 </tr>
               </thead>
               <tbody>
                 {enrollmentData.map((row, index) => (
-                  <tr key={row.term} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                    <td className="py-3 px-4 font-medium text-gray-900">{row.term}</td>
-                    <td className="py-3 px-4 text-right text-gray-700">{row.total.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right text-gray-700">{row.inPerson.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right text-gray-700">{row.online.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right text-gray-700">{row.hybrid.toLocaleString()}</td>
+                  <tr key={row.term} className={index % 2 === 0 ? 'bg-surface-2' : ''}>
+                    <td className="py-3 px-4 font-medium text-brand-ink">{row.term}</td>
+                    <td className="py-3 px-4 text-right text-brand-text font-mono tabular-nums">{row.total.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right text-brand-text font-mono tabular-nums">{row.inPerson.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right text-brand-text font-mono tabular-nums">{row.online.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right text-brand-text font-mono tabular-nums">{row.hybrid.toLocaleString()}</td>
                     <td className="py-3 px-4 text-right">
                       <span className={`font-medium ${
                         row.fillRate >= 75 ? 'text-green-600' : row.fillRate >= 65 ? 'text-amber-600' : 'text-red-600'
@@ -558,8 +558,8 @@ export default function DataPage() {
           <Card>
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total CSLOs Assessed</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
+                <p className="text-sm text-brand-muted">Total CSLOs Assessed</p>
+                <p className="text-3xl font-bold text-brand-ink mt-1 font-mono tabular-nums">
                   {csloSummary.totalSLOs}
                 </p>
               </div>
@@ -567,7 +567,7 @@ export default function DataPage() {
                 <Target className="w-5 h-5 text-blue-600" />
               </div>
             </div>
-            <p className="text-sm text-gray-500 mt-3">
+            <p className="text-sm text-brand-muted mt-3">
               Across {new Set(csloData.map(c => c.coursePrefix + c.courseNumber)).size} courses
             </p>
           </Card>
@@ -575,8 +575,8 @@ export default function DataPage() {
           <Card>
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-500">Exceeds Target</p>
-                <p className="text-3xl font-bold text-green-600 mt-1">
+                <p className="text-sm text-brand-muted">Exceeds Target</p>
+                <p className="text-3xl font-bold text-green-600 mt-1 font-mono tabular-nums">
                   {csloSummary.exceeds}
                 </p>
               </div>
@@ -592,8 +592,8 @@ export default function DataPage() {
           <Card>
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-500">Meets Target</p>
-                <p className="text-3xl font-bold text-amber-600 mt-1">
+                <p className="text-sm text-brand-muted">Meets Target</p>
+                <p className="text-3xl font-bold text-amber-600 mt-1 font-mono tabular-nums">
                   {csloSummary.meets}
                 </p>
               </div>
@@ -609,8 +609,8 @@ export default function DataPage() {
           <Card>
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-500">Below Target</p>
-                <p className="text-3xl font-bold text-red-600 mt-1">
+                <p className="text-sm text-brand-muted">Below Target</p>
+                <p className="text-3xl font-bold text-red-600 mt-1 font-mono tabular-nums">
                   {csloSummary.below}
                 </p>
               </div>
@@ -627,7 +627,7 @@ export default function DataPage() {
         {/* Average SLO Performance */}
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Overall SLO Performance</h3>
+            <h3 className="text-lg font-semibold text-brand-ink font-display tracking-tight">Overall SLO Performance</h3>
             <Badge variant="info">ISMP Goal 3.4</Badge>
           </div>
           <div className="flex items-center gap-6">
@@ -654,24 +654,24 @@ export default function DataPage() {
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center flex-col">
-                <span className="text-2xl font-bold text-gray-900">{csloSummary.avgPerformance}%</span>
-                <span className="text-xs text-gray-500">Avg. Met Standard</span>
+                <span className="text-2xl font-bold text-brand-ink font-mono tabular-nums">{csloSummary.avgPerformance}%</span>
+                <span className="text-xs text-brand-muted">Avg. Met Standard</span>
               </div>
             </div>
             <div className="flex-1 space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="text-sm text-gray-700">Exceeds Target (&gt;70%)</span>
+                <span className="text-sm text-brand-text">Exceeds Target (&gt;70%)</span>
                 <span className="ml-auto text-sm font-medium">{csloSummary.exceeds} SLOs</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-amber-500" />
-                <span className="text-sm text-gray-700">Meets Target (=70%)</span>
+                <span className="text-sm text-brand-text">Meets Target (=70%)</span>
                 <span className="ml-auto text-sm font-medium">{csloSummary.meets} SLOs</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-red-500" />
-                <span className="text-sm text-gray-700">Below Target (&lt;70%)</span>
+                <span className="text-sm text-brand-text">Below Target (&lt;70%)</span>
                 <span className="ml-auto text-sm font-medium">{csloSummary.below} SLOs</span>
               </div>
             </div>
@@ -681,45 +681,45 @@ export default function DataPage() {
         {/* CSLO Detail Table */}
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Course SLO Assessment Results</h3>
-            <div className="text-xs text-gray-500">Data from eLumen</div>
+            <h3 className="text-lg font-semibold text-brand-ink font-display tracking-tight">Course SLO Assessment Results</h3>
+            <div className="text-xs text-brand-muted">Data from eLumen</div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Course</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">SLO</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Assessment</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">Assessed</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">Met Standard</th>
-                  <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">Status</th>
+                <tr className="border-b border-brand-line">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-brand-muted">Course</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-brand-muted">SLO</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-brand-muted">Assessment</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-brand-muted">Assessed</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-brand-muted">Met Standard</th>
+                  <th className="text-center py-3 px-4 text-sm font-medium text-brand-muted">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {csloData.map((slo, index) => (
-                  <tr key={slo.id} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                  <tr key={slo.id} className={index % 2 === 0 ? 'bg-surface-2' : ''}>
                     <td className="py-3 px-4">
-                      <div className="font-medium text-gray-900">
+                      <div className="font-medium text-brand-ink">
                         {slo.coursePrefix} {slo.courseNumber}
                       </div>
-                      <div className="text-xs text-gray-500">{slo.courseName}</div>
+                      <div className="text-xs text-brand-muted">{slo.courseName}</div>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="text-sm text-gray-900">SLO {slo.sloNumber}</div>
-                      <div className="text-xs text-gray-500 max-w-xs truncate" title={slo.sloDescription}>
+                      <div className="text-sm text-brand-ink">SLO {slo.sloNumber}</div>
+                      <div className="text-xs text-brand-muted max-w-xs truncate" title={slo.sloDescription}>
                         {slo.sloDescription}
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-700">
+                    <td className="py-3 px-4 text-sm text-brand-text">
                       {slo.assessmentMethod}
                     </td>
-                    <td className="py-3 px-4 text-right text-sm text-gray-700">
+                    <td className="py-3 px-4 text-right text-sm text-brand-text font-mono tabular-nums">
                       {slo.studentsAssessed}
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="w-20 h-2 bg-surface-2 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${
                               slo.status === 'exceeds' ? 'bg-green-500' :
@@ -728,7 +728,7 @@ export default function DataPage() {
                             style={{ width: `${slo.metStandardPct}%` }}
                           />
                         </div>
-                        <span className="text-sm font-medium text-gray-900 w-14 text-right">
+                        <span className="text-sm font-medium text-brand-ink w-14 text-right font-mono tabular-nums">
                           {slo.metStandardPct}%
                         </span>
                       </div>
@@ -753,22 +753,22 @@ export default function DataPage() {
 
         {/* Action Required Alert */}
         {csloSummary.below > 0 && (
-          <Card className="bg-red-50 border-red-200">
+          <Card className="bg-[#FBEAEA] border-destructive">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
+              <div className="w-10 h-10 bg-destructive rounded-lg flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 text-destructive-foreground" />
               </div>
               <div>
-                <h4 className="font-semibold text-red-800 mb-1">Action Required</h4>
-                <p className="text-sm text-red-700 mb-3">
+                <h4 className="font-semibold text-destructive mb-1">Action Required</h4>
+                <p className="text-sm text-destructive mb-3">
                   {csloSummary.below} SLO(s) are below the 70% target threshold. Per ACCJC Standard II.A.3,
                   the institution must develop and implement improvements based on assessment results.
                 </p>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-100">
+                  <Button size="sm" variant="outline" className="border-destructive text-destructive hover:bg-destructive/10">
                     Create Action Plan
                   </Button>
-                  <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-100">
+                  <Button size="sm" variant="outline" className="border-destructive text-destructive hover:bg-destructive/10">
                     View Recommendations
                   </Button>
                 </div>

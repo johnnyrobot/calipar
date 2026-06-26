@@ -129,7 +129,7 @@ export function TabList({ children, className = '' }: TabListProps) {
   return (
     <div
       role="tablist"
-      className={`flex border-b border-gray-200 ${className}`}
+      className={`flex border-b border-brand-line ${className}`}
     >
       {children}
     </div>
@@ -177,8 +177,8 @@ export function Tab({
         relative px-4 py-2.5 text-sm font-medium transition-colors
         flex items-center gap-2
         ${isActive
-          ? 'text-lamc-blue border-b-2 border-lamc-blue -mb-px'
-          : 'text-gray-600 hover:text-gray-900 border-b-2 border-transparent'
+          ? 'text-brand-primary border-b-2 border-brand-primary -mb-px'
+          : 'text-brand-muted hover:text-brand-ink border-b-2 border-transparent'
         }
         ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         ${className}
@@ -191,8 +191,8 @@ export function Tab({
           className={`
             ml-1 px-1.5 py-0.5 text-xs font-medium rounded-full
             ${isActive
-              ? 'bg-lamc-blue/10 text-lamc-blue'
-              : 'bg-gray-100 text-gray-600'
+              ? 'bg-brand-primary/10 text-brand-primary'
+              : 'bg-surface-2 text-brand-muted'
             }
           `}
         >
@@ -257,7 +257,7 @@ export function PillTabs({
   return (
     <div
       role="tablist"
-      className={`inline-flex bg-gray-100 rounded-lg p-1 ${className}`}
+      className={`inline-flex bg-surface-2 rounded-lg p-1 ${className}`}
     >
       {tabs.map((tab) => (
         <button
@@ -271,8 +271,8 @@ export function PillTabs({
             font-medium rounded-md transition-all
             flex items-center gap-2
             ${activeTab === tab.id
-              ? 'bg-white text-lamc-blue shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-surface text-brand-primary shadow-sm'
+              : 'text-brand-muted hover:text-brand-ink'
             }
             ${tab.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           `}
@@ -284,8 +284,8 @@ export function PillTabs({
               className={`
                 px-1.5 py-0.5 text-xs font-medium rounded-full
                 ${activeTab === tab.id
-                  ? 'bg-lamc-blue/10 text-lamc-blue'
-                  : 'bg-gray-200 text-gray-600'
+                  ? 'bg-brand-primary/10 text-brand-primary'
+                  : 'bg-surface-2 text-brand-muted'
                 }
               `}
             >
