@@ -104,15 +104,15 @@ export function Table<T extends Record<string, unknown>>({
 
   const getSortIcon = (columnKey: string) => {
     if (sortConfig.key !== columnKey) {
-      return <ChevronsUpDown className="w-4 h-4 text-gray-400" />;
+      return <ChevronsUpDown className="w-4 h-4 text-brand-muted" />;
     }
     if (sortConfig.direction === 'asc') {
-      return <ChevronUp className="w-4 h-4 text-lamc-blue" />;
+      return <ChevronUp className="w-4 h-4 text-brand-primary" />;
     }
     if (sortConfig.direction === 'desc') {
-      return <ChevronDown className="w-4 h-4 text-lamc-blue" />;
+      return <ChevronDown className="w-4 h-4 text-brand-primary" />;
     }
-    return <ChevronsUpDown className="w-4 h-4 text-gray-400" />;
+    return <ChevronsUpDown className="w-4 h-4 text-brand-muted" />;
   };
 
   const getAlignmentClass = (align?: 'left' | 'center' | 'right') => {
@@ -131,7 +131,7 @@ export function Table<T extends Record<string, unknown>>({
   // Loading state
   if (isLoading) {
     return (
-      <div className={`bg-white rounded-lg border border-gray-200 ${className}`}>
+      <div className={`bg-surface rounded-lg border border-brand-line ${className}`}>
         <div className="flex items-center justify-center py-12">
           <Spinner size="lg" />
         </div>
@@ -142,26 +142,26 @@ export function Table<T extends Record<string, unknown>>({
   // Empty state
   if (data.length === 0) {
     return (
-      <div className={`bg-white rounded-lg border border-gray-200 ${className}`}>
+      <div className={`bg-surface rounded-lg border border-brand-line ${className}`}>
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          {emptyIcon || <AlertCircle className="w-12 h-12 text-gray-300 mb-3" />}
-          <p className="text-gray-500">{emptyMessage}</p>
+          {emptyIcon || <AlertCircle className="w-12 h-12 text-brand-muted mb-3" />}
+          <p className="text-brand-muted">{emptyMessage}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 overflow-hidden ${className}`}>
+    <div className={`bg-surface rounded-lg border border-brand-line overflow-hidden ${className}`}>
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className={`bg-gray-50 border-b border-gray-200 ${stickyHeader ? 'sticky top-0 z-10' : ''}`}>
+          <thead className={`bg-surface-2 border-b border-brand-line ${stickyHeader ? 'sticky top-0 z-10' : ''}`}>
             <tr>
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
-                  className={`${paddingClass} text-xs font-semibold text-gray-600 uppercase tracking-wider ${getAlignmentClass(column.align)} ${
-                    column.sortable ? 'cursor-pointer select-none hover:bg-gray-100 transition-colors' : ''
+                  className={`${paddingClass} text-xs font-semibold text-brand-muted uppercase tracking-wider ${getAlignmentClass(column.align)} ${
+                    column.sortable ? 'cursor-pointer select-none hover:bg-surface-2 transition-colors' : ''
                   }`}
                   style={{ width: column.width }}
                   onClick={() => column.sortable && handleSort(String(column.key))}
@@ -174,13 +174,13 @@ export function Table<T extends Record<string, unknown>>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-brand-line">
             {sortedData.map((item, index) => (
               <tr
                 key={keyExtractor(item)}
                 className={`
-                  ${striped && index % 2 === 1 ? 'bg-gray-50' : 'bg-white'}
-                  ${hoverable ? 'hover:bg-gray-50' : ''}
+                  ${striped && index % 2 === 1 ? 'bg-surface-2' : 'bg-surface'}
+                  ${hoverable ? 'hover:bg-surface-2' : ''}
                   ${onRowClick ? 'cursor-pointer' : ''}
                   ${rowClassName ? rowClassName(item, index) : ''}
                   transition-colors
@@ -190,7 +190,7 @@ export function Table<T extends Record<string, unknown>>({
                 {columns.map((column) => (
                   <td
                     key={String(column.key)}
-                    className={`${paddingClass} text-sm text-gray-900 ${getAlignmentClass(column.align)}`}
+                    className={`${paddingClass} text-sm text-brand-ink ${getAlignmentClass(column.align)}`}
                   >
                     {column.render
                       ? column.render(item, index)

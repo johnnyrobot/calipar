@@ -22,11 +22,11 @@ export function Header({ title, subtitle }: HeaderProps) {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center px-4 lg:px-6">
+    <header className="h-16 bg-surface border-b border-brand-line flex items-center px-4 lg:px-6">
       {/* Mobile Menu Button */}
       <button
         onClick={() => setShowMobileMenu(!showMobileMenu)}
-        className="lg:hidden p-2 text-gray-500 hover:text-gray-700 mr-2"
+        className="lg:hidden p-2 text-brand-muted hover:text-brand-ink mr-2"
       >
         {showMobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
@@ -35,9 +35,9 @@ export function Header({ title, subtitle }: HeaderProps) {
       <div className="flex-1">
         {title && (
           <div>
-            <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
+            <h1 className="font-display text-lg font-semibold tracking-tight text-brand-ink">{title}</h1>
             {subtitle && (
-              <p className="text-sm text-gray-500">{subtitle}</p>
+              <p className="text-sm text-brand-muted">{subtitle}</p>
             )}
           </div>
         )}
@@ -50,16 +50,16 @@ export function Header({ title, subtitle }: HeaderProps) {
             <input
               type="text"
               placeholder="Search reviews, data..."
-              className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue focus:border-transparent"
+              className="w-64 pl-10 pr-4 py-2 border border-brand-line bg-surface-2 rounded-lg text-sm text-brand-text focus:outline-none focus:bg-surface focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               autoFocus
               onBlur={() => setShowSearch(false)}
             />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
           </div>
         ) : (
           <button
             onClick={() => setShowSearch(true)}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-brand-muted hover:text-brand-ink hover:bg-surface-2 rounded-lg transition-colors"
           >
             <Search className="w-5 h-5" />
           </button>
@@ -74,20 +74,20 @@ export function Header({ title, subtitle }: HeaderProps) {
         {/* Help */}
         <button
           onClick={() => setChatOpen(true)}
-          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 text-brand-muted hover:text-brand-ink hover:bg-surface-2 rounded-lg transition-colors"
           title="Ask Mission-Bot"
         >
           <HelpCircle className="w-5 h-5" />
         </button>
 
         {/* Notifications */}
-        <button className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+        <button className="relative p-2 text-brand-muted hover:text-brand-ink hover:bg-surface-2 rounded-lg transition-colors">
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full"></span>
         </button>
 
         {/* Current Cycle */}
-        <div className="hidden sm:flex items-center ml-2 px-3 py-1.5 bg-lamc-light text-lamc-blue text-sm font-medium rounded-lg">
+        <div className="hidden sm:flex items-center ml-2 px-3 py-1.5 bg-brand-primary-bg text-brand-ink text-sm font-medium rounded-lg">
           2024-2025 Cycle
         </div>
       </div>

@@ -88,10 +88,10 @@ export function Pagination({
     <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`}>
       {/* Items info */}
       {totalItems !== undefined && (
-        <p className={`${textSize} text-gray-500`}>
-          Showing <span className="font-medium text-gray-900">{startItem}</span> to{' '}
-          <span className="font-medium text-gray-900">{endItem}</span> of{' '}
-          <span className="font-medium text-gray-900">{totalItems}</span> results
+        <p className={`${textSize} text-brand-muted`}>
+          Showing <span className="font-medium text-brand-ink font-mono tabular-nums">{startItem}</span> to{' '}
+          <span className="font-medium text-brand-ink font-mono tabular-nums">{endItem}</span> of{' '}
+          <span className="font-medium text-brand-ink font-mono tabular-nums">{totalItems}</span> results
         </p>
       )}
 
@@ -102,8 +102,8 @@ export function Pagination({
           <button
             onClick={() => onPageChange(1)}
             disabled={isFirstPage}
-            className={`${buttonSize} flex items-center justify-center rounded-lg border border-gray-200 text-gray-600
-              ${isFirstPage ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'hover:bg-gray-50 hover:border-gray-300'}
+            className={`${buttonSize} flex items-center justify-center rounded-lg border border-brand-line text-brand-muted
+              ${isFirstPage ? 'opacity-50 cursor-not-allowed bg-surface-2' : 'hover:bg-surface-2 hover:border-brand-line'}
               transition-colors`}
             aria-label="Go to first page"
           >
@@ -115,8 +115,8 @@ export function Pagination({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={isFirstPage}
-          className={`${buttonSize} flex items-center justify-center rounded-lg border border-gray-200 text-gray-600
-            ${isFirstPage ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'hover:bg-gray-50 hover:border-gray-300'}
+          className={`${buttonSize} flex items-center justify-center rounded-lg border border-brand-line text-brand-muted
+            ${isFirstPage ? 'opacity-50 cursor-not-allowed bg-surface-2' : 'hover:bg-surface-2 hover:border-brand-line'}
             transition-colors`}
           aria-label="Go to previous page"
         >
@@ -131,7 +131,7 @@ export function Pagination({
                 return (
                   <span
                     key={`ellipsis-${index}`}
-                    className={`${buttonSize} flex items-center justify-center ${textSize} text-gray-400`}
+                    className={`${buttonSize} flex items-center justify-center ${textSize} text-brand-muted`}
                   >
                     ...
                   </span>
@@ -143,10 +143,10 @@ export function Pagination({
                 <button
                   key={page}
                   onClick={() => onPageChange(page)}
-                  className={`${buttonSize} flex items-center justify-center rounded-lg ${textSize} font-medium transition-colors
+                  className={`${buttonSize} flex items-center justify-center rounded-lg ${textSize} font-medium font-mono tabular-nums transition-colors
                     ${isCurrentPage
-                      ? 'bg-lamc-blue text-white border border-lamc-blue'
-                      : 'border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                      ? 'bg-brand-primary text-white border border-brand-primary'
+                      : 'border border-brand-line text-brand-muted hover:bg-surface-2 hover:border-brand-line'
                     }`}
                   aria-label={`Go to page ${page}`}
                   aria-current={isCurrentPage ? 'page' : undefined}
@@ -160,7 +160,7 @@ export function Pagination({
 
         {/* Mobile page indicator */}
         {showPageNumbers && (
-          <span className={`sm:hidden ${textSize} text-gray-600 px-2`}>
+          <span className={`sm:hidden ${textSize} text-brand-muted px-2`}>
             Page {currentPage} of {totalPages}
           </span>
         )}
@@ -169,8 +169,8 @@ export function Pagination({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={isLastPage}
-          className={`${buttonSize} flex items-center justify-center rounded-lg border border-gray-200 text-gray-600
-            ${isLastPage ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'hover:bg-gray-50 hover:border-gray-300'}
+          className={`${buttonSize} flex items-center justify-center rounded-lg border border-brand-line text-brand-muted
+            ${isLastPage ? 'opacity-50 cursor-not-allowed bg-surface-2' : 'hover:bg-surface-2 hover:border-brand-line'}
             transition-colors`}
           aria-label="Go to next page"
         >
@@ -182,8 +182,8 @@ export function Pagination({
           <button
             onClick={() => onPageChange(totalPages)}
             disabled={isLastPage}
-            className={`${buttonSize} flex items-center justify-center rounded-lg border border-gray-200 text-gray-600
-              ${isLastPage ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'hover:bg-gray-50 hover:border-gray-300'}
+            className={`${buttonSize} flex items-center justify-center rounded-lg border border-brand-line text-brand-muted
+              ${isLastPage ? 'opacity-50 cursor-not-allowed bg-surface-2' : 'hover:bg-surface-2 hover:border-brand-line'}
               transition-colors`}
             aria-label="Go to last page"
           >
@@ -210,14 +210,14 @@ export function PageSizeSelector({
 }: PageSizeSelectorProps) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <label htmlFor="page-size" className="text-sm text-gray-600">
+      <label htmlFor="page-size" className="text-sm text-brand-muted">
         Items per page:
       </label>
       <select
         id="page-size"
         value={pageSize}
         onChange={(e) => onPageSizeChange(Number(e.target.value))}
-        className="px-2 py-1 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue focus:border-transparent"
+        className="px-2 py-1 text-sm border border-brand-line rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
       >
         {options.map((option) => (
           <option key={option} value={option}>

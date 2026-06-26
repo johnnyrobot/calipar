@@ -18,6 +18,58 @@ CALIPAR is a comprehensive platform for program review, strategic planning, and 
 - **Mission-Bot** - AI compliance copilot for ACCJC/ISMP guidance
 - **Demo Mode** - Sandbox environment for prospective users
 
+## Design
+
+CALIPAR uses a custom **"maritime instrument deck"** design system — a trustworthy, institution-neutral
+identity built around a deep‑navy command rail, a single signal‑blue action color, and a brass
+**Golden Thread** accent, with Archivo display type and IBM Plex Mono numerals rendered as instrument
+readouts. Screens were authored in [Paper](https://paper.design) and exported to the live Tailwind theme.
+
+### Dashboard
+
+![CALIPAR Dashboard](docs/screenshots/dashboard.png)
+
+### Program Reviews & Smart Context Editor
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/reviews.png" alt="Program Reviews" /></td>
+    <td width="50%"><img src="docs/screenshots/review-editor.png" alt="Smart Context Editor" /></td>
+  </tr>
+</table>
+
+### Golden Thread Planning & Data Analytics
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/planning.png" alt="Golden Thread Planning" /></td>
+    <td width="50%"><img src="docs/screenshots/data-analytics.png" alt="Data & Analytics" /></td>
+  </tr>
+</table>
+
+### Mission-Bot & Sign In
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/mission-bot.png" alt="Mission-Bot AI copilot" /></td>
+    <td width="50%"><img src="docs/screenshots/login.png" alt="Sign in" /></td>
+  </tr>
+</table>
+
+### Mobile
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/mobile-dashboard.png" width="250" alt="Mobile dashboard" /></td>
+    <td><img src="docs/screenshots/mobile-reviews.png" width="250" alt="Mobile reviews" /></td>
+    <td><img src="docs/screenshots/mobile-mission-bot.png" width="250" alt="Mobile Mission-Bot" /></td>
+  </tr>
+</table>
+
+### Design System
+
+![CALIPAR design system — palette, type scale, and components](docs/screenshots/design-system.png)
+
 ## Quick Start
 
 ### Using Docker (Recommended)

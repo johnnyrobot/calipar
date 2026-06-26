@@ -4,25 +4,27 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Maritime "instrument deck" palette mapped onto shadcn tokens.
+       See docs/DESIGN_HANDOFF.md §4 for the source hex values. */
+    --background: 216 48% 97%; /* ground #F3F6FB (sea-fog) */
+    --foreground: 212 45% 16%; /* text  #16273A */
+    --card: 0 0% 100%; /* surface #FFFFFF */
+    --card-foreground: 212 45% 16%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 210 100% 20%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 45 100% 55%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 210 100% 20%;
+    --popover-foreground: 212 45% 16%;
+    --primary: 220 74% 47%; /* signal blue #1F5BD0 */
+    --primary-foreground: 210 43% 94%; /* on-ink #E7EEF6 */
+    --secondary: 215 40% 95%; /* surface-2 #EEF2F8 */
+    --secondary-foreground: 210 61% 13%; /* ink #0D2236 */
+    --muted: 215 40% 95%; /* surface-2 #EEF2F8 */
+    --muted-foreground: 214 17% 43%; /* muted #5B6B80 */
+    --accent: 215 40% 95%; /* subtle hover surface (brass lives in brand-accent) */
+    --accent-foreground: 210 61% 13%;
+    --destructive: 0 72% 51%; /* danger #DC2626 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 28% 88%; /* hairline #D8E0EB */
+    --input: 214 28% 88%;
+    --ring: 220 74% 47%; /* signal blue */
     --radius: 0.5rem;
   }
 }
@@ -32,29 +34,29 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar (maritime hairline tones) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #eef2f8;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #cbd5e3;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: #8da3bc;
 }
 
 /* Utility classes for status badges */
@@ -63,17 +65,17 @@
 }
 
 .status-draft {
-  @apply bg-gray-100 text-gray-800;
+  @apply bg-surface-2 text-status-draft;
 }
 
 .status-in-review {
-  @apply bg-amber-100 text-amber-800;
+  @apply bg-brand-review-bg text-status-review;
 }
 
 .status-validated {
-  @apply bg-blue-100 text-blue-800;
+  @apply bg-brand-primary-bg text-status-validated;
 }
 
 .status-approved {
-  @apply bg-green-100 text-green-800;
+  @apply bg-brand-success-bg text-status-approved;
 }

@@ -17,28 +17,28 @@ export interface BadgeProps {
 }
 
 const variantStyles = {
-  default: 'bg-gray-100 text-gray-800',
-  success: 'bg-green-100 text-green-800',
-  warning: 'bg-amber-100 text-amber-800',
-  error: 'bg-red-100 text-red-800',
-  info: 'bg-blue-100 text-blue-800',
+  default: 'bg-surface-2 text-status-draft',
+  success: 'bg-brand-success-bg text-status-approved',
+  warning: 'bg-brand-review-bg text-status-review',
+  error: 'bg-[#FBEAEA] text-destructive',
+  info: 'bg-brand-primary-bg text-brand-primary',
   // Review status variants
-  draft: 'bg-gray-100 text-gray-800',
-  review: 'bg-amber-100 text-amber-800',
-  validated: 'bg-blue-100 text-blue-800',
-  approved: 'bg-green-100 text-green-800',
+  draft: 'bg-surface-2 text-status-draft',
+  review: 'bg-brand-review-bg text-status-review',
+  validated: 'bg-brand-primary-bg text-status-validated',
+  approved: 'bg-brand-success-bg text-status-approved',
 };
 
 const dotColors = {
-  default: 'bg-gray-400',
-  success: 'bg-green-500',
-  warning: 'bg-amber-500',
-  error: 'bg-red-500',
-  info: 'bg-blue-500',
-  draft: 'bg-gray-400',
-  review: 'bg-amber-500',
-  validated: 'bg-blue-500',
-  approved: 'bg-green-500',
+  default: 'bg-status-draft',
+  success: 'bg-status-approved',
+  warning: 'bg-status-review',
+  error: 'bg-destructive',
+  info: 'bg-brand-primary',
+  draft: 'bg-status-draft',
+  review: 'bg-status-review',
+  validated: 'bg-status-validated',
+  approved: 'bg-status-approved',
 };
 
 const sizeStyles = {
@@ -56,7 +56,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 font-medium rounded-full',
+        'inline-flex items-center gap-1.5 font-semibold rounded-full',
         variantStyles[variant],
         sizeStyles[size],
         className

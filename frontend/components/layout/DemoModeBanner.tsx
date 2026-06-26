@@ -73,30 +73,30 @@ export function DemoModeBanner() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200">
+    <div className="bg-brand-review-bg border-b border-brand-line">
       <div className="px-4 py-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2 text-sm">
-            <div className="flex items-center gap-1.5 text-amber-700 font-medium">
+            <div className="flex items-center gap-1.5 text-status-review font-medium">
               <AlertCircle className="w-4 h-4" />
               <span>Demo Mode</span>
             </div>
-            <span className="text-gray-600">
+            <span className="text-brand-muted">
               Your demo data will reset every night at midnight.
             </span>
           </div>
 
           {demoStatus.next_reset && (
-            <div className="flex items-center gap-1.5 text-sm text-gray-600">
+            <div className="flex items-center gap-1.5 text-sm text-brand-muted">
               <Clock className="w-4 h-4" />
-              <span>Resets in: <strong>{timeUntilReset}</strong></span>
+              <span>Resets in: <strong className="font-mono">{timeUntilReset}</strong></span>
             </div>
           )}
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => window.location.reload()}
-              className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-md transition-colors"
+              className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-brand-primary bg-surface-2 hover:bg-brand-primary-bg rounded-md transition-colors"
             >
               <RefreshCw className="w-3 h-3" />
               Reset Now
@@ -136,7 +136,7 @@ export function DemoModeBadge() {
   }
 
   return (
-    <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-md border border-amber-200">
+    <div className="flex items-center gap-1.5 px-2 py-1 bg-brand-review-bg text-status-review text-xs font-medium rounded-md border border-brand-line">
       <AlertCircle className="w-3 h-3" />
       <span>Demo</span>
     </div>

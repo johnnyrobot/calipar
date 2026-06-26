@@ -148,47 +148,47 @@ export function DataInjectionPanel({
   const getStatusColor = (status?: string) => {
     switch (status) {
       case 'positive':
-        return 'text-green-600';
+        return 'text-status-approved';
       case 'negative':
-        return 'text-red-600';
+        return 'text-destructive';
       case 'warning':
-        return 'text-amber-600';
+        return 'text-status-review';
       default:
-        return 'text-gray-600';
+        return 'text-brand-muted';
     }
   };
 
   const getStatusBgColor = (status?: string) => {
     switch (status) {
       case 'positive':
-        return 'bg-green-50 border-green-200';
+        return 'bg-brand-success-bg border-brand-line';
       case 'negative':
-        return 'bg-red-50 border-red-200';
+        return 'bg-[#FBEAEA] border-brand-line';
       case 'warning':
-        return 'bg-amber-50 border-amber-200';
+        return 'bg-brand-review-bg border-brand-line';
       default:
-        return 'bg-white border-gray-200';
+        return 'bg-surface border-brand-line';
     }
   };
 
   // Loading skeleton
   if (isLoading) {
     return (
-      <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+      <Card className="mb-6 bg-brand-primary-bg border-brand-primary">
         <div className="flex items-center justify-between mb-4">
-          <div className="h-6 w-40 bg-blue-200 rounded animate-pulse" />
-          <div className="h-8 w-32 bg-blue-200 rounded animate-pulse" />
+          <div className="h-6 w-40 bg-surface-2 rounded animate-pulse" />
+          <div className="h-8 w-32 bg-surface-2 rounded animate-pulse" />
         </div>
         <div className="grid grid-cols-4 gap-4 mb-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-lg p-4 border border-blue-100">
-              <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mb-2" />
-              <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mb-1" />
-              <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
+            <div key={i} className="bg-surface rounded-lg p-4 border border-brand-line">
+              <div className="h-4 w-20 bg-surface-2 rounded animate-pulse mb-2" />
+              <div className="h-8 w-16 bg-surface-2 rounded animate-pulse mb-1" />
+              <div className="h-3 w-24 bg-surface-2 rounded animate-pulse" />
             </div>
           ))}
         </div>
-        <div className="h-40 bg-white rounded-lg border border-blue-100 animate-pulse" />
+        <div className="h-40 bg-surface rounded-lg border border-brand-line animate-pulse" />
       </Card>
     );
   }
@@ -196,9 +196,9 @@ export function DataInjectionPanel({
   // Error state
   if (error) {
     return (
-      <Card className="mb-6 bg-red-50 border-red-200">
+      <Card className="mb-6 bg-[#FBEAEA] border-brand-line">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 text-red-700">
+          <div className="flex items-center gap-3 text-destructive">
             <AlertCircle className="w-5 h-5" />
             <span>{error}</span>
           </div>
@@ -214,21 +214,21 @@ export function DataInjectionPanel({
   if (!data) return null;
 
   return (
-    <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+    <Card className="mb-6 bg-brand-primary-bg border-brand-primary">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-          <BarChart2 className="w-5 h-5 text-lamc-blue" />
+        <h3 className="font-semibold text-brand-ink font-display tracking-tight flex items-center gap-2">
+          <BarChart2 className="w-5 h-5 text-brand-ink" />
           {data.title}
         </h3>
         <div className="flex items-center gap-2">
           {/* Term Selector */}
           <div className="flex items-center gap-1">
-            <Calendar className="w-4 h-4 text-gray-400" />
+            <Calendar className="w-4 h-4 text-brand-muted" />
             <select
               value={selectedTerm}
               onChange={(e) => setSelectedTerm(e.target.value)}
-              className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+              className="text-sm border border-brand-line bg-surface rounded px-2 py-1 focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
             >
               {termOptions.map((term) => (
                 <option key={term.key} value={term.key}>
@@ -242,7 +242,7 @@ export function DataInjectionPanel({
           <select
             value={compareTerm || ''}
             onChange={(e) => setCompareTerm(e.target.value || null)}
-            className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+            className="text-sm border border-brand-line bg-surface rounded px-2 py-1 focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
           >
             <option value="">Compare to...</option>
             {termOptions.filter(t => t.key !== selectedTerm).map((term) => (
@@ -273,8 +273,8 @@ export function DataInjectionPanel({
       {/* Disaggregation Toggles */}
       {data.hasDisaggregation && (
         <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-4 h-4 text-gray-400" />
-          <span className="text-sm text-gray-500">View by:</span>
+          <Filter className="w-4 h-4 text-brand-muted" />
+          <span className="text-sm text-brand-muted">View by:</span>
           <div className="flex gap-1">
             {disaggregationOptions.map((option) => (
               <button
@@ -282,8 +282,8 @@ export function DataInjectionPanel({
                 onClick={() => setSelectedDisaggregation(option.key)}
                 className={`px-3 py-1 text-sm rounded-full transition-colors ${
                   selectedDisaggregation === option.key
-                    ? 'bg-lamc-blue text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                    ? 'bg-brand-primary text-white'
+                    : 'bg-surface text-brand-muted hover:bg-surface-2 border border-brand-line'
                 }`}
               >
                 {option.label}
@@ -300,8 +300,8 @@ export function DataInjectionPanel({
             key={index}
             className={`rounded-lg p-4 border ${getStatusBgColor(metric.status)}`}
           >
-            <p className="text-sm text-gray-500 mb-1">{metric.label}</p>
-            <p className="text-2xl font-bold text-gray-900">{metric.value}</p>
+            <p className="text-sm text-brand-muted mb-1">{metric.label}</p>
+            <p className="text-2xl font-bold text-brand-ink font-mono tabular-nums">{metric.value}</p>
             {metric.change !== undefined && (
               <div className={`flex items-center gap-1 text-xs mt-1 ${getStatusColor(metric.status)}`}>
                 {metric.change > 0 ? (
@@ -315,7 +315,7 @@ export function DataInjectionPanel({
               </div>
             )}
             {metric.target && (
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-brand-muted mt-1">
                 Target: {metric.target}
               </p>
             )}
@@ -325,12 +325,12 @@ export function DataInjectionPanel({
 
       {/* Simple Bar Chart Visualization */}
       {data.chartData && (
-        <div className="bg-white rounded-lg p-4 border border-blue-100">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Trend Analysis</h4>
+        <div className="bg-surface rounded-lg p-4 border border-brand-line">
+          <h4 className="text-sm font-medium text-brand-text mb-3">Trend Analysis</h4>
           <div className="space-y-3">
             {data.chartData.datasets.map((dataset, datasetIndex) => (
               <div key={datasetIndex}>
-                <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                <div className="flex items-center justify-between text-xs text-brand-muted mb-1">
                   <span>{dataset.label}</span>
                   <span>{dataset.data[dataset.data.length - 1]}%</span>
                 </div>
@@ -348,13 +348,13 @@ export function DataInjectionPanel({
                         }}
                       />
                       {/* Tooltip */}
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-brand-ink text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                         {data.chartData?.labels[i]}: {value}%
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <div className="flex justify-between text-xs text-brand-muted mt-1">
                   {data.chartData?.labels.map((label, i) => (
                     <span key={i} className="flex-1 text-center truncate">
                       {label.split(' ')[0]}
@@ -368,9 +368,9 @@ export function DataInjectionPanel({
       )}
 
       {/* Data Source Footer */}
-      <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
+      <div className="mt-3 flex items-center justify-between text-xs text-brand-muted">
         <span>Data source: Institutional Research • Last updated: Dec 10, 2024</span>
-        <button className="hover:text-lamc-blue transition-colors">
+        <button className="hover:text-brand-primary transition-colors">
           <RefreshCw className="w-3 h-3" />
         </button>
       </div>

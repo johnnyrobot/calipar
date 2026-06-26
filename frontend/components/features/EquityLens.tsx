@@ -152,7 +152,7 @@ export function EquityLens({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-50 flex flex-col">
+    <div className="fixed right-0 top-0 h-full w-96 bg-surface border-l border-brand-line shadow-xl z-50 flex flex-col">
       {/* Header */}
       <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-4">
         <div className="flex items-center justify-between">
@@ -182,10 +182,10 @@ export function EquityLens({
             <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Sparkles className="w-8 h-8 text-amber-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-2">
               Equity Check
             </h3>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-brand-muted mb-6">
               Analyze your program review for equity considerations and ensure
               compliance with ACCJC Standard I.B.6 (disaggregated data analysis).
             </p>
@@ -202,7 +202,7 @@ export function EquityLens({
                 </>
               )}
             </Button>
-            <p className="text-xs text-gray-400 mt-4">
+            <p className="text-xs text-brand-muted mt-4">
               This analysis uses disaggregated data to identify achievement gaps
               across demographic groups.
             </p>
@@ -243,7 +243,7 @@ export function EquityLens({
 
             {/* Equity Gaps List */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+              <h4 className="font-medium text-brand-ink font-display tracking-tight mb-3 flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 Identified Equity Gaps
               </h4>
@@ -283,19 +283,19 @@ export function EquityLens({
                       <div className="px-3 pb-3 pt-0 border-t border-current/10">
                         <div className="grid grid-cols-2 gap-3 text-xs mt-3">
                           <div>
-                            <p className="text-gray-500">Current Rate</p>
-                            <p className="font-semibold">{gap.value}%</p>
+                            <p className="text-brand-muted">Current Rate</p>
+                            <p className="font-semibold font-mono tabular-nums">{gap.value}%</p>
                           </div>
                           <div>
-                            <p className="text-gray-500">Benchmark</p>
-                            <p className="font-semibold">{gap.benchmark}%</p>
+                            <p className="text-brand-muted">Benchmark</p>
+                            <p className="font-semibold font-mono tabular-nums">{gap.benchmark}%</p>
                           </div>
                           <div>
-                            <p className="text-gray-500">ISMP Goal</p>
+                            <p className="text-brand-muted">ISMP Goal</p>
                             <p className="font-semibold">Goal {gap.ismpGoal}</p>
                           </div>
                           <div>
-                            <p className="text-gray-500">ACCJC Standard</p>
+                            <p className="text-brand-muted">ACCJC Standard</p>
                             <p className="font-semibold">{gap.accjcStandard}</p>
                           </div>
                         </div>
@@ -308,7 +308,7 @@ export function EquityLens({
 
             {/* Suggestions */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+              <h4 className="font-medium text-brand-ink font-display tracking-tight mb-3 flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
                 Recommendations
               </h4>
@@ -316,12 +316,12 @@ export function EquityLens({
                 {suggestions.map((suggestion) => (
                   <div
                     key={suggestion.id}
-                    className="bg-white border border-gray-200 rounded-lg p-3"
+                    className="bg-surface border border-brand-line rounded-lg p-3"
                   >
-                    <h5 className="font-medium text-gray-900 text-sm mb-1">
+                    <h5 className="font-medium text-brand-ink font-display tracking-tight text-sm mb-1">
                       {suggestion.title}
                     </h5>
-                    <p className="text-xs text-gray-500 mb-3">
+                    <p className="text-xs text-brand-muted mb-3">
                       {suggestion.description}
                     </p>
                     <Button
@@ -340,12 +340,12 @@ export function EquityLens({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 p-4 bg-gray-50">
+      <div className="border-t border-brand-line p-4 bg-surface-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-brand-muted">
             <a
               href="#"
-              className="flex items-center gap-1 hover:text-lamc-blue"
+              className="flex items-center gap-1 hover:text-brand-primary"
             >
               ACCJC Standard I.B.6
               <ExternalLink className="w-3 h-3" />
@@ -353,7 +353,7 @@ export function EquityLens({
             <span>&middot;</span>
             <a
               href="#"
-              className="flex items-center gap-1 hover:text-lamc-blue"
+              className="flex items-center gap-1 hover:text-brand-primary"
             >
               ISMP Goal 3
               <ExternalLink className="w-3 h-3" />

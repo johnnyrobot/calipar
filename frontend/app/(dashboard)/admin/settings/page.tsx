@@ -121,9 +121,9 @@ export default function SystemSettingsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
-          <p className="text-gray-500">You don&apos;t have permission to access this page.</p>
+          <Shield className="w-16 h-16 text-brand-line mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-brand-ink font-display tracking-tight mb-2">Access Denied</h2>
+          <p className="text-brand-muted">You don&apos;t have permission to access this page.</p>
         </div>
       </div>
     );
@@ -135,30 +135,30 @@ export default function SystemSettingsPage() {
 
       <div className="p-6">
         {/* System Health Banner */}
-        <div className="mb-6 p-4 bg-white border border-gray-200 rounded-lg">
+        <div className="mb-6 p-4 bg-surface border border-brand-line rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <div
                   className={`w-3 h-3 rounded-full ${
                     systemHealth.status === 'healthy'
-                      ? 'bg-green-500'
+                      ? 'bg-status-approved'
                       : systemHealth.status === 'degraded'
-                      ? 'bg-amber-500'
-                      : 'bg-red-500'
+                      ? 'bg-status-review'
+                      : 'bg-destructive'
                   }`}
                 />
-                <span className="font-medium text-gray-900 capitalize">System {systemHealth.status}</span>
+                <span className="font-medium text-brand-ink capitalize">System {systemHealth.status}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2 text-sm text-brand-muted">
                 <Activity className="w-4 h-4" />
                 <span>Uptime: {systemHealth.uptime}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2 text-sm text-brand-muted">
                 <HardDrive className="w-4 h-4" />
                 <span>DB Size: {systemHealth.dbSize}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2 text-sm text-brand-muted">
                 <Users className="w-4 h-4" />
                 <span>{systemHealth.activeUsers} Active Users</span>
               </div>
@@ -169,9 +169,9 @@ export default function SystemSettingsPage() {
 
         {/* Success Banner */}
         {saveSuccess && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-green-500" />
-            <p className="text-sm text-green-700">Settings have been saved successfully.</p>
+          <div className="mb-6 p-4 bg-brand-success-bg border border-brand-line rounded-lg flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-status-approved" />
+            <p className="text-sm text-status-approved">Settings have been saved successfully.</p>
           </div>
         )}
 
@@ -185,11 +185,11 @@ export default function SystemSettingsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-lamc-light text-lamc-blue font-medium'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? 'bg-brand-primary-bg text-brand-primary font-medium'
+                      : 'text-brand-muted hover:bg-surface-2'
                   }`}
                 >
-                  <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-lamc-blue' : 'text-gray-400'}`} />
+                  <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-brand-primary' : 'text-brand-muted'}`} />
                   <span>{tab.label}</span>
                 </button>
               ))}
@@ -201,19 +201,19 @@ export default function SystemSettingsPage() {
             {/* General Tab */}
             {activeTab === 'general' && (
               <Card>
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">General Settings</h2>
+                <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-6">General Settings</h2>
 
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Institution Name</label>
+                      <label className="block text-sm font-medium text-brand-text mb-1">Institution Name</label>
                       <Input
                         value={generalSettings.institutionName}
                         onChange={(e) => setGeneralSettings((s) => ({ ...s, institutionName: e.target.value }))}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Institution Code</label>
+                      <label className="block text-sm font-medium text-brand-text mb-1">Institution Code</label>
                       <Input
                         value={generalSettings.institutionCode}
                         onChange={(e) => setGeneralSettings((s) => ({ ...s, institutionCode: e.target.value }))}
@@ -223,11 +223,11 @@ export default function SystemSettingsPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                      <label className="block text-sm font-medium text-brand-text mb-1">Academic Year</label>
                       <select
                         value={generalSettings.academicYear}
                         onChange={(e) => setGeneralSettings((s) => ({ ...s, academicYear: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                        className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
                       >
                         <option value="2023-2024">2023-2024</option>
                         <option value="2024-2025">2024-2025</option>
@@ -235,11 +235,11 @@ export default function SystemSettingsPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+                      <label className="block text-sm font-medium text-brand-text mb-1">Timezone</label>
                       <select
                         value={generalSettings.timezone}
                         onChange={(e) => setGeneralSettings((s) => ({ ...s, timezone: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                        className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
                       >
                         <option value="America/Los_Angeles">Pacific Time (PT)</option>
                         <option value="America/Denver">Mountain Time (MT)</option>
@@ -249,18 +249,18 @@ export default function SystemSettingsPage() {
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-200 pt-6">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-4">Email Configuration</h3>
+                  <div className="border-t border-brand-line pt-6">
+                    <h3 className="text-sm font-semibold text-brand-ink font-display tracking-tight mb-4">Email Configuration</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">From Name</label>
+                        <label className="block text-sm font-medium text-brand-text mb-1">From Name</label>
                         <Input
                           value={generalSettings.emailFromName}
                           onChange={(e) => setGeneralSettings((s) => ({ ...s, emailFromName: e.target.value }))}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">From Address</label>
+                        <label className="block text-sm font-medium text-brand-text mb-1">From Address</label>
                         <Input
                           type="email"
                           value={generalSettings.emailFromAddress}
@@ -269,7 +269,7 @@ export default function SystemSettingsPage() {
                       </div>
                     </div>
                     <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Support Email</label>
+                      <label className="block text-sm font-medium text-brand-text mb-1">Support Email</label>
                       <Input
                         type="email"
                         value={generalSettings.supportEmail}
@@ -278,22 +278,22 @@ export default function SystemSettingsPage() {
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-200 pt-6">
+                  <div className="border-t border-brand-line pt-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">Maintenance Mode</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-brand-ink">Maintenance Mode</p>
+                        <p className="text-sm text-brand-muted">
                           When enabled, only administrators can access the platform
                         </p>
                       </div>
                       <button
                         onClick={() => setGeneralSettings((s) => ({ ...s, maintenanceMode: !s.maintenanceMode }))}
                         className={`w-12 h-6 rounded-full transition-colors ${
-                          generalSettings.maintenanceMode ? 'bg-amber-500' : 'bg-gray-200'
+                          generalSettings.maintenanceMode ? 'bg-status-review' : 'bg-surface-2'
                         }`}
                       >
                         <div
-                          className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                          className={`w-5 h-5 bg-surface rounded-full shadow transition-transform ${
                             generalSettings.maintenanceMode ? 'translate-x-6' : 'translate-x-1'
                           }`}
                         />
@@ -302,7 +302,7 @@ export default function SystemSettingsPage() {
                   </div>
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end">
+                <div className="mt-6 pt-6 border-t border-brand-line flex justify-end">
                   <Button onClick={handleSave} disabled={isSaving}>
                     {isSaving ? <Spinner size="sm" className="mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                     Save Changes
@@ -314,16 +314,16 @@ export default function SystemSettingsPage() {
             {/* Review Cycles Tab */}
             {activeTab === 'cycles' && (
               <Card>
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">Review Cycle Settings</h2>
+                <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-6">Review Cycle Settings</h2>
 
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Current Cycle</label>
+                      <label className="block text-sm font-medium text-brand-text mb-1">Current Cycle</label>
                       <select
                         value={cycleSettings.currentCycle}
                         onChange={(e) => setCycleSettings((s) => ({ ...s, currentCycle: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                        className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
                       >
                         <option value="2023-2024">2023-2024</option>
                         <option value="2024-2025">2024-2025</option>
@@ -331,11 +331,11 @@ export default function SystemSettingsPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Cycle Type</label>
+                      <label className="block text-sm font-medium text-brand-text mb-1">Cycle Type</label>
                       <select
                         value={cycleSettings.cycleType}
                         onChange={(e) => setCycleSettings((s) => ({ ...s, cycleType: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                        className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
                       >
                         <option value="comprehensive">Comprehensive (6-Year)</option>
                         <option value="annual">Annual Update</option>
@@ -345,7 +345,7 @@ export default function SystemSettingsPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Submission Deadline</label>
+                      <label className="block text-sm font-medium text-brand-text mb-1">Submission Deadline</label>
                       <Input
                         type="date"
                         value={cycleSettings.submissionDeadline}
@@ -353,7 +353,7 @@ export default function SystemSettingsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Validation Deadline</label>
+                      <label className="block text-sm font-medium text-brand-text mb-1">Validation Deadline</label>
                       <Input
                         type="date"
                         value={cycleSettings.validationDeadline}
@@ -363,7 +363,7 @@ export default function SystemSettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-brand-text mb-1">
                       Reminder Days Before Deadline
                     </label>
                     <Input
@@ -373,27 +373,27 @@ export default function SystemSettingsPage() {
                       value={cycleSettings.reminderDays}
                       onChange={(e) => setCycleSettings((s) => ({ ...s, reminderDays: parseInt(e.target.value) }))}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-brand-muted mt-1">
                       Users will receive email reminders this many days before deadlines
                     </p>
                   </div>
 
-                  <div className="border-t border-gray-200 pt-6 space-y-4">
+                  <div className="border-t border-brand-line pt-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">Allow Late Submissions</p>
-                        <p className="text-sm text-gray-500">Users can submit reviews after the deadline</p>
+                        <p className="font-medium text-brand-ink">Allow Late Submissions</p>
+                        <p className="text-sm text-brand-muted">Users can submit reviews after the deadline</p>
                       </div>
                       <button
                         onClick={() =>
                           setCycleSettings((s) => ({ ...s, allowLateSubmissions: !s.allowLateSubmissions }))
                         }
                         className={`w-12 h-6 rounded-full transition-colors ${
-                          cycleSettings.allowLateSubmissions ? 'bg-lamc-blue' : 'bg-gray-200'
+                          cycleSettings.allowLateSubmissions ? 'bg-brand-primary' : 'bg-surface-2'
                         }`}
                       >
                         <div
-                          className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                          className={`w-5 h-5 bg-surface rounded-full shadow transition-transform ${
                             cycleSettings.allowLateSubmissions ? 'translate-x-6' : 'translate-x-1'
                           }`}
                         />
@@ -402,17 +402,17 @@ export default function SystemSettingsPage() {
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">Require Chair/Dean Approval</p>
-                        <p className="text-sm text-gray-500">Reviews must be approved before PROC validation</p>
+                        <p className="font-medium text-brand-ink">Require Chair/Dean Approval</p>
+                        <p className="text-sm text-brand-muted">Reviews must be approved before PROC validation</p>
                       </div>
                       <button
                         onClick={() => setCycleSettings((s) => ({ ...s, requireApproval: !s.requireApproval }))}
                         className={`w-12 h-6 rounded-full transition-colors ${
-                          cycleSettings.requireApproval ? 'bg-lamc-blue' : 'bg-gray-200'
+                          cycleSettings.requireApproval ? 'bg-brand-primary' : 'bg-surface-2'
                         }`}
                       >
                         <div
-                          className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                          className={`w-5 h-5 bg-surface rounded-full shadow transition-transform ${
                             cycleSettings.requireApproval ? 'translate-x-6' : 'translate-x-1'
                           }`}
                         />
@@ -421,17 +421,17 @@ export default function SystemSettingsPage() {
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">Auto-Archive Previous Cycles</p>
-                        <p className="text-sm text-gray-500">Automatically archive reviews when a new cycle begins</p>
+                        <p className="font-medium text-brand-ink">Auto-Archive Previous Cycles</p>
+                        <p className="text-sm text-brand-muted">Automatically archive reviews when a new cycle begins</p>
                       </div>
                       <button
                         onClick={() => setCycleSettings((s) => ({ ...s, autoArchive: !s.autoArchive }))}
                         className={`w-12 h-6 rounded-full transition-colors ${
-                          cycleSettings.autoArchive ? 'bg-lamc-blue' : 'bg-gray-200'
+                          cycleSettings.autoArchive ? 'bg-brand-primary' : 'bg-surface-2'
                         }`}
                       >
                         <div
-                          className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                          className={`w-5 h-5 bg-surface rounded-full shadow transition-transform ${
                             cycleSettings.autoArchive ? 'translate-x-6' : 'translate-x-1'
                           }`}
                         />
@@ -440,7 +440,7 @@ export default function SystemSettingsPage() {
                   </div>
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end">
+                <div className="mt-6 pt-6 border-t border-brand-line flex justify-end">
                   <Button onClick={handleSave} disabled={isSaving}>
                     {isSaving ? <Spinner size="sm" className="mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                     Save Changes
@@ -453,17 +453,17 @@ export default function SystemSettingsPage() {
             {activeTab === 'integrations' && (
               <div className="space-y-6">
                 <Card>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-6">AI & Authentication</h2>
+                  <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-6">AI & Authentication</h2>
 
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-surface-2 rounded-lg">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                          <Key className="w-6 h-6 text-amber-600" />
+                        <div className="w-12 h-12 bg-brand-review-bg rounded-lg flex items-center justify-center">
+                          <Key className="w-6 h-6 text-status-review" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">Firebase Authentication</p>
-                          <p className="text-sm text-gray-500">User authentication and identity management</p>
+                          <p className="font-medium text-brand-ink">Firebase Authentication</p>
+                          <p className="text-sm text-brand-muted">User authentication and identity management</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -475,11 +475,11 @@ export default function SystemSettingsPage() {
                             setIntegrationSettings((s) => ({ ...s, firebaseEnabled: !s.firebaseEnabled }))
                           }
                           className={`w-12 h-6 rounded-full transition-colors ${
-                            integrationSettings.firebaseEnabled ? 'bg-green-500' : 'bg-gray-200'
+                            integrationSettings.firebaseEnabled ? 'bg-status-approved' : 'bg-surface-2'
                           }`}
                         >
                           <div
-                            className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                            className={`w-5 h-5 bg-surface rounded-full shadow transition-transform ${
                               integrationSettings.firebaseEnabled ? 'translate-x-6' : 'translate-x-1'
                             }`}
                           />
@@ -487,21 +487,21 @@ export default function SystemSettingsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-surface-2 rounded-lg">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Target className="w-6 h-6 text-blue-600" />
+                        <div className="w-12 h-12 bg-brand-primary-bg rounded-lg flex items-center justify-center">
+                          <Target className="w-6 h-6 text-brand-primary" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">Google Gemini AI</p>
-                          <p className="text-sm text-gray-500">AI-powered analysis and Mission-Bot assistant</p>
+                          <p className="font-medium text-brand-ink">Google Gemini AI</p>
+                          <p className="text-sm text-brand-muted">AI-powered analysis and Mission-Bot assistant</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <select
                           value={integrationSettings.geminiModel}
                           onChange={(e) => setIntegrationSettings((s) => ({ ...s, geminiModel: e.target.value }))}
-                          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+                          className="px-3 py-1.5 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
                         >
                           <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                           <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
@@ -511,11 +511,11 @@ export default function SystemSettingsPage() {
                             setIntegrationSettings((s) => ({ ...s, geminiEnabled: !s.geminiEnabled }))
                           }
                           className={`w-12 h-6 rounded-full transition-colors ${
-                            integrationSettings.geminiEnabled ? 'bg-green-500' : 'bg-gray-200'
+                            integrationSettings.geminiEnabled ? 'bg-status-approved' : 'bg-surface-2'
                           }`}
                         >
                           <div
-                            className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                            className={`w-5 h-5 bg-surface rounded-full shadow transition-transform ${
                               integrationSettings.geminiEnabled ? 'translate-x-6' : 'translate-x-1'
                             }`}
                           />
@@ -526,20 +526,20 @@ export default function SystemSettingsPage() {
                 </Card>
 
                 <Card>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-6">Data Integrations</h2>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-6">Data Integrations</h2>
+                  <p className="text-sm text-brand-muted mb-4">
                     Connect to external systems for data synchronization
                   </p>
 
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between p-4 border border-brand-line rounded-lg">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <Database className="w-6 h-6 text-purple-600" />
+                        <div className="w-12 h-12 bg-[#F3E7FB] rounded-lg flex items-center justify-center">
+                          <Database className="w-6 h-6 text-[#7A3FA0]" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">PeopleSoft Integration</p>
-                          <p className="text-sm text-gray-500">Sync enrollment and student data</p>
+                          <p className="font-medium text-brand-ink">PeopleSoft Integration</p>
+                          <p className="text-sm text-brand-muted">Sync enrollment and student data</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -552,14 +552,14 @@ export default function SystemSettingsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between p-4 border border-brand-line rounded-lg">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                          <FileText className="w-6 h-6 text-green-600" />
+                        <div className="w-12 h-12 bg-brand-success-bg rounded-lg flex items-center justify-center">
+                          <FileText className="w-6 h-6 text-status-approved" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">eLumen SLO System</p>
-                          <p className="text-sm text-gray-500">Import CSLO/PSLO assessment data</p>
+                          <p className="font-medium text-brand-ink">eLumen SLO System</p>
+                          <p className="text-sm text-brand-muted">Import CSLO/PSLO assessment data</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -572,14 +572,14 @@ export default function SystemSettingsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between p-4 border border-brand-line rounded-lg">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                          <Globe className="w-6 h-6 text-red-600" />
+                        <div className="w-12 h-12 bg-[#FBEAEA] rounded-lg flex items-center justify-center">
+                          <Globe className="w-6 h-6 text-destructive" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">Canvas LMS</p>
-                          <p className="text-sm text-gray-500">Course and assignment data integration</p>
+                          <p className="font-medium text-brand-ink">Canvas LMS</p>
+                          <p className="text-sm text-brand-muted">Course and assignment data integration</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -606,12 +606,12 @@ export default function SystemSettingsPage() {
             {/* Security Tab */}
             {activeTab === 'security' && (
               <Card>
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">Security Settings</h2>
+                <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-6">Security Settings</h2>
 
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-brand-text mb-1">
                         Session Timeout (minutes)
                       </label>
                       <Input
@@ -625,7 +625,7 @@ export default function SystemSettingsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Max Login Attempts</label>
+                      <label className="block text-sm font-medium text-brand-text mb-1">Max Login Attempts</label>
                       <Input
                         type="number"
                         min="3"
@@ -640,7 +640,7 @@ export default function SystemSettingsPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-brand-text mb-1">
                         Password Expiration (days)
                       </label>
                       <Input
@@ -654,7 +654,7 @@ export default function SystemSettingsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-brand-text mb-1">
                         Audit Log Retention (days)
                       </label>
                       <Input
@@ -670,34 +670,34 @@ export default function SystemSettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">IP Whitelist</label>
+                    <label className="block text-sm font-medium text-brand-text mb-1">IP Whitelist</label>
                     <Textarea
                       value={securitySettings.ipWhitelist}
                       onChange={(e) => setSecuritySettings((s) => ({ ...s, ipWhitelist: e.target.value }))}
                       placeholder="Enter IP addresses (one per line) to restrict access..."
                       rows={3}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-brand-muted mt-1">
                       Leave empty to allow access from any IP address
                     </p>
                   </div>
 
-                  <div className="border-t border-gray-200 pt-6">
+                  <div className="border-t border-brand-line pt-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">Require Multi-Factor Authentication</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-brand-ink">Require Multi-Factor Authentication</p>
+                        <p className="text-sm text-brand-muted">
                           All users must set up MFA to access their accounts
                         </p>
                       </div>
                       <button
                         onClick={() => setSecuritySettings((s) => ({ ...s, requireMFA: !s.requireMFA }))}
                         className={`w-12 h-6 rounded-full transition-colors ${
-                          securitySettings.requireMFA ? 'bg-lamc-blue' : 'bg-gray-200'
+                          securitySettings.requireMFA ? 'bg-brand-primary' : 'bg-surface-2'
                         }`}
                       >
                         <div
-                          className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                          className={`w-5 h-5 bg-surface rounded-full shadow transition-transform ${
                             securitySettings.requireMFA ? 'translate-x-6' : 'translate-x-1'
                           }`}
                         />
@@ -706,7 +706,7 @@ export default function SystemSettingsPage() {
                   </div>
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end">
+                <div className="mt-6 pt-6 border-t border-brand-line flex justify-end">
                   <Button onClick={handleSave} disabled={isSaving}>
                     {isSaving ? <Spinner size="sm" className="mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                     Save Changes
@@ -719,13 +719,13 @@ export default function SystemSettingsPage() {
             {activeTab === 'maintenance' && (
               <div className="space-y-6">
                 <Card>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-6">Database Operations</h2>
+                  <h2 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-6">Database Operations</h2>
 
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-surface-2 rounded-lg">
                       <div>
-                        <p className="font-medium text-gray-900">Create Backup</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-brand-ink">Create Backup</p>
+                        <p className="text-sm text-brand-muted">
                           Download a full backup of the database
                         </p>
                       </div>
@@ -735,10 +735,10 @@ export default function SystemSettingsPage() {
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-surface-2 rounded-lg">
                       <div>
-                        <p className="font-medium text-gray-900">Clear Cache</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-brand-ink">Clear Cache</p>
+                        <p className="text-sm text-brand-muted">
                           Clear application cache and temporary files
                         </p>
                       </div>
@@ -748,10 +748,10 @@ export default function SystemSettingsPage() {
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-surface-2 rounded-lg">
                       <div>
-                        <p className="font-medium text-gray-900">Rebuild Search Index</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-brand-ink">Rebuild Search Index</p>
+                        <p className="text-sm text-brand-muted">
                           Recreate the search index for faster queries
                         </p>
                       </div>
@@ -763,19 +763,19 @@ export default function SystemSettingsPage() {
                   </div>
                 </Card>
 
-                <Card className="border-red-200">
-                  <h2 className="text-lg font-semibold text-red-600 mb-2">Danger Zone</h2>
-                  <p className="text-sm text-gray-500 mb-6">
+                <Card className="border-destructive">
+                  <h2 className="text-lg font-semibold text-destructive font-display tracking-tight mb-2">Danger Zone</h2>
+                  <p className="text-sm text-brand-muted mb-6">
                     These actions are destructive and cannot be undone.
                   </p>
 
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-[#FBEAEA] border border-destructive rounded-lg">
                       <div className="flex items-start gap-3">
-                        <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-medium text-red-800">Reset All Data</p>
-                          <p className="text-sm text-red-700">
+                          <p className="font-medium text-destructive">Reset All Data</p>
+                          <p className="text-sm text-destructive">
                             Permanently delete all program reviews and related data. User accounts will be preserved.
                           </p>
                         </div>
@@ -785,12 +785,12 @@ export default function SystemSettingsPage() {
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-[#FBEAEA] border border-destructive rounded-lg">
                       <div className="flex items-start gap-3">
-                        <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-medium text-red-800">Archive Current Cycle</p>
-                          <p className="text-sm text-red-700">
+                          <p className="font-medium text-destructive">Archive Current Cycle</p>
+                          <p className="text-sm text-destructive">
                             Archive all reviews from the current cycle. This action cannot be reversed.
                           </p>
                         </div>

@@ -169,13 +169,13 @@ export default function ReviewsPage() {
         {/* Actions Bar */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-muted" />
             <input
               type="text"
               placeholder="Search reviews..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
             />
           </div>
 
@@ -183,7 +183,7 @@ export default function ReviewsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+              className="px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
             >
               <option value="all">All Status</option>
               <option value="draft">Draft</option>
@@ -195,7 +195,7 @@ export default function ReviewsPage() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+              className="px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
             >
               <option value="all">All Types</option>
               <option value="comprehensive">Comprehensive</option>
@@ -218,9 +218,9 @@ export default function ReviewsPage() {
           </div>
         ) : filteredReviews.length === 0 ? (
           <Card className="text-center py-12">
-            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No reviews found</h3>
-            <p className="text-gray-500 mb-4">
+            <FileText className="w-12 h-12 text-brand-muted mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-brand-ink font-display tracking-tight mb-2">No reviews found</h3>
+            <p className="text-brand-muted mb-4">
               {searchQuery || statusFilter !== 'all' || typeFilter !== 'all'
                 ? 'Try adjusting your filters'
                 : 'Get started by creating your first program review'}
@@ -242,20 +242,20 @@ export default function ReviewsPage() {
                 href={`/reviews/${review.id}`}
                 className="block"
               >
-                <Card className="hover:border-lamc-blue hover:shadow-md transition-all cursor-pointer">
+                <Card className="hover:border-brand-primary hover:shadow-md transition-all cursor-pointer">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-lamc-light rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-6 h-6 text-lamc-blue" />
+                      <div className="w-12 h-12 bg-brand-primary-bg rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-6 h-6 text-brand-ink" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-lg font-semibold text-brand-ink font-display tracking-tight">
                             {review.org_name || 'Unnamed Program'}
                           </h3>
                           <StatusBadge status={review.status} />
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <div className="flex items-center gap-4 text-sm text-brand-muted">
                           <span className="flex items-center gap-1">
                             <User className="w-4 h-4" />
                             {review.author_name || 'Unknown Author'}
@@ -264,19 +264,19 @@ export default function ReviewsPage() {
                             <Calendar className="w-4 h-4" />
                             {review.cycle_year}
                           </span>
-                          <span className="capitalize px-2 py-0.5 bg-gray-100 rounded text-xs">
+                          <span className="capitalize px-2 py-0.5 bg-surface-2 rounded text-xs">
                             {review.review_type}
                           </span>
                         </div>
                         {review.progress !== undefined && review.status === 'draft' && (
                           <div className="mt-3">
-                            <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                            <div className="flex items-center justify-between text-xs text-brand-muted mb-1">
                               <span>Progress</span>
-                              <span>{review.progress}%</span>
+                              <span className="font-mono tabular-nums">{review.progress}%</span>
                             </div>
-                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden w-48">
+                            <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden w-48">
                               <div
-                                className="h-full bg-lamc-blue rounded-full transition-all"
+                                className="h-full bg-brand-primary rounded-full transition-all"
                                 style={{ width: `${review.progress}%` }}
                               />
                             </div>
@@ -286,13 +286,13 @@ export default function ReviewsPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <div className="text-right text-sm text-gray-500">
+                      <div className="text-right text-sm text-brand-muted">
                         <p>Last updated</p>
-                        <p className="font-medium text-gray-700">
+                        <p className="font-medium text-brand-text">
                           {formatDate(review.updated_at)}
                         </p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                      <ChevronRight className="w-5 h-5 text-brand-muted" />
                     </div>
                   </div>
                 </Card>
@@ -304,15 +304,15 @@ export default function ReviewsPage() {
         {/* Stats Summary */}
         <div className="mt-8 grid grid-cols-2 md:grid-cols-5 gap-4">
           {[
-            { label: 'Total Reviews', value: displayReviews.length, color: 'text-gray-900' },
-            { label: 'Draft', value: displayReviews.filter((r) => r.status === 'draft').length, color: 'text-gray-600' },
-            { label: 'In Review', value: displayReviews.filter((r) => r.status === 'in_review').length, color: 'text-amber-600' },
-            { label: 'Validated', value: displayReviews.filter((r) => r.status === 'validated').length, color: 'text-blue-600' },
-            { label: 'Approved', value: displayReviews.filter((r) => r.status === 'approved').length, color: 'text-green-600' },
+            { label: 'Total Reviews', value: displayReviews.length, color: 'text-brand-ink' },
+            { label: 'Draft', value: displayReviews.filter((r) => r.status === 'draft').length, color: 'text-status-draft' },
+            { label: 'In Review', value: displayReviews.filter((r) => r.status === 'in_review').length, color: 'text-status-review' },
+            { label: 'Validated', value: displayReviews.filter((r) => r.status === 'validated').length, color: 'text-status-validated' },
+            { label: 'Approved', value: displayReviews.filter((r) => r.status === 'approved').length, color: 'text-status-approved' },
           ].map((stat) => (
-            <div key={stat.label} className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-              <p className="text-sm text-gray-500">{stat.label}</p>
-              <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+            <div key={stat.label} className="bg-surface rounded-lg border border-brand-line p-4 text-center">
+              <p className="text-sm text-brand-muted">{stat.label}</p>
+              <p className={`text-2xl font-bold font-mono tabular-nums ${stat.color}`}>{stat.value}</p>
             </div>
           ))}
         </div>

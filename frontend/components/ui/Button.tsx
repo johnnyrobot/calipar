@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Button style variant */
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost' | 'link';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost' | 'link' | 'ink';
   /** Button size */
   size?: 'sm' | 'md' | 'lg';
   /** Show loading spinner */
@@ -41,49 +41,48 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const isDisabled = disabled || isLoading;
 
     const baseStyles = cn(
-      'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200',
-      'focus:outline-none focus:ring-2 focus:ring-offset-2',
+      'inline-flex items-center justify-center font-semibold rounded-lg transition-colors duration-200',
+      'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       fullWidth && 'w-full'
     );
 
     const variantStyles = {
       primary: cn(
-        'bg-lamc-blue text-white',
-        'hover:bg-blue-800 active:bg-blue-900',
-        'focus:ring-lamc-blue'
+        'bg-brand-primary text-white',
+        'hover:bg-brand-primary-hover active:bg-brand-primary-hover'
       ),
       secondary: cn(
-        'bg-white text-lamc-blue border-2 border-lamc-blue',
-        'hover:bg-lamc-light active:bg-blue-100',
-        'focus:ring-lamc-blue'
+        'bg-surface text-brand-ink border border-brand-line',
+        'hover:bg-surface-2 active:bg-surface-2'
       ),
       outline: cn(
-        'bg-white text-gray-700 border border-gray-300',
-        'hover:bg-gray-50 active:bg-gray-100',
-        'focus:ring-gray-400'
+        'bg-transparent text-brand-text border border-brand-line',
+        'hover:bg-surface-2 active:bg-surface-2'
       ),
       danger: cn(
-        'bg-red-600 text-white',
-        'hover:bg-red-700 active:bg-red-800',
-        'focus:ring-red-500'
+        'bg-destructive text-destructive-foreground',
+        'hover:bg-[#B91C1C] active:bg-[#991B1B]'
       ),
       ghost: cn(
-        'bg-transparent text-gray-700',
-        'hover:bg-gray-100 active:bg-gray-200',
-        'focus:ring-gray-400'
+        'bg-transparent text-brand-text',
+        'hover:bg-surface-2 active:bg-surface-2'
       ),
       link: cn(
-        'bg-transparent text-lamc-blue underline-offset-4',
-        'hover:underline',
-        'focus:ring-lamc-blue p-0'
+        'bg-transparent text-brand-primary underline-offset-4',
+        'hover:underline p-0'
+      ),
+      // Signature maritime CTA — navy with a brass-accented icon (the Golden Thread).
+      ink: cn(
+        'bg-brand-ink text-brand-on-ink',
+        'hover:bg-brand-ink-soft active:bg-brand-ink-soft'
       ),
     };
 
     const sizeStyles = {
-      sm: 'text-sm px-3 py-1.5 gap-1.5',
-      md: 'text-sm px-4 py-2 gap-2',
-      lg: 'text-base px-6 py-3 gap-2.5',
+      sm: 'h-9 text-sm px-3.5 gap-1.5',
+      md: 'h-10 text-sm px-5 gap-2',
+      lg: 'h-11 text-[15px] px-6 gap-2.5',
     };
 
     // Link variant doesn't use size padding

@@ -131,28 +131,28 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
 
   const styles = {
     success: {
-      container: 'bg-green-50 border-green-200',
-      icon: 'text-green-500',
-      title: 'text-green-800',
-      message: 'text-green-700',
+      container: 'bg-brand-success-bg border-brand-line',
+      icon: 'text-status-approved',
+      title: 'text-status-approved',
+      message: 'text-status-approved',
     },
     error: {
-      container: 'bg-red-50 border-red-200',
-      icon: 'text-red-500',
-      title: 'text-red-800',
-      message: 'text-red-700',
+      container: 'bg-[#FBEAEA] border-brand-line',
+      icon: 'text-destructive',
+      title: 'text-destructive',
+      message: 'text-destructive',
     },
     warning: {
-      container: 'bg-amber-50 border-amber-200',
-      icon: 'text-amber-500',
-      title: 'text-amber-800',
-      message: 'text-amber-700',
+      container: 'bg-brand-review-bg border-brand-line',
+      icon: 'text-status-review',
+      title: 'text-status-review',
+      message: 'text-status-review',
     },
     info: {
-      container: 'bg-blue-50 border-blue-200',
-      icon: 'text-blue-500',
-      title: 'text-blue-800',
-      message: 'text-blue-700',
+      container: 'bg-brand-primary-bg border-brand-line',
+      icon: 'text-brand-primary',
+      title: 'text-brand-primary',
+      message: 'text-brand-primary',
     },
   };
 

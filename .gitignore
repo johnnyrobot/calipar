@@ -106,3 +106,11 @@ logs/
 # Demo reset marker
 # -----------------------------------------------------------------------------
 /tmp/luminous_demo_reset.txt
+
+# -----------------------------------------------------------------------------
+# Design session handoff (session meta — not for the repo)
+# -----------------------------------------------------------------------------
+docs/DESIGN_HANDOFF.md
+
+# TypeScript incremental build info (build artifact)
+*.tsbuildinfo

@@ -138,24 +138,24 @@ export default function ResourcesPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Package className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-brand-primary-bg rounded-lg flex items-center justify-center">
+                <Package className="w-6 h-6 text-brand-primary" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Total Requests</p>
-                <p className="text-2xl font-bold text-gray-900">{resourceRequests.length}</p>
+                <p className="text-sm text-brand-muted">Total Requests</p>
+                <p className="text-2xl font-bold text-brand-ink font-mono tabular-nums">{resourceRequests.length}</p>
               </div>
             </div>
           </Card>
 
           <Card>
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-amber-600" />
+              <div className="w-12 h-12 bg-brand-review-bg rounded-lg flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-status-review" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Total Requested</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-brand-muted">Total Requested</p>
+                <p className="text-2xl font-bold text-brand-ink font-mono tabular-nums">
                   ${totalRequested.toLocaleString()}
                 </p>
               </div>
@@ -164,12 +164,12 @@ export default function ResourcesPage() {
 
           <Card>
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-brand-success-bg rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-status-approved" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Total Funded</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-sm text-brand-muted">Total Funded</p>
+                <p className="text-2xl font-bold text-status-approved font-mono tabular-nums">
                   ${totalFunded.toLocaleString()}
                 </p>
               </div>
@@ -178,12 +178,12 @@ export default function ResourcesPage() {
 
           <Card>
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Clock className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-[#F3E7FB] rounded-lg flex items-center justify-center">
+                <Clock className="w-6 h-6 text-[#7A3FA0]" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Pending</p>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-sm text-brand-muted">Pending</p>
+                <p className="text-2xl font-bold text-[#7A3FA0] font-mono tabular-nums">
                   {resourceRequests.length - fundedCount}
                 </p>
               </div>
@@ -203,7 +203,7 @@ export default function ResourcesPage() {
               View Cart ({resourceRequests.filter(r => !r.isFunded).length})
             </Button>
           </div>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-brand-muted">
             Drag to reorder priorities
           </p>
         </div>
@@ -214,7 +214,7 @@ export default function ResourcesPage() {
             <Card
               key={request.id}
               className={`transition-all ${
-                request.isFunded ? 'bg-green-50 border-green-200' : ''
+                request.isFunded ? 'bg-brand-success-bg border-brand-line' : ''
               }`}
             >
               <div className="flex items-start gap-4">
@@ -223,17 +223,17 @@ export default function ResourcesPage() {
                   <button
                     onClick={() => moveRequest(request.id, 'up')}
                     disabled={index === 0}
-                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                    className="p-1 text-brand-muted hover:text-brand-ink disabled:opacity-30"
                   >
                     <ChevronUp className="w-4 h-4" />
                   </button>
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <span className="text-sm font-bold text-gray-600">#{request.priority}</span>
+                  <div className="w-8 h-8 bg-surface-2 rounded-lg flex items-center justify-center">
+                    <span className="text-sm font-bold text-brand-muted font-mono tabular-nums">#{request.priority}</span>
                   </div>
                   <button
                     onClick={() => moveRequest(request.id, 'down')}
                     disabled={index === resourceRequests.length - 1}
-                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                    className="p-1 text-brand-muted hover:text-brand-ink disabled:opacity-30"
                   >
                     <ChevronDown className="w-4 h-4" />
                   </button>
@@ -244,16 +244,16 @@ export default function ResourcesPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-gray-900">{request.description}</h4>
+                        <h4 className="font-semibold text-brand-ink font-display tracking-tight">{request.description}</h4>
                         {request.isFunded ? (
                           <Badge variant="success">Funded</Badge>
                         ) : (
                           <Badge variant="warning">Pending</Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-gray-500">
+                      <div className="flex items-center gap-3 text-sm text-brand-muted">
                         <span className="flex items-center gap-1">
-                          <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium">
+                          <span className="px-2 py-0.5 bg-surface-2 rounded text-xs font-medium font-mono tabular-nums">
                             {request.objectCode}
                           </span>
                           {request.objectCodeName}
@@ -261,11 +261,11 @@ export default function ResourcesPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-gray-900">
+                      <p className="text-xl font-bold text-brand-ink font-mono tabular-nums">
                         ${request.amount.toLocaleString()}
                       </p>
                       {request.isFunded && request.fundedAmount && request.fundedAmount < request.amount && (
-                        <p className="text-sm text-green-600">
+                        <p className="text-sm text-status-approved font-mono tabular-nums">
                           Funded: ${request.fundedAmount.toLocaleString()}
                         </p>
                       )}
@@ -274,15 +274,15 @@ export default function ResourcesPage() {
 
                   {/* Linked Action Plan */}
                   <div className="mt-3 flex items-center gap-2 text-sm">
-                    <LinkIcon className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-500">Linked to:</span>
-                    <span className="text-lamc-blue font-medium">{request.actionPlanTitle}</span>
+                    <LinkIcon className="w-4 h-4 text-brand-muted" />
+                    <span className="text-brand-muted">Linked to:</span>
+                    <span className="text-brand-ink font-medium">{request.actionPlanTitle}</span>
                   </div>
 
                   {/* Expandable Details */}
                   <button
                     onClick={() => setExpandedRequest(expandedRequest === request.id ? null : request.id)}
-                    className="mt-3 text-sm text-lamc-blue hover:underline flex items-center gap-1"
+                    className="mt-3 text-sm text-brand-ink hover:underline flex items-center gap-1"
                   >
                     {expandedRequest === request.id ? 'Hide details' : 'Show details'}
                     <ChevronDown
@@ -293,17 +293,17 @@ export default function ResourcesPage() {
                   </button>
 
                   {expandedRequest === request.id && (
-                    <div className="mt-3 p-4 bg-gray-50 rounded-lg space-y-3">
+                    <div className="mt-3 p-4 bg-surface-2 rounded-lg space-y-3">
                       <div>
-                        <p className="text-xs font-medium text-gray-500 uppercase mb-1">Justification</p>
-                        <p className="text-sm text-gray-700">{request.justification}</p>
+                        <p className="text-xs font-medium text-brand-muted uppercase mb-1">Justification</p>
+                        <p className="text-sm text-brand-text">{request.justification}</p>
                       </div>
                       {request.tcoNotes && (
                         <div>
-                          <p className="text-xs font-medium text-gray-500 uppercase mb-1">
+                          <p className="text-xs font-medium text-brand-muted uppercase mb-1">
                             Total Cost of Ownership Notes
                           </p>
-                          <p className="text-sm text-gray-700">{request.tcoNotes}</p>
+                          <p className="text-sm text-brand-text">{request.tcoNotes}</p>
                         </div>
                       )}
                     </div>
@@ -312,7 +312,7 @@ export default function ResourcesPage() {
 
                 {/* Actions */}
                 {!request.isFunded && (
-                  <button className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                  <button className="p-2 text-brand-muted hover:text-destructive transition-colors">
                     <Trash2 className="w-5 h-5" />
                   </button>
                 )}
@@ -323,21 +323,21 @@ export default function ResourcesPage() {
 
         {/* Object Code Reference */}
         <Card>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Object Code Reference</h3>
+          <h3 className="text-lg font-semibold text-brand-ink font-display tracking-tight mb-4">Object Code Reference</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {objectCodes.map((code) => (
               <div
                 key={code.code}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                className="flex items-center gap-3 p-3 bg-surface-2 rounded-lg"
               >
-                <span className="px-2 py-1 bg-white border border-gray-200 rounded text-sm font-mono font-medium">
+                <span className="px-2 py-1 bg-surface border border-brand-line rounded text-sm font-mono font-medium">
                   {code.code}
                 </span>
-                <span className="text-sm text-gray-700">{code.name}</span>
+                <span className="text-sm text-brand-text">{code.name}</span>
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-500 mt-4">
+          <p className="text-xs text-brand-muted mt-4">
             Object codes follow LACCD chart of accounts. Select the appropriate code when submitting resource requests.
           </p>
         </Card>
@@ -351,25 +351,25 @@ export default function ResourcesPage() {
       >
         <form className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Link to Action Plan <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-brand-text mb-1">
+              Link to Action Plan <span className="text-destructive">*</span>
             </label>
-            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue">
+            <select className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg">
               <option value="">Select an action plan...</option>
               <option value="ap-1">Implement Supplemental Instruction for Gateway Courses</option>
               <option value="ap-2">Expand Online Tutoring Hours</option>
               <option value="ap-4">Faculty Professional Development on Equity-Minded Pedagogy</option>
             </select>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-brand-muted mt-1">
               Resource requests must be linked to an action plan (The Golden Thread)
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Object Code <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-brand-text mb-1">
+              Object Code <span className="text-destructive">*</span>
             </label>
-            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue">
+            <select className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg">
               <option value="">Select object code...</option>
               {objectCodes.map((code) => (
                 <option key={code.code} value={code.code}>
@@ -380,45 +380,45 @@ export default function ResourcesPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-brand-text mb-1">
+              Description <span className="text-destructive">*</span>
             </label>
             <input
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+              className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               placeholder="Brief description of the resource"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Amount ($) <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-brand-text mb-1">
+              Amount ($) <span className="text-destructive">*</span>
             </label>
             <input
               type="number"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+              className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               placeholder="0.00"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Justification <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-brand-text mb-1">
+              Justification <span className="text-destructive">*</span>
             </label>
             <textarea
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+              className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               placeholder="Explain why this resource is needed and how it supports the action plan"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-brand-text mb-1">
               TCO Notes (Optional)
             </label>
             <textarea
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lamc-blue"
+              className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               placeholder="Any ongoing costs, maintenance, or total cost of ownership considerations"
             />
           </div>
@@ -444,29 +444,29 @@ export default function ResourcesPage() {
         <div className="space-y-4">
           {resourceRequests.filter(r => !r.isFunded).length === 0 ? (
             <div className="text-center py-8">
-              <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Your cart is empty</p>
+              <ShoppingCart className="w-12 h-12 text-brand-muted mx-auto mb-4" />
+              <p className="text-brand-muted">Your cart is empty</p>
             </div>
           ) : (
             <>
               {resourceRequests.filter(r => !r.isFunded).map((request) => (
                 <div
                   key={request.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-surface-2 rounded-lg"
                 >
                   <div>
-                    <p className="font-medium text-gray-900">{request.description}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-brand-ink">{request.description}</p>
+                    <p className="text-sm text-brand-muted">
                       {request.objectCode} - {request.objectCodeName}
                     </p>
                   </div>
-                  <p className="font-bold text-gray-900">${request.amount.toLocaleString()}</p>
+                  <p className="font-bold text-brand-ink font-mono tabular-nums">${request.amount.toLocaleString()}</p>
                 </div>
               ))}
               <div className="border-t pt-4">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-lg font-semibold text-gray-900">Total</span>
-                  <span className="text-xl font-bold text-lamc-blue">
+                  <span className="text-lg font-semibold text-brand-ink">Total</span>
+                  <span className="text-xl font-bold text-brand-ink font-mono tabular-nums">
                     ${resourceRequests.filter(r => !r.isFunded).reduce((sum, r) => sum + r.amount, 0).toLocaleString()}
                   </span>
                 </div>
