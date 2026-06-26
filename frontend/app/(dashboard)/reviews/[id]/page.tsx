@@ -48,7 +48,7 @@ interface Review {
   cycle_year: string;
   review_type: 'comprehensive' | 'annual';
   status: 'draft' | 'in_review' | 'validated' | 'approved';
-  content: Record<string, any>;
+  content: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }

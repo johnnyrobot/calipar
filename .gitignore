@@ -34,8 +34,10 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# NOTE: these Python build-artifact patterns are root-anchored so the bare `lib/`
+# does NOT swallow the frontend's `frontend/lib/` application source directory.
+/lib/
+/lib64/
 parts/
 sdist/
 var/
