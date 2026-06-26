@@ -38,6 +38,13 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'calipar-auth',
+      // Persist only non-sensitive, stable fields. The bearer `token` must NOT be
+      // written to localStorage (XSS-exfiltration risk) — it is re-obtained from
+      // Firebase on load. `_hasHydrated` is a runtime flag, reset via onRehydrateStorage.
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },

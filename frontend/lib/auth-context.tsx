@@ -256,6 +256,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(true);
       setError(null);
 
+      // Guard: demo/dev sign-in must never run in production, nor when real Firebase
+      // auth is configured — it mints demo users (including elevated roles like Admin/
+      // Dean) without real authentication.
+      if (process.env.NODE_ENV === 'production' || isFirebaseEnabled) {
+        setError('Development sign-in is disabled in this environment.');
+        setIsLoading(false);
+        throw new Error('Development sign-in is disabled.');
+      }
+
       // Demo account definitions
       const demoAccounts: Record<string, { email: string; role: string; full_name: string; department_id: string }> = {
         'demo-faculty-001': { email: 'faculty@ccc.edu', role: 'Faculty', full_name: 'Demo Faculty', department_id: 'dept-math-001' },
@@ -304,7 +313,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setIsLoading(false);
       }
     },
-    [setUser, setToken]
+    [setUser, setToken, isFirebaseEnabled]
   );
 
   /**
