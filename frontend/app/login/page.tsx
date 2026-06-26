@@ -73,8 +73,8 @@ function LoginForm() {
         }
       }
       // Redirect will happen via useEffect when isAuthenticated changes
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in. Please check your credentials.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -88,8 +88,8 @@ function LoginForm() {
     try {
       await devSignIn(uid);
       // Redirect will happen via useEffect when isAuthenticated changes
-    } catch (err: any) {
-      setError(err.message || 'Failed to set up demo account. Please ensure the backend is running.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to set up demo account. Please ensure the backend is running.');
     } finally {
       setIsLoading(false);
     }

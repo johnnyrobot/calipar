@@ -121,12 +121,12 @@ export default function ReviewsPage() {
           setReviews(data);
         } else {
           // Use mock data for development
-          setReviews(mockReviews as any);
+          setReviews(mockReviews);
         }
       } catch (error) {
         console.error('Failed to fetch reviews:', error);
         // Fall back to mock data
-        setReviews(mockReviews as any);
+        setReviews(mockReviews);
       } finally {
         setLoading(false);
       }
@@ -136,9 +136,9 @@ export default function ReviewsPage() {
   }, [token, setReviews, setLoading]);
 
   // Use mock data if reviews store is empty
-  const displayReviews = reviews.length > 0 ? reviews : mockReviews;
+  const displayReviews: Review[] = reviews.length > 0 ? (reviews as Review[]) : mockReviews;
 
-  const filteredReviews = displayReviews.filter((review: any) => {
+  const filteredReviews = displayReviews.filter((review) => {
     const matchesSearch =
       searchQuery === '' ||
       review.org_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -236,7 +236,7 @@ export default function ReviewsPage() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {filteredReviews.map((review: any) => (
+            {filteredReviews.map((review) => (
               <Link
                 key={review.id}
                 href={`/reviews/${review.id}`}
@@ -305,10 +305,10 @@ export default function ReviewsPage() {
         <div className="mt-8 grid grid-cols-2 md:grid-cols-5 gap-4">
           {[
             { label: 'Total Reviews', value: displayReviews.length, color: 'text-gray-900' },
-            { label: 'Draft', value: displayReviews.filter((r: any) => r.status === 'draft').length, color: 'text-gray-600' },
-            { label: 'In Review', value: displayReviews.filter((r: any) => r.status === 'in_review').length, color: 'text-amber-600' },
-            { label: 'Validated', value: displayReviews.filter((r: any) => r.status === 'validated').length, color: 'text-blue-600' },
-            { label: 'Approved', value: displayReviews.filter((r: any) => r.status === 'approved').length, color: 'text-green-600' },
+            { label: 'Draft', value: displayReviews.filter((r) => r.status === 'draft').length, color: 'text-gray-600' },
+            { label: 'In Review', value: displayReviews.filter((r) => r.status === 'in_review').length, color: 'text-amber-600' },
+            { label: 'Validated', value: displayReviews.filter((r) => r.status === 'validated').length, color: 'text-blue-600' },
+            { label: 'Approved', value: displayReviews.filter((r) => r.status === 'approved').length, color: 'text-green-600' },
           ].map((stat) => (
             <div key={stat.label} className="bg-white rounded-lg border border-gray-200 p-4 text-center">
               <p className="text-sm text-gray-500">{stat.label}</p>

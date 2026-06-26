@@ -41,7 +41,7 @@ interface SortConfig {
   direction: SortDirection;
 }
 
-export function Table<T extends Record<string, any>>({
+export function Table<T extends Record<string, unknown>>({
   columns,
   data,
   keyExtractor,

@@ -96,7 +96,7 @@ export default function NewReviewPage() {
           org_id: selectedDepartment,
           cycle_year: cycleYear,
           review_type: reviewType,
-        }) as any;
+        }) as { id: string };
 
         router.push(`/reviews/${response.id}`);
       } else {
@@ -104,8 +104,8 @@ export default function NewReviewPage() {
         await new Promise(resolve => setTimeout(resolve, 1000));
         router.push(`/reviews/${selectedDepartment}-${Date.now()}`);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to create review. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create review. Please try again.');
       setIsCreating(false);
     }
   };

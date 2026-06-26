@@ -67,9 +67,9 @@ function ForgotPasswordForm() {
       });
 
       setSuccess(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Password reset error:', err);
-      const errorMessage = getFirebaseErrorMessage(err.code);
+      const errorMessage = getFirebaseErrorMessage((err as { code?: string }).code ?? '');
       setError(errorMessage);
     } finally {
       setIsLoading(false);
