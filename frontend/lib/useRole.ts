@@ -69,7 +69,9 @@ export function useHasPermission(permission: Permission): boolean {
  * @example
  * const { canEdit, canDelete } = usePermissions(['reviews.edit', 'reviews.delete']);
  */
-export function usePermissions(permissions: Permission[]): Record<Permission, boolean> {
+export function usePermissions(
+  permissions: Permission[]
+): Partial<Record<Permission, boolean>> {
   const { user } = useAuth();
 
   return useMemo(() => {
@@ -78,7 +80,7 @@ export function usePermissions(permissions: Permission[]): Record<Permission, bo
         acc[permission] = roleHasPermission(user?.role, permission);
         return acc;
       },
-      {} as Record<Permission, boolean>
+      {} as Partial<Record<Permission, boolean>>
     );
   }, [user?.role, permissions]);
 }

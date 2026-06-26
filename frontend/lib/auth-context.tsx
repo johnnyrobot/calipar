@@ -109,6 +109,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       } catch (err) {
         console.error('Failed to sync user with backend:', err);
+        // Backend could not verify the Firebase identity — fail closed. Clear the app
+        // auth state AND the local firebaseUser, so the token-refresh path cannot reissue
+        // a token and re-authenticate before backend verification succeeds.
+        setFirebaseUser(null);
+        setUser(null);
+        setToken(null);
+        api.setToken(null);
         setError(err instanceof Error ? err.message : 'Failed to authenticate with server');
       }
     },
