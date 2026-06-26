@@ -1,0 +1,2 @@
+# Keeps frontend/public/ tracked so it exists in clean checkouts (CI/Docker).
+# Next.js serves static assets from here; the prod Dockerfile COPYs this dir.
