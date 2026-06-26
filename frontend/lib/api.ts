@@ -7,7 +7,16 @@
  * - Graceful session handling
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// In production, never silently fall back to localhost — authenticated requests
+// must not be sent to a local service. Outside production, default to the dev backend.
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000');
+
+if (!API_URL && typeof window !== 'undefined') {
+  // eslint-disable-next-line no-console
+  console.error('NEXT_PUBLIC_API_URL is not set — API requests will fail. Configure it for production.');
+}
 
 // Token refresh callback type
 type TokenRefreshCallback = () => Promise<string | null>;
