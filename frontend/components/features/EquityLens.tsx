@@ -236,8 +236,8 @@ export function EquityLens({
               </div>
               <p className="text-sm text-blue-700">
                 Your program&apos;s overall success rate (68.5%) is{' '}
-                <strong>below the ISMP target (67%)</strong>. Consider addressing
-                this in your action plan.
+                <strong>above the ISMP target (67%)</strong> — but the
+                disaggregated gaps below should be addressed in your action plan.
               </p>
             </div>
 
