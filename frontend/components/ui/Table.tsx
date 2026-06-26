@@ -5,7 +5,6 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
-  Search,
   AlertCircle,
 } from 'lucide-react';
 import { Spinner } from './Spinner';

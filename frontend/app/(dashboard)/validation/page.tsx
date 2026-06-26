@@ -12,14 +12,11 @@ import {
   ChevronRight,
   MessageSquare,
   Send,
-  ArrowLeft,
   Eye,
-  Filter,
   Search,
 } from 'lucide-react';
 import { Header } from '@/components/layout';
-import { Card, Button, Badge, StatusBadge, Modal, Spinner, Textarea } from '@/components/ui';
-import { useAuthStore } from '@/lib/store';
+import { Card, Button, Badge, Modal, Spinner, Textarea } from '@/components/ui';
 
 interface ReviewToValidate {
   id: string;
@@ -48,7 +45,6 @@ interface RubricScore {
 }
 
 export default function ValidationPage() {
-  const { user } = useAuthStore();
   const [selectedReview, setSelectedReview] = useState<ReviewToValidate | null>(null);
   const [scores, setScores] = useState<Record<string, RubricScore>>({});
   const [overallComments, setOverallComments] = useState('');
@@ -549,7 +545,7 @@ export default function ValidationPage() {
         <div className="space-y-4">
           <p className="text-gray-600">
             Are you sure you want to submit this validation? This will update the review status
-            to "Validated" and notify the author.
+            to &quot;Validated&quot; and notify the author.
           </p>
 
           <div className="bg-gray-50 rounded-lg p-4">

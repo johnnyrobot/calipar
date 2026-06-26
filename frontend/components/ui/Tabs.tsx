@@ -70,9 +70,6 @@ export function Tabs({
   tabs,
   onChange,
   children,
-  variant = 'default',
-  size = 'md',
-  fullWidth = false,
   className = '',
 }: TabsProps) {
   const baseId = useId();

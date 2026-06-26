@@ -8,11 +8,9 @@ import {
   Package,
   CheckCircle2,
   Clock,
-  AlertCircle,
   ChevronDown,
   ChevronUp,
   Trash2,
-  GripVertical,
   Link as LinkIcon,
 } from 'lucide-react';
 import { Header } from '@/components/layout';

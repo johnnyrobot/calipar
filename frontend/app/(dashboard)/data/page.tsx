@@ -9,15 +9,13 @@ import {
   GraduationCap,
   Filter,
   Download,
-  RefreshCw,
-  ChevronDown,
   Target,
   CheckCircle2,
   AlertTriangle,
   BarChart3,
 } from 'lucide-react';
 import { Header } from '@/components/layout';
-import { Card, Button, Badge, Spinner } from '@/components/ui';
+import { Card, Button, Badge } from '@/components/ui';
 
 interface EnrollmentData {
   term: string;
@@ -55,7 +53,6 @@ export default function DataPage() {
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [viewBy, setViewBy] = useState<'overall' | 'ethnicity' | 'gender' | 'pell'>('overall');
   const [activeTab, setActiveTab] = useState<'enrollment' | 'slo'>('enrollment');
-  const [isLoading, setIsLoading] = useState(false);
 
   const terms = ['Fall 2024', 'Spring 2024', 'Fall 2023', 'Spring 2023'];
   const departments = [

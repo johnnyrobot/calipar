@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { Button } from './Button';
 
 export interface PaginationProps {
   currentPage: number;

@@ -5,8 +5,6 @@ import {
   BarChart2,
   TrendingUp,
   TrendingDown,
-  Users,
-  GraduationCap,
   AlertCircle,
   RefreshCw,
   Calendar,
@@ -111,7 +109,6 @@ const termOptions = [
 
 export function DataInjectionPanel({
   sectionKey,
-  reviewId,
   onAnalyze,
   isAnalyzing = false,
 }: DataInjectionPanelProps) {
@@ -137,7 +134,7 @@ export function DataInjectionPanel({
       } else {
         setError('No data available for this section');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load data. Please try again.');
     } finally {
       setIsLoading(false);

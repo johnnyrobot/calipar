@@ -10,17 +10,14 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  Pause,
   Link as LinkIcon,
-  Filter,
   Search,
   Edit2,
   Save,
   X,
 } from 'lucide-react';
 import { Header } from '@/components/layout';
-import { Card, Button, Badge, StatusBadge, Modal } from '@/components/ui';
-import { useAuthStore } from '@/lib/store';
+import { Card, Button, Badge, Modal } from '@/components/ui';
 
 interface ActionPlan {
   id: string;
@@ -34,16 +31,7 @@ interface ActionPlan {
   updatedAt: string;
 }
 
-interface StrategicInitiative {
-  id: string;
-  goalNumber: number;
-  code: string;
-  title: string;
-  description: string;
-}
-
 export default function PlanningPage() {
-  const { user } = useAuthStore();
   const [selectedGoal, setSelectedGoal] = useState<number | null>(null);
   const [showNewPlanModal, setShowNewPlanModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
