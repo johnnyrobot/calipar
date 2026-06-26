@@ -22,15 +22,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Create audit action enum
-    op.execute("""
-        CREATE TYPE auditaction AS ENUM (
-            'created', 'updated', 'deleted', 'status_changed',
-            'submitted', 'approved', 'rejected', 'comment_added'
-        )
-    """)
-
-    # Create audit_trail table
+    # Create audit_trail table. The `auditaction` ENUM type is created together with
+    # the table (uppercase member names, matching the AuditAction model / create_all).
+    # Note: do NOT also emit an explicit `CREATE TYPE` — that double-creates the type
+    # and fails on a fresh database with "type auditaction already exists".
     op.create_table(
         'audit_trail',
         sa.Column('id', sa.Uuid(), nullable=False),
@@ -38,7 +33,7 @@ def upgrade() -> None:
         sa.Column('entity_id', sa.Uuid(), nullable=False),
         sa.Column('action', sa.Enum('CREATED', 'UPDATED', 'DELETED', 'STATUS_CHANGED',
                                      'SUBMITTED', 'APPROVED', 'REJECTED', 'COMMENT_ADDED',
-                                     name='auditaction', create_type=False), nullable=False),
+                                     name='auditaction'), nullable=False),
         sa.Column('user_id', sa.Uuid(), nullable=True),
         sa.Column('old_values', sa.JSON(), nullable=True),
         sa.Column('new_values', sa.JSON(), nullable=True),
