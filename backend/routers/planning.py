@@ -109,6 +109,38 @@ async def create_action_plan(
     )
 
 
+@router.get("/action-plans", response_model=List[ActionPlanResponse])
+async def list_action_plans(
+    review_id: Optional[UUID] = None,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """List action plans (optionally for a single review), each with its mapped initiatives."""
+    query = select(ActionPlan)
+    if review_id:
+        query = query.where(ActionPlan.review_id == review_id)
+    plans = session.exec(query.order_by(ActionPlan.created_at.desc())).all()
+
+    responses: List[ActionPlanResponse] = []
+    for plan in plans:
+        mappings = session.exec(
+            select(ActionPlanMapping).where(ActionPlanMapping.action_plan_id == plan.id)
+        ).all()
+        initiative_ids = [m.initiative_id for m in mappings]
+        initiatives = []
+        if initiative_ids:
+            initiatives = session.exec(
+                select(StrategicInitiative).where(StrategicInitiative.id.in_(initiative_ids))
+            ).all()
+        responses.append(
+            ActionPlanResponse(
+                **plan.model_dump(),
+                initiatives=[InitiativeResponse(**i.model_dump()) for i in initiatives],
+            )
+        )
+    return responses
+
+
 @router.get("/action-plans/{plan_id}", response_model=ActionPlanResponse)
 async def get_action_plan(
     plan_id: UUID,

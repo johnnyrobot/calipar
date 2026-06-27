@@ -91,14 +91,21 @@ def _enrich_review(review: ProgramReview, session: Session) -> ReviewResponse:
 @router.get("", response_model=List[ReviewResponse])
 async def list_reviews(
     org_id: Optional[UUID] = None,
+    status: Optional[ReviewStatus] = None,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    """List program reviews, optionally filtered by organization."""
+    """List program reviews, optionally filtered by organization and/or status.
+
+    `status=in_review` backs the PROC validation queue.
+    """
     query = select(ProgramReview)
 
     if org_id:
         query = query.where(ProgramReview.org_id == org_id)
+
+    if status:
+        query = query.where(ProgramReview.status == status)
 
     # Faculty can only see their department's reviews
     if current_user.role == "faculty" and current_user.department_id:

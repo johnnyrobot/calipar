@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from database import create_db_and_tables, engine
-from routers import auth, reviews, ai, data, planning, resources, validation
+from routers import auth, reviews, ai, data, planning, resources, validation, activity, admin
 from config import get_settings
 
 settings = get_settings()
@@ -55,6 +55,8 @@ app.include_router(data.router, prefix="/api/data", tags=["Data"])
 app.include_router(planning.router, prefix="/api", tags=["Planning"])
 app.include_router(resources.router, prefix="/api/resources", tags=["Resources"])
 app.include_router(validation.router, prefix="/api", tags=["Validation"])
+app.include_router(activity.router, prefix="/api/activity", tags=["Activity"])
+app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 
 
 @app.get("/")
