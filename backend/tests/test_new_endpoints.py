@@ -14,7 +14,7 @@ os.environ.setdefault("DEMO_MODE_ENABLED", "false")
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import SQLModel, Session, create_engine
+from sqlmodel import SQLModel, Session, create_engine, select
 
 from main import app
 from database import get_session
@@ -370,3 +370,29 @@ def test_faculty_cannot_map_out_of_department_plan():
                        json={"initiative_id": str(init_id)}).status_code == 403
     assert client.delete(
         f"/api/action-plans/{plan_id}/map-initiative/{init_id}").status_code == 403
+
+
+def test_faculty_cannot_create_or_update_out_of_department_plan():
+    _, plan_id, _, _ = _seed_plan_and_initiative()  # plan in "Math" dept
+    with Session(_engine) as s:
+        other_org = Organization(name="Elsewhere", type=OrganizationType.DEPARTMENT)
+        s.add(other_org)
+        s.commit()
+        s.refresh(other_org)
+        # the review the existing plan belongs to (Math dept) — fetch its id
+        review = s.exec(select(ProgramReview)).first()
+        outsider = User(email=f"outsider2_{uuid4()}@example.edu", full_name="Outsider2",
+                        role=UserRole.FACULTY, department_id=other_org.id,
+                        firebase_uid=f"uid-{uuid4()}")
+        s.add(outsider)
+        s.commit()
+        s.refresh(outsider)
+        review_id = str(review.id)
+
+    client = _client_as(outsider)
+    # create on a review outside their department -> 403
+    assert client.post("/api/action-plans", json={
+        "review_id": review_id, "title": "x", "description": "y",
+    }).status_code == 403
+    # update a plan outside their department -> 403
+    assert client.patch(f"/api/action-plans/{plan_id}", json={"title": "z"}).status_code == 403

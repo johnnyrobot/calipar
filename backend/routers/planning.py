@@ -99,6 +99,15 @@ async def create_action_plan(
             detail="Justification required when addressing equity gap",
         )
 
+    # Faculty may only create action plans on reviews in their own department.
+    if current_user.role == UserRole.FACULTY and current_user.department_id:
+        review = session.get(ProgramReview, plan_data.review_id)
+        if not review or review.org_id != current_user.department_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only create action plans for reviews in your department.",
+            )
+
     plan = ActionPlan(**plan_data.model_dump())
     session.add(plan)
     session.commit()
@@ -196,6 +205,7 @@ async def update_action_plan(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Action plan not found",
         )
+    _assert_plan_write_access(plan, current_user, session)
 
     # Update fields
     update_data = plan_data.model_dump(exclude_unset=True)
