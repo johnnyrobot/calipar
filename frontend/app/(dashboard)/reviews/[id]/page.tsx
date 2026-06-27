@@ -157,25 +157,25 @@ export default function ReviewDetailPage() {
     },
   ];
 
-  // Mock review data for development
-  const mockReview: Review = {
-    id: reviewId,
-    org_id: 'bio-001',
-    org_name: 'Biology Department',
-    author_id: user?.id || 'user-1',
-    author_name: user?.full_name || 'Dr. Sarah Martinez',
-    cycle_year: '2024-2025',
-    review_type: 'comprehensive',
-    status: 'draft',
-    content: {
-      program_overview: 'The Biology Department offers a comprehensive curriculum designed to prepare students for transfer to four-year institutions and careers in the life sciences. Our program emphasizes hands-on laboratory experience and critical thinking skills.',
-      student_success: '',
-    },
-    created_at: '2024-11-15T10:00:00Z',
-    updated_at: '2024-12-10T14:30:00Z',
-  };
-
   useEffect(() => {
+    // Mock review data for development
+    const mockReview: Review = {
+      id: reviewId,
+      org_id: 'bio-001',
+      org_name: 'Biology Department',
+      author_id: user?.id || 'user-1',
+      author_name: user?.full_name || 'Dr. Sarah Martinez',
+      cycle_year: '2024-2025',
+      review_type: 'comprehensive',
+      status: 'draft',
+      content: {
+        program_overview: 'The Biology Department offers a comprehensive curriculum designed to prepare students for transfer to four-year institutions and careers in the life sciences. Our program emphasizes hands-on laboratory experience and critical thinking skills.',
+        student_success: '',
+      },
+      created_at: '2024-11-15T10:00:00Z',
+      updated_at: '2024-12-10T14:30:00Z',
+    };
+
     const fetchReview = async () => {
       setIsLoading(true);
       try {
@@ -200,7 +200,7 @@ export default function ReviewDetailPage() {
     };
 
     fetchReview();
-  }, [reviewId, token]);
+  }, [reviewId, token, user?.id, user?.full_name]);
 
   const handleSaveSection = async () => {
     if (!activeSection || !review) return;

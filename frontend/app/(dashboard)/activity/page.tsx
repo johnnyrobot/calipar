@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   FileText,
@@ -19,6 +19,20 @@ import {
 } from 'lucide-react';
 import { Header } from '@/components/layout';
 import { Card, Badge } from '@/components/ui';
+import { useAuthStore } from '@/lib/store';
+import api from '@/lib/api';
+
+// Shape of an activity record as returned by the backend activity feed.
+interface ApiActivity {
+  id: string;
+  type: string;
+  entity_type: string;
+  entity_id?: string;
+  title: string;
+  description: string;
+  user: string;
+  timestamp: string;
+}
 
 type ActivityType =
   | 'review_updated'
@@ -49,13 +63,56 @@ interface Activity {
   };
 }
 
+const KNOWN_ACTIVITY_TYPES: ActivityType[] = [
+  'review_updated',
+  'review_submitted',
+  'review_approved',
+  'status_changed',
+  'comment_added',
+  'action_plan_created',
+  'resource_funded',
+  'deadline_reminder',
+];
+
+// Resolve the backend `type`/`entity_type` to a UI ActivityType for icon/badge.
+function resolveActivityType(type: string, entityType: string): ActivityType {
+  if ((KNOWN_ACTIVITY_TYPES as string[]).includes(type)) {
+    return type as ActivityType;
+  }
+  switch (entityType) {
+    case 'action_plan':
+      return 'action_plan_created';
+    case 'resource':
+      return 'resource_funded';
+    case 'comment':
+      return 'comment_added';
+    case 'review':
+    default:
+      return 'review_updated';
+  }
+}
+
+// Map a backend activity record onto the richer UI Activity shape.
+function mapApiActivity(a: ApiActivity): Activity {
+  return {
+    id: a.id,
+    type: resolveActivityType(a.type, a.entity_type),
+    title: a.title,
+    description: a.description,
+    timestamp: a.timestamp,
+    user: { name: a.user || 'System', role: '' },
+    metadata: a.entity_type === 'review' && a.entity_id ? { reviewId: a.entity_id } : undefined,
+  };
+}
+
 export default function ActivityPage() {
+  const { token } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
 
-  // Mock activity data
-  const activities: Activity[] = [
+  // Mock activity data (graceful fallback when no token / API fails)
+  const mockActivities = useMemo<Activity[]>(() => [
     {
       id: '1',
       type: 'review_updated',
@@ -145,7 +202,25 @@ export default function ActivityPage() {
       user: { name: 'Dr. Emily Williams', role: 'Faculty' },
       metadata: { reviewId: '3', reviewName: 'Nursing Program' },
     },
-  ];
+  ], []);
+
+  const [activities, setActivities] = useState<Activity[]>(mockActivities);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        if (token) {
+          api.setToken(token);
+          const data = await api.getActivity(20) as ApiActivity[];
+          setActivities(data.map(mapApiActivity));
+        }
+      } catch (error) {
+        console.error('Failed to load activity feed:', error);
+        // Keep existing mock fallback
+      }
+    };
+    load();
+  }, [token]);
 
   const getActivityIcon = (type: ActivityType) => {
     switch (type) {

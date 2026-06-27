@@ -45,12 +45,8 @@ function LoginForm() {
     }
   }, [isAuthenticated, authLoading, router, returnUrl]);
 
-  // Sync auth context error with local error state
-  useEffect(() => {
-    if (authError) {
-      setError(authError);
-    }
-  }, [authError]);
+  // Show the local error if present, otherwise fall back to the auth context error
+  const displayError = error || authError;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,10 +117,10 @@ function LoginForm() {
               <p className="text-brand-muted mt-2">Sign in to continue to CALIPAR</p>
             </div>
 
-            {error && (
+            {displayError && (
               <div className="mb-6 p-4 bg-[#FBEAEA] border border-destructive rounded-lg flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-destructive">{error}</p>
+                <p className="text-sm text-destructive">{displayError}</p>
               </div>
             )}
 

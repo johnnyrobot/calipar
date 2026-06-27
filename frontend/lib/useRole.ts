@@ -27,12 +27,10 @@ import {
 export function useHasRole(allowedRoles: UserRole | UserRole[]): boolean {
   const { user } = useAuth();
 
-  return useMemo(() => {
-    if (!user?.role) return false;
+  if (!user?.role) return false;
 
-    const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-    return roleIsOneOf(user.role, roles);
-  }, [user?.role, allowedRoles]);
+  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+  return roleIsOneOf(user.role, roles);
 }
 
 /**

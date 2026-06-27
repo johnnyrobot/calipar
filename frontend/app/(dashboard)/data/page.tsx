@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   TrendingUp,
   TrendingDown,
@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { Header } from '@/components/layout';
 import { Card, Button, Badge } from '@/components/ui';
+import { useAuthStore } from '@/lib/store';
+import api from '@/lib/api';
 
 interface EnrollmentData {
   term: string;
@@ -48,13 +50,195 @@ interface CSLOData {
   status: 'exceeds' | 'meets' | 'below';
 }
 
+interface DisaggGroup {
+  group: string;
+  successRate: number;
+  enrollment: number;
+  gap: number;
+}
+
+interface DisaggregatedData {
+  ethnicity: DisaggGroup[];
+  gender: DisaggGroup[];
+  pell: DisaggGroup[];
+}
+
+// Backend response shapes (snake_case / decimals). Mapped into the UI types above.
+interface ApiTermInfo {
+  term: string;
+  snapshot_date: string;
+}
+
+interface ApiEnrollmentData {
+  term: string;
+  total_enrollment: number;
+  sections: number;
+  fill_rate: number; // decimal (0-1)
+  by_mode: Record<string, number>;
+  by_term_length: Record<string, number>;
+}
+
+interface ApiSuccessData {
+  discipline: string;
+  success_rate: number; // decimal (0-1)
+  retention_rate: number; // decimal (0-1)
+  by_demographics: Record<string, { success_rate: number; retention_rate: number }>;
+}
+
+interface ApiCSLOData {
+  course: string;
+  cslos: { id: string; description: string }[];
+  achievement_rate: number;
+  by_outcome: { cslo: string; achievement_rate: number; n_assessed: number }[];
+}
+
+// Defaults already referenced by the page selectors / mock data.
+const DEFAULT_COURSE = 'BIOL 101';
+const round1 = (n: number) => Math.round(n * 10) / 10;
+const ETHNICITY_LABELS: Record<string, string> = {
+  hispanic: 'Hispanic/Latino',
+  white: 'White',
+  african_american: 'African American',
+  asian: 'Asian',
+  other: 'Other',
+};
+
+const defaultTerms = ['Fall 2024', 'Spring 2024', 'Fall 2023', 'Spring 2023'];
+
+// Mock datasets — used as a graceful fallback when there's no token or the API fails.
+const mockEnrollmentData: EnrollmentData[] = [
+  { term: 'Fall 2024', total: 12450, inPerson: 5200, online: 4800, hybrid: 2450, fillRate: 78 },
+  { term: 'Spring 2024', total: 11800, inPerson: 4900, online: 4500, hybrid: 2400, fillRate: 75 },
+  { term: 'Fall 2023', total: 11200, inPerson: 5500, online: 3800, hybrid: 1900, fillRate: 72 },
+  { term: 'Spring 2023', total: 10500, inPerson: 5200, online: 3500, hybrid: 1800, fillRate: 70 },
+];
+
+const mockSuccessData: SuccessData[] = [
+  { term: 'Fall 2024', successRate: 72.5, retentionRate: 85.2, withdrawalRate: 8.3 },
+  { term: 'Spring 2024', successRate: 71.8, retentionRate: 84.5, withdrawalRate: 8.8 },
+  { term: 'Fall 2023', successRate: 70.2, retentionRate: 83.1, withdrawalRate: 9.2 },
+  { term: 'Spring 2023', successRate: 69.5, retentionRate: 82.4, withdrawalRate: 9.8 },
+];
+
+const mockDisaggregatedData: DisaggregatedData = {
+  ethnicity: [
+    { group: 'Hispanic/Latino', successRate: 70.2, enrollment: 9600, gap: -2.3 },
+    { group: 'White', successRate: 74.8, enrollment: 1200, gap: 2.3 },
+    { group: 'African American', successRate: 65.5, enrollment: 620, gap: -7.0 },
+    { group: 'Asian', successRate: 78.2, enrollment: 580, gap: 5.7 },
+    { group: 'Other', successRate: 71.5, enrollment: 450, gap: -1.0 },
+  ],
+  gender: [
+    { group: 'Female', successRate: 74.1, enrollment: 6850, gap: 1.6 },
+    { group: 'Male', successRate: 70.5, enrollment: 5400, gap: -2.0 },
+    { group: 'Non-binary', successRate: 72.3, enrollment: 200, gap: -0.2 },
+  ],
+  pell: [
+    { group: 'Pell Recipients', successRate: 68.9, enrollment: 7200, gap: -3.6 },
+    { group: 'Non-Pell', successRate: 76.8, enrollment: 5250, gap: 4.3 },
+  ],
+};
+
+const mockCsloData: CSLOData[] = [
+  {
+    id: '1',
+    coursePrefix: 'BIOL',
+    courseNumber: '101',
+    courseName: 'Principles of Biology',
+    sloNumber: 1,
+    sloDescription: 'Apply the scientific method to analyze biological phenomena',
+    assessmentMethod: 'Lab Report Rubric',
+    studentsAssessed: 245,
+    metStandard: 198,
+    metStandardPct: 80.8,
+    target: 70,
+    status: 'exceeds',
+  },
+  {
+    id: '2',
+    coursePrefix: 'BIOL',
+    courseNumber: '101',
+    courseName: 'Principles of Biology',
+    sloNumber: 2,
+    sloDescription: 'Explain cellular processes including metabolism and genetics',
+    assessmentMethod: 'Embedded Exam Questions',
+    studentsAssessed: 245,
+    metStandard: 172,
+    metStandardPct: 70.2,
+    target: 70,
+    status: 'meets',
+  },
+  {
+    id: '3',
+    coursePrefix: 'BIOL',
+    courseNumber: '101',
+    courseName: 'Principles of Biology',
+    sloNumber: 3,
+    sloDescription: 'Analyze evolutionary relationships and ecological interactions',
+    assessmentMethod: 'Research Paper',
+    studentsAssessed: 238,
+    metStandard: 147,
+    metStandardPct: 61.8,
+    target: 70,
+    status: 'below',
+  },
+  {
+    id: '4',
+    coursePrefix: 'BIOL',
+    courseNumber: '201',
+    courseName: 'Human Anatomy',
+    sloNumber: 1,
+    sloDescription: 'Identify anatomical structures of the human body',
+    assessmentMethod: 'Practical Exam',
+    studentsAssessed: 85,
+    metStandard: 72,
+    metStandardPct: 84.7,
+    target: 70,
+    status: 'exceeds',
+  },
+  {
+    id: '5',
+    coursePrefix: 'BIOL',
+    courseNumber: '201',
+    courseName: 'Human Anatomy',
+    sloNumber: 2,
+    sloDescription: 'Explain physiological processes of major organ systems',
+    assessmentMethod: 'Case Study Analysis',
+    studentsAssessed: 85,
+    metStandard: 61,
+    metStandardPct: 71.8,
+    target: 70,
+    status: 'meets',
+  },
+  {
+    id: '6',
+    coursePrefix: 'MICR',
+    courseNumber: '101',
+    courseName: 'Introduction to Microbiology',
+    sloNumber: 1,
+    sloDescription: 'Apply aseptic technique in laboratory procedures',
+    assessmentMethod: 'Lab Skills Checklist',
+    studentsAssessed: 64,
+    metStandard: 59,
+    metStandardPct: 92.2,
+    target: 70,
+    status: 'exceeds',
+  },
+];
+
 export default function DataPage() {
+  const { token } = useAuthStore();
   const [selectedTerm, setSelectedTerm] = useState('Fall 2024');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [viewBy, setViewBy] = useState<'overall' | 'ethnicity' | 'gender' | 'pell'>('overall');
   const [activeTab, setActiveTab] = useState<'enrollment' | 'slo'>('enrollment');
 
-  const terms = ['Fall 2024', 'Spring 2024', 'Fall 2023', 'Spring 2023'];
+  const [terms, setTerms] = useState<string[]>(defaultTerms);
+  const [enrollmentData, setEnrollmentData] = useState<EnrollmentData[]>(mockEnrollmentData);
+  const [successData, setSuccessData] = useState<SuccessData[]>(mockSuccessData);
+  const [disaggregatedData, setDisaggregatedData] = useState<DisaggregatedData>(mockDisaggregatedData);
+  const [csloData, setCsloData] = useState<CSLOData[]>(mockCsloData);
+
   const departments = [
     { value: 'all', label: 'All Departments' },
     { value: 'biology', label: 'Biology' },
@@ -64,129 +248,99 @@ export default function DataPage() {
     { value: 'nursing', label: 'Nursing' },
   ];
 
-  // Mock enrollment data
-  const enrollmentData: EnrollmentData[] = [
-    { term: 'Fall 2024', total: 12450, inPerson: 5200, online: 4800, hybrid: 2450, fillRate: 78 },
-    { term: 'Spring 2024', total: 11800, inPerson: 4900, online: 4500, hybrid: 2400, fillRate: 75 },
-    { term: 'Fall 2023', total: 11200, inPerson: 5500, online: 3800, hybrid: 1900, fillRate: 72 },
-    { term: 'Spring 2023', total: 10500, inPerson: 5200, online: 3500, hybrid: 1800, fillRate: 70 },
-  ];
+  // Fetch real analytics from the backend; keep the mock data as a graceful fallback.
+  useEffect(() => {
+    const load = async () => {
+      if (!token) return;
+      try {
+        api.setToken(token);
 
-  // Mock success data
-  const successData: SuccessData[] = [
-    { term: 'Fall 2024', successRate: 72.5, retentionRate: 85.2, withdrawalRate: 8.3 },
-    { term: 'Spring 2024', successRate: 71.8, retentionRate: 84.5, withdrawalRate: 8.8 },
-    { term: 'Fall 2023', successRate: 70.2, retentionRate: 83.1, withdrawalRate: 9.2 },
-    { term: 'Spring 2023', successRate: 69.5, retentionRate: 82.4, withdrawalRate: 9.8 },
-  ];
+        // Available terms
+        const termList = (await api.getTerms()) as ApiTermInfo[];
+        if (termList.length > 0) {
+          setTerms(termList.map((t) => t.term));
+        }
 
-  // Mock disaggregated data
-  const disaggregatedData = {
-    ethnicity: [
-      { group: 'Hispanic/Latino', successRate: 70.2, enrollment: 9600, gap: -2.3 },
-      { group: 'White', successRate: 74.8, enrollment: 1200, gap: 2.3 },
-      { group: 'African American', successRate: 65.5, enrollment: 620, gap: -7.0 },
-      { group: 'Asian', successRate: 78.2, enrollment: 580, gap: 5.7 },
-      { group: 'Other', successRate: 71.5, enrollment: 450, gap: -1.0 },
-    ],
-    gender: [
-      { group: 'Female', successRate: 74.1, enrollment: 6850, gap: 1.6 },
-      { group: 'Male', successRate: 70.5, enrollment: 5400, gap: -2.0 },
-      { group: 'Non-binary', successRate: 72.3, enrollment: 200, gap: -0.2 },
-    ],
-    pell: [
-      { group: 'Pell Recipients', successRate: 68.9, enrollment: 7200, gap: -3.6 },
-      { group: 'Non-Pell', successRate: 76.8, enrollment: 5250, gap: 4.3 },
-    ],
-  };
+        // Enrollment for the selected term — merge into the matching historical row
+        const enr = (await api.getEnrollment(selectedTerm)) as ApiEnrollmentData;
+        const byMode = enr.by_mode || {};
+        setEnrollmentData((prev) =>
+          prev.map((e) =>
+            e.term === selectedTerm
+              ? {
+                  ...e,
+                  total: enr.total_enrollment,
+                  inPerson: byMode.in_person ?? e.inPerson,
+                  online: byMode.online ?? e.online,
+                  hybrid: (byMode.hybrid ?? 0) + (byMode.hyflex ?? 0) || e.hybrid,
+                  fillRate: Math.round((enr.fill_rate || 0) * 100),
+                }
+              : e
+          )
+        );
 
-  // Mock CSLO data (from eLumen)
-  const csloData: CSLOData[] = [
-    {
-      id: '1',
-      coursePrefix: 'BIOL',
-      courseNumber: '101',
-      courseName: 'Principles of Biology',
-      sloNumber: 1,
-      sloDescription: 'Apply the scientific method to analyze biological phenomena',
-      assessmentMethod: 'Lab Report Rubric',
-      studentsAssessed: 245,
-      metStandard: 198,
-      metStandardPct: 80.8,
-      target: 70,
-      status: 'exceeds',
-    },
-    {
-      id: '2',
-      coursePrefix: 'BIOL',
-      courseNumber: '101',
-      courseName: 'Principles of Biology',
-      sloNumber: 2,
-      sloDescription: 'Explain cellular processes including metabolism and genetics',
-      assessmentMethod: 'Embedded Exam Questions',
-      studentsAssessed: 245,
-      metStandard: 172,
-      metStandardPct: 70.2,
-      target: 70,
-      status: 'meets',
-    },
-    {
-      id: '3',
-      coursePrefix: 'BIOL',
-      courseNumber: '101',
-      courseName: 'Principles of Biology',
-      sloNumber: 3,
-      sloDescription: 'Analyze evolutionary relationships and ecological interactions',
-      assessmentMethod: 'Research Paper',
-      studentsAssessed: 238,
-      metStandard: 147,
-      metStandardPct: 61.8,
-      target: 70,
-      status: 'below',
-    },
-    {
-      id: '4',
-      coursePrefix: 'BIOL',
-      courseNumber: '201',
-      courseName: 'Human Anatomy',
-      sloNumber: 1,
-      sloDescription: 'Identify anatomical structures of the human body',
-      assessmentMethod: 'Practical Exam',
-      studentsAssessed: 85,
-      metStandard: 72,
-      metStandardPct: 84.7,
-      target: 70,
-      status: 'exceeds',
-    },
-    {
-      id: '5',
-      coursePrefix: 'BIOL',
-      courseNumber: '201',
-      courseName: 'Human Anatomy',
-      sloNumber: 2,
-      sloDescription: 'Explain physiological processes of major organ systems',
-      assessmentMethod: 'Case Study Analysis',
-      studentsAssessed: 85,
-      metStandard: 61,
-      metStandardPct: 71.8,
-      target: 70,
-      status: 'meets',
-    },
-    {
-      id: '6',
-      coursePrefix: 'MICR',
-      courseNumber: '101',
-      courseName: 'Introduction to Microbiology',
-      sloNumber: 1,
-      sloDescription: 'Apply aseptic technique in laboratory procedures',
-      assessmentMethod: 'Lab Skills Checklist',
-      studentsAssessed: 64,
-      metStandard: 59,
-      metStandardPct: 92.2,
-      target: 70,
-      status: 'exceeds',
-    },
-  ];
+        // Success + disaggregated (by_demographics) for the selected discipline/term
+        const suc = (await api.getSuccessData(selectedDepartment, selectedTerm)) as ApiSuccessData;
+        const overall = round1((suc.success_rate || 0) * 100);
+        setSuccessData((prev) =>
+          prev.map((s) =>
+            s.term === selectedTerm
+              ? {
+                  ...s,
+                  successRate: overall,
+                  retentionRate: round1((suc.retention_rate || 0) * 100),
+                }
+              : s
+          )
+        );
+        const ethnicity: DisaggGroup[] = Object.entries(suc.by_demographics || {}).map(
+          ([key, val]) => {
+            const label = ETHNICITY_LABELS[key] ?? key;
+            const sr = round1((val.success_rate || 0) * 100);
+            const existing = mockDisaggregatedData.ethnicity.find((g) => g.group === label);
+            return {
+              group: label,
+              successRate: sr,
+              enrollment: existing?.enrollment ?? 0,
+              gap: round1(sr - overall),
+            };
+          }
+        );
+        if (ethnicity.length > 0) {
+          setDisaggregatedData((prev) => ({ ...prev, ethnicity }));
+        }
+
+        // CSLO assessment for the default course
+        const cslo = (await api.getCSLOData(DEFAULT_COURSE)) as ApiCSLOData;
+        const [prefix, number] = DEFAULT_COURSE.split(' ');
+        const mappedCslo: CSLOData[] = cslo.by_outcome.map((o, i) => {
+          const pct = round1((o.achievement_rate || 0) * 100);
+          const status: CSLOData['status'] = pct < 70 ? 'below' : pct < 80 ? 'meets' : 'exceeds';
+          return {
+            id: o.cslo || String(i + 1),
+            coursePrefix: prefix ?? DEFAULT_COURSE,
+            courseNumber: number ?? '',
+            courseName: '',
+            sloNumber: parseInt(o.cslo.replace(/\D/g, ''), 10) || i + 1,
+            sloDescription: cslo.cslos.find((c) => c.id === o.cslo)?.description ?? '',
+            assessmentMethod: 'Direct Assessment',
+            studentsAssessed: o.n_assessed,
+            metStandard: Math.round((o.n_assessed || 0) * (o.achievement_rate || 0)),
+            metStandardPct: pct,
+            target: 70,
+            status,
+          };
+        });
+        if (mappedCslo.length > 0) {
+          setCsloData(mappedCslo);
+        }
+      } catch (e) {
+        // Keep the existing mock data as a graceful fallback.
+        console.error('Failed to load analytics data', e);
+      }
+    };
+    load();
+  }, [token, selectedTerm, selectedDepartment]);
 
   // CSLO Summary calculations
   const csloSummary = {

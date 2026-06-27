@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   ClipboardCheck,
@@ -17,6 +17,19 @@ import {
 } from 'lucide-react';
 import { Header } from '@/components/layout';
 import { Card, Button, Badge, Modal, Spinner, Textarea } from '@/components/ui';
+import { useAuthStore } from '@/lib/store';
+import api from '@/lib/api';
+
+// Shape of a review as returned by the backend reviews API.
+interface ApiReview {
+  id: string;
+  org_name?: string;
+  author_name?: string;
+  cycle_year: string;
+  review_type: 'comprehensive' | 'annual';
+  status: 'in_review' | 'validated' | string;
+  updated_at: string;
+}
 
 interface ReviewToValidate {
   id: string;
@@ -44,7 +57,21 @@ interface RubricScore {
   comment: string;
 }
 
+// Map a backend review record onto the validation-queue UI shape.
+function mapApiReview(r: ApiReview): ReviewToValidate {
+  return {
+    id: r.id,
+    orgName: r.org_name || 'Unnamed Program',
+    authorName: r.author_name || 'Unknown Author',
+    cycleYear: r.cycle_year,
+    reviewType: r.review_type,
+    submittedAt: r.updated_at,
+    status: r.status === 'validated' ? 'validated' : 'in_review',
+  };
+}
+
 export default function ValidationPage() {
+  const { token } = useAuthStore();
   const [selectedReview, setSelectedReview] = useState<ReviewToValidate | null>(null);
   const [scores, setScores] = useState<Record<string, RubricScore>>({});
   const [overallComments, setOverallComments] = useState('');
@@ -53,8 +80,8 @@ export default function ValidationPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['mission', 'data', 'equity', 'planning']));
 
-  // Mock reviews awaiting validation
-  const reviewsToValidate: ReviewToValidate[] = [
+  // Mock reviews awaiting validation (graceful fallback when no token / API fails)
+  const mockReviews = useMemo<ReviewToValidate[]>(() => [
     {
       id: '1',
       orgName: 'Biology Department',
@@ -82,7 +109,39 @@ export default function ValidationPage() {
       submittedAt: '2024-12-05T09:00:00Z',
       status: 'validated',
     },
-  ];
+  ], []);
+
+  const [reviewsToValidate, setReviewsToValidate] = useState<ReviewToValidate[]>(mockReviews);
+
+  // Fetch the validation queue from the backend (keeps mock fallback on error).
+  const refreshQueue = async () => {
+    try {
+      if (token) {
+        api.setToken(token);
+        const data = await api.listReviews({ status: 'in_review' }) as ApiReview[];
+        setReviewsToValidate(data.map(mapApiReview));
+      }
+    } catch (error) {
+      console.error('Failed to load validation queue:', error);
+      // Keep existing mock fallback
+    }
+  };
+
+  useEffect(() => {
+    const fetchQueue = async () => {
+      try {
+        if (token) {
+          api.setToken(token);
+          const data = await api.listReviews({ status: 'in_review' }) as ApiReview[];
+          setReviewsToValidate(data.map(mapApiReview));
+        }
+      } catch (error) {
+        console.error('Failed to load validation queue:', error);
+        // Keep existing mock fallback
+      }
+    };
+    fetchQueue();
+  }, [token]);
 
   // PROC Validation Rubric
   const rubricCriteria: RubricCriterion[] = [
@@ -251,15 +310,32 @@ export default function ValidationPage() {
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      // Build criterion -> score map for the rubric submission.
+      const rubricScores: Record<string, number> = Object.values(scores).reduce(
+        (acc, s) => {
+          acc[s.criterionId] = s.score;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
 
-    // Reset state
-    setSelectedReview(null);
-    setScores({});
-    setOverallComments('');
-    setShowSubmitModal(false);
-    setIsSubmitting(false);
+      if (token) {
+        api.setToken(token);
+        await api.validateReview(selectedReview.id, rubricScores, overallComments || undefined);
+        // Refresh the queue so the validated review drops off the list.
+        await refreshQueue();
+      }
+    } catch (error) {
+      console.error('Failed to submit validation:', error);
+    } finally {
+      // Reset state
+      setSelectedReview(null);
+      setScores({});
+      setOverallComments('');
+      setShowSubmitModal(false);
+      setIsSubmitting(false);
+    }
   };
 
   const filteredReviews = reviewsToValidate.filter(review =>

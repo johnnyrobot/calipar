@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Target,
@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { Header } from '@/components/layout';
 import { Card, Button, Badge, Modal } from '@/components/ui';
+import { useAuthStore } from '@/lib/store';
+import api from '@/lib/api';
 
 interface ActionPlan {
   id: string;
@@ -31,16 +33,103 @@ interface ActionPlan {
   updatedAt: string;
 }
 
+interface StrategicGoal {
+  number: number;
+  title: string;
+  color: string;
+  objectives: { code: string; title: string }[];
+}
+
+// Shapes returned by the backend planning endpoints.
+interface InitiativeResponse {
+  id: string;
+  goal_number: number;
+  code: string;
+  title: string;
+  description: string;
+  performance_measure?: string | null;
+  baseline_value?: string | null;
+  target_value?: string | null;
+}
+
+interface ActionPlanResponse {
+  id: string;
+  review_id: string;
+  title: string;
+  description: string;
+  status: ActionPlan['status'];
+  addresses_equity_gap: boolean;
+  justification?: string | null;
+  created_at: string;
+  updated_at: string;
+  initiatives: InitiativeResponse[];
+}
+
+// Goal colors aren't stored in the backend, so map them by ISMP goal number.
+const goalColors: Record<number, string> = {
+  1: 'bg-blue-500',
+  2: 'bg-green-500',
+  3: 'bg-amber-500',
+  4: 'bg-purple-500',
+  5: 'bg-red-500',
+};
+
+// Build the nested goal/objective structure the UI expects from the flat
+// initiative list. Rows whose code is just the goal number (e.g. "3") supply the
+// goal title; rows with a dotted code (e.g. "3.1") are the objectives.
+function buildGoals(initiatives: InitiativeResponse[]): StrategicGoal[] {
+  const byGoal = new Map<number, StrategicGoal>();
+  for (const init of initiatives) {
+    let goal = byGoal.get(init.goal_number);
+    if (!goal) {
+      goal = {
+        number: init.goal_number,
+        title: '',
+        color: goalColors[init.goal_number] ?? 'bg-slate-500',
+        objectives: [],
+      };
+      byGoal.set(init.goal_number, goal);
+    }
+    if (init.code.includes('.')) {
+      goal.objectives.push({ code: init.code, title: init.description });
+    } else {
+      goal.title = init.title;
+    }
+  }
+  for (const goal of byGoal.values()) {
+    if (!goal.title) goal.title = `Goal ${goal.number}`;
+  }
+  return Array.from(byGoal.values()).sort((a, b) => a.number - b.number);
+}
+
+function mapActionPlan(p: ActionPlanResponse): ActionPlan {
+  return {
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    status: p.status,
+    addressesEquityGap: p.addresses_equity_gap,
+    mappedInitiatives: p.initiatives.map((i) => i.code),
+    resourceRequests: 0,
+    createdAt: p.created_at,
+    updatedAt: p.updated_at,
+  };
+}
+
 export default function PlanningPage() {
+  const { token } = useAuthStore();
   const [selectedGoal, setSelectedGoal] = useState<number | null>(null);
   const [showNewPlanModal, setShowNewPlanModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [editedPlan, setEditedPlan] = useState<ActionPlan | null>(null);
+  // Backend-loaded data; null means "not loaded" so the mock fallback is used.
+  const [apiGoals, setApiGoals] = useState<StrategicGoal[] | null>(null);
+  const [apiPlans, setApiPlans] = useState<ActionPlan[] | null>(null);
 
-  // ISMP Strategic Goals
-  const strategicGoals = [
+  // ISMP Strategic Goals (fallback used when the backend is unavailable)
+  const mockStrategicGoals: StrategicGoal[] = [
     {
       number: 1,
       title: 'Expand Access',
@@ -97,8 +186,8 @@ export default function PlanningPage() {
     },
   ];
 
-  // Mock action plans
-  const actionPlans: ActionPlan[] = [
+  // Mock action plans (fallback used when the backend is unavailable)
+  const mockActionPlans: ActionPlan[] = [
     {
       id: '1',
       title: 'Implement Supplemental Instruction for Gateway Courses',
@@ -144,6 +233,65 @@ export default function PlanningPage() {
       updatedAt: '2024-12-05',
     },
   ];
+
+  // Prefer backend data; fall back to mock only when nothing has loaded
+  // (no token / fetch error). An empty array from the API is a real result.
+  const strategicGoals = apiGoals ?? mockStrategicGoals;
+  const actionPlans = apiPlans ?? mockActionPlans;
+
+  useEffect(() => {
+    const load = async () => {
+      if (!token) return;
+      try {
+        api.setToken(token);
+        const [initiatives, plans] = await Promise.all([
+          api.listInitiatives() as Promise<InitiativeResponse[]>,
+          api.listActionPlans() as Promise<ActionPlanResponse[]>,
+        ]);
+        if (initiatives.length) setApiGoals(buildGoals(initiatives));
+        setApiPlans(plans.map(mapActionPlan));
+      } catch (error) {
+        console.error('Failed to load planning data:', error);
+        // Keep the mock fallback on error.
+      }
+    };
+    load();
+  }, [token]);
+
+  const handleSavePlan = async () => {
+    if (!editedPlan) return;
+    const plan = editedPlan;
+    // Optimistically reflect the edit locally (keeps demo / no-token mode working).
+    setApiPlans((prev) =>
+      (prev ?? mockActionPlans).map((p) =>
+        p.id === plan.id ? { ...plan, updatedAt: new Date().toISOString() } : p
+      )
+    );
+    try {
+      if (token) {
+        api.setToken(token);
+        const updated = (await api.updateActionPlan(plan.id, {
+          title: plan.title,
+          description: plan.description,
+          status: plan.status,
+          addresses_equity_gap: plan.addressesEquityGap,
+        })) as ActionPlanResponse;
+        const mapped = mapActionPlan(updated);
+        // Reconcile with the server response, preserving the resource-request count
+        // (not returned by this endpoint).
+        setApiPlans((prev) =>
+          (prev ?? mockActionPlans).map((p) =>
+            p.id === mapped.id ? { ...mapped, resourceRequests: p.resourceRequests } : p
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Failed to save action plan:', error);
+    } finally {
+      setEditingPlanId(null);
+      setEditedPlan(null);
+    }
+  };
 
   const getStatusIcon = (status: ActionPlan['status']) => {
     switch (status) {
@@ -501,10 +649,7 @@ export default function PlanningPage() {
                               <Button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  // TODO: Save to backend
-                                  console.log('Saving plan:', editedPlan);
-                                  setEditingPlanId(null);
-                                  setEditedPlan(null);
+                                  handleSavePlan();
                                 }}
                               >
                                 <Save className="w-4 h-4 mr-2" />

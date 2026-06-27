@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -74,11 +74,11 @@ export default function NewReviewPage() {
 
   const selectedDept = departments.find(d => d.id === selectedDepartment);
 
-  useEffect(() => {
-    if (selectedDept) {
-      setReviewType(getRecommendedType(selectedDept));
-    }
-  }, [selectedDepartment]);
+  // Set the recommended review type when a department is selected.
+  const handleSelectDepartment = (dept: Department) => {
+    setSelectedDepartment(dept.id);
+    setReviewType(getRecommendedType(dept));
+  };
 
   const handleCreateReview = async () => {
     if (!selectedDepartment) {
@@ -147,7 +147,7 @@ export default function NewReviewPage() {
             {departments.map((dept) => (
               <button
                 key={dept.id}
-                onClick={() => setSelectedDepartment(dept.id)}
+                onClick={() => handleSelectDepartment(dept)}
                 className={`flex items-start gap-3 p-4 rounded-lg border-2 text-left transition-all ${
                   selectedDepartment === dept.id
                     ? 'border-brand-primary bg-brand-primary-bg'

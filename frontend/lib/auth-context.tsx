@@ -86,6 +86,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (_hasHydrated && !isFirebaseEnabled) {
       // Store has hydrated and Firebase is not configured
       // If we have a user from localStorage, we're authenticated
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- isLoading is resolved in response to Zustand store hydration (an external system) and is also driven by async auth events, so it cannot be derived during render.
       setIsLoading(false);
     }
   }, [_hasHydrated, isFirebaseEnabled]);

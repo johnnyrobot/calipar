@@ -14,7 +14,6 @@ const API_URL =
   (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000');
 
 if (!API_URL && typeof window !== 'undefined') {
-  // eslint-disable-next-line no-console
   console.error('NEXT_PUBLIC_API_URL is not set — API requests will fail. Configure it for production.');
 }
 
@@ -307,9 +306,12 @@ class ApiClient {
   }
 
   // Reviews endpoints
-  async listReviews(orgId?: string) {
-    const params = orgId ? `?org_id=${encodeURIComponent(orgId)}` : '';
-    return this.request(`/api/reviews${params}`);
+  async listReviews(filters?: { orgId?: string; status?: string }) {
+    const params = new URLSearchParams();
+    if (filters?.orgId) params.set('org_id', filters.orgId);
+    if (filters?.status) params.set('status', filters.status);
+    const qs = params.toString();
+    return this.request(`/api/reviews${qs ? `?${qs}` : ''}`);
   }
 
   async createReview(data: {
@@ -506,6 +508,60 @@ class ApiClient {
   async approveReview(reviewId: string) {
     return this.request(`/api/reviews/${reviewId}/approve`, {
       method: 'POST',
+    });
+  }
+
+  // Action plans
+  async listActionPlans(reviewId?: string) {
+    const params = reviewId ? `?review_id=${reviewId}` : '';
+    return this.request(`/api/action-plans${params}`);
+  }
+
+  // Activity feed
+  async getActivity(limit = 20, entityType?: string) {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (entityType) params.set('entity_type', entityType);
+    return this.request(`/api/activity?${params.toString()}`);
+  }
+
+  // Admin: user management
+  async listUsers(filters?: { role?: string; is_active?: boolean; department_id?: string }) {
+    const params = new URLSearchParams();
+    if (filters?.role) params.set('role', filters.role);
+    if (typeof filters?.is_active === 'boolean') params.set('is_active', String(filters.is_active));
+    if (filters?.department_id) params.set('department_id', filters.department_id);
+    const qs = params.toString();
+    return this.request(`/api/admin/users${qs ? `?${qs}` : ''}`);
+  }
+
+  async createUser(data: {
+    email: string;
+    full_name: string;
+    role?: string;
+    department_id?: string;
+    is_active?: boolean;
+  }) {
+    return this.request('/api/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateUser(id: string, data: {
+    full_name?: string;
+    role?: string;
+    department_id?: string;
+    is_active?: boolean;
+  }) {
+    return this.request(`/api/admin/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteUser(id: string) {
+    return this.request(`/api/admin/users/${id}`, {
+      method: 'DELETE',
     });
   }
 

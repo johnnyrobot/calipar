@@ -142,6 +142,7 @@ export function DataInjectionPanel({
   }, [sectionKey]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetchData synchronously sets loading state for an async data fetch triggered by section/term changes; this is the intended data-fetching effect, not derivable during render.
     fetchData();
   }, [fetchData, selectedTerm, selectedDisaggregation]);
 

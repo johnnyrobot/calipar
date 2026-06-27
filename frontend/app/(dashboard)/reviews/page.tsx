@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   Plus,
@@ -38,7 +38,7 @@ export default function ReviewsPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
   // Mock data for development
-  const mockReviews: Review[] = [
+  const mockReviews: Review[] = useMemo<Review[]>(() => [
     {
       id: '1',
       org_id: 'bio-001',
@@ -109,7 +109,7 @@ export default function ReviewsPage() {
       updated_at: '2024-12-09T13:00:00Z',
       progress: 25,
     },
-  ];
+  ], []);
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -133,10 +133,12 @@ export default function ReviewsPage() {
     };
 
     fetchReviews();
-  }, [token, setReviews, setLoading]);
+  }, [token, setReviews, setLoading, mockReviews]);
 
-  // Use mock data if reviews store is empty
-  const displayReviews: Review[] = reviews.length > 0 ? (reviews as Review[]) : mockReviews;
+  // Mock data is only a fallback (no token / fetch error). When authenticated, an
+  // empty result is a real "no reviews" state and must not show mock data.
+  const displayReviews: Review[] =
+    reviews.length > 0 ? (reviews as Review[]) : token ? [] : mockReviews;
 
   const filteredReviews = displayReviews.filter((review) => {
     const matchesSearch =

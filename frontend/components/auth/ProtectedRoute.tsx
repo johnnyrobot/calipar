@@ -7,7 +7,7 @@
  * Shows a loading spinner while checking authentication status.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Spinner } from '@/components/ui';
@@ -111,33 +111,29 @@ export function ProtectedRoute({
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoading, isAuthenticated } = useAuth();
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
+  // Derive authorization during render instead of mirroring it into state.
+  // null = still resolving (auth loading or unauthenticated and about to redirect).
+  let isAuthorized: boolean | null = null;
+  if (!isLoading && isAuthenticated && user) {
+    isAuthorized =
+      allowedRoles && allowedRoles.length > 0
+        ? allowedRoles.some(
+            (role) => user.role.toLowerCase() === role.toLowerCase()
+          )
+        : true;
+  }
+
+  // Redirect unauthenticated users to login, preserving the intended destination.
   useEffect(() => {
-    // Wait for auth state to be determined
     if (isLoading) {
       return;
     }
-
-    // Not authenticated - redirect to login
     if (!isAuthenticated || !user) {
-      // Preserve the intended destination in the URL
       const returnUrl = encodeURIComponent(pathname);
       router.replace(`${redirectTo}?returnUrl=${returnUrl}`);
-      return;
     }
-
-    // Check role-based access
-    if (allowedRoles && allowedRoles.length > 0) {
-      const hasRequiredRole = allowedRoles.some(
-        (role) => user.role.toLowerCase() === role.toLowerCase()
-      );
-      setIsAuthorized(hasRequiredRole);
-    } else {
-      // No specific roles required, just need to be authenticated
-      setIsAuthorized(true);
-    }
-  }, [isLoading, isAuthenticated, user, allowedRoles, pathname, router, redirectTo]);
+  }, [isLoading, isAuthenticated, user, pathname, router, redirectTo]);
 
   // Show loading state while checking auth
   if (isLoading || isAuthorized === null) {

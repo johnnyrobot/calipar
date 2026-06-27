@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Users,
   Search,
@@ -17,6 +17,8 @@ import {
 import { Header } from '@/components/layout';
 import { Card, Button, Badge, Modal, Input, Spinner } from '@/components/ui';
 import { useCurrentRole } from '@/lib/useRole';
+import { useAuthStore } from '@/lib/store';
+import api from '@/lib/api';
 
 interface User {
   id: string;
@@ -29,8 +31,53 @@ interface User {
   createdAt: string;
 }
 
+// Shape of a user record as returned by the backend admin users API.
+interface ApiUser {
+  id: string;
+  email: string;
+  full_name: string;
+  role?: string;
+  department?: string;
+  department_id?: string;
+  is_active?: boolean;
+  last_login?: string | null;
+  created_at?: string;
+}
+
+// The backend uses an `is_active` boolean rather than a tri-state status,
+// so active -> is_active true, everything else -> false.
+function mapApiUser(u: ApiUser): User {
+  return {
+    id: u.id,
+    fullName: u.full_name,
+    email: u.email,
+    role: (u.role || 'faculty').toLowerCase() as User['role'],
+    department: u.department || u.department_id || '—',
+    status: u.is_active === false ? 'inactive' : 'active',
+    lastLogin: u.last_login ?? null,
+    createdAt: u.created_at ?? '',
+  };
+}
+
+interface UserFormState {
+  fullName: string;
+  email: string;
+  role: User['role'];
+  department: string;
+  status: 'active' | 'inactive';
+}
+
+const EMPTY_FORM: UserFormState = {
+  fullName: '',
+  email: '',
+  role: 'faculty',
+  department: '',
+  status: 'active',
+};
+
 export default function UserManagementPage() {
   const { isAdmin } = useCurrentRole();
+  const { token } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -39,9 +86,10 @@ export default function UserManagementPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState<UserFormState>(EMPTY_FORM);
 
-  // Mock users data
-  const users: User[] = [
+  // Mock users data (graceful fallback for the initial load only)
+  const mockUsers: User[] = useMemo<User[]>(() => [
     {
       id: '1',
       fullName: 'Michael Williams',
@@ -142,7 +190,25 @@ export default function UserManagementPage() {
       lastLogin: '2024-12-12T09:30:00Z',
       createdAt: '2023-09-05T10:00:00Z',
     },
-  ];
+  ], []);
+
+  const [users, setUsers] = useState<User[]>(mockUsers);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        if (token) {
+          api.setToken(token);
+          const data = await api.listUsers() as ApiUser[];
+          setUsers(data.map(mapApiUser));
+        }
+      } catch (error) {
+        console.error('Failed to load users:', error);
+        // Keep existing mock fallback (initial load only)
+      }
+    };
+    fetchUsers();
+  }, [token]);
 
   const roleOptions = [
     { value: 'all', label: 'All Roles' },
@@ -214,30 +280,84 @@ export default function UserManagementPage() {
     });
   };
 
+  const openAddModal = () => {
+    setFormData(EMPTY_FORM);
+    setShowAddModal(true);
+  };
+
+  const openEditModal = (user: User) => {
+    setSelectedUser(user);
+    setFormData({
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      department: user.department === '—' ? '' : user.department,
+      status: user.status === 'inactive' ? 'inactive' : 'active',
+    });
+    setShowEditModal(true);
+  };
+
   const handleAddUser = async () => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    setShowAddModal(false);
+    try {
+      if (token) {
+        api.setToken(token);
+        const created = await api.createUser({
+          email: formData.email,
+          full_name: formData.fullName,
+          role: formData.role,
+          department_id: formData.department || undefined,
+          is_active: formData.status === 'active',
+        }) as ApiUser;
+        setUsers((prev) => [...prev, mapApiUser(created)]);
+      }
+    } catch (error) {
+      console.error('Failed to create user:', error);
+    } finally {
+      setIsLoading(false);
+      setShowAddModal(false);
+    }
   };
 
   const handleEditUser = async () => {
+    if (!selectedUser) return;
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    setShowEditModal(false);
-    setSelectedUser(null);
+    try {
+      if (token) {
+        api.setToken(token);
+        const updated = await api.updateUser(selectedUser.id, {
+          full_name: formData.fullName,
+          role: formData.role,
+          department_id: formData.department || undefined,
+          is_active: formData.status === 'active',
+        }) as ApiUser;
+        setUsers((prev) => prev.map((u) => (u.id === selectedUser.id ? mapApiUser(updated) : u)));
+      }
+    } catch (error) {
+      console.error('Failed to update user:', error);
+    } finally {
+      setIsLoading(false);
+      setShowEditModal(false);
+      setSelectedUser(null);
+    }
   };
 
   const handleDeleteUser = async () => {
+    if (!selectedUser) return;
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    setShowDeleteModal(false);
-    setSelectedUser(null);
+    try {
+      if (token) {
+        api.setToken(token);
+        await api.deleteUser(selectedUser.id);
+        setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
+      }
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+    } finally {
+      setIsLoading(false);
+      setShowDeleteModal(false);
+      setSelectedUser(null);
+    }
   };
 
   // Admin check
@@ -355,7 +475,7 @@ export default function UserManagementPage() {
               </select>
             </div>
 
-            <Button onClick={() => setShowAddModal(true)}>
+            <Button onClick={openAddModal}>
               <UserPlus className="w-4 h-4 mr-2" />
               Add User
             </Button>
@@ -431,10 +551,7 @@ export default function UserManagementPage() {
                     <td className="px-4 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setShowEditModal(true);
-                          }}
+                          onClick={() => openEditModal(user)}
                           className="p-2 text-brand-muted hover:text-brand-primary hover:bg-surface-2 rounded-lg transition-colors"
                           title="Edit user"
                         >
@@ -473,15 +590,28 @@ export default function UserManagementPage() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-brand-text mb-1">Full Name</label>
-            <Input placeholder="Enter full name" />
+            <Input
+              placeholder="Enter full name"
+              value={formData.fullName}
+              onChange={(e) => setFormData((f) => ({ ...f, fullName: e.target.value }))}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-text mb-1">Email Address</label>
-            <Input type="email" placeholder="user@ccc.edu" />
+            <Input
+              type="email"
+              placeholder="user@ccc.edu"
+              value={formData.email}
+              onChange={(e) => setFormData((f) => ({ ...f, email: e.target.value }))}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-text mb-1">Role</label>
-            <select className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg">
+            <select
+              value={formData.role}
+              onChange={(e) => setFormData((f) => ({ ...f, role: e.target.value as User['role'] }))}
+              className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
+            >
               <option value="faculty">Faculty</option>
               <option value="chair">Department Chair</option>
               <option value="dean">Dean</option>
@@ -491,7 +621,11 @@ export default function UserManagementPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-text mb-1">Department</label>
-            <Input placeholder="Enter department name" />
+            <Input
+              placeholder="Enter department name"
+              value={formData.department}
+              onChange={(e) => setFormData((f) => ({ ...f, department: e.target.value }))}
+            />
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-brand-line">
@@ -519,16 +653,20 @@ export default function UserManagementPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-brand-text mb-1">Full Name</label>
-              <Input defaultValue={selectedUser.fullName} />
+              <Input
+                value={formData.fullName}
+                onChange={(e) => setFormData((f) => ({ ...f, fullName: e.target.value }))}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-brand-text mb-1">Email Address</label>
-              <Input type="email" defaultValue={selectedUser.email} />
+              <Input type="email" value={formData.email} disabled />
             </div>
             <div>
               <label className="block text-sm font-medium text-brand-text mb-1">Role</label>
               <select
-                defaultValue={selectedUser.role}
+                value={formData.role}
+                onChange={(e) => setFormData((f) => ({ ...f, role: e.target.value as User['role'] }))}
                 className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               >
                 <option value="faculty">Faculty</option>
@@ -540,17 +678,20 @@ export default function UserManagementPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-brand-text mb-1">Department</label>
-              <Input defaultValue={selectedUser.department} />
+              <Input
+                value={formData.department}
+                onChange={(e) => setFormData((f) => ({ ...f, department: e.target.value }))}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-brand-text mb-1">Status</label>
               <select
-                defaultValue={selectedUser.status}
+                value={formData.status}
+                onChange={(e) => setFormData((f) => ({ ...f, status: e.target.value as UserFormState['status'] }))}
                 className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg text-sm focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
-                <option value="pending">Pending</option>
               </select>
             </div>
 

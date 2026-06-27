@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import {
   DollarSign,
   Plus,
@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { Header } from '@/components/layout';
 import { Card, Button, Badge, Modal } from '@/components/ui';
+import { useAuthStore } from '@/lib/store';
+import api from '@/lib/api';
 
 interface ResourceRequest {
   id: string;
@@ -40,66 +42,135 @@ const objectCodes = [
   { code: '6000', name: 'Capital Outlay' },
 ];
 
+const objectCodeNames: Record<string, string> = Object.fromEntries(
+  objectCodes.map((c) => [c.code, c.name])
+);
+
+// Shape returned by the backend (snake_case). Mapped to ResourceRequest below.
+interface ApiResource {
+  id: string;
+  action_plan_id: string;
+  object_code: string;
+  description: string;
+  amount: number | string;
+  justification: string;
+  tco_notes?: string | null;
+  priority: number;
+  is_funded: boolean;
+  funded_amount?: number | string | null;
+}
+
+function toResourceRequest(r: ApiResource): ResourceRequest {
+  const code4 = (r.object_code || '').slice(0, 4);
+  return {
+    id: String(r.id),
+    objectCode: r.object_code,
+    objectCodeName: objectCodeNames[code4] || objectCodeNames[r.object_code] || '',
+    description: r.description,
+    amount: Number(r.amount) || 0,
+    justification: r.justification,
+    tcoNotes: r.tco_notes ?? undefined,
+    priority: r.priority,
+    actionPlanId: String(r.action_plan_id),
+    actionPlanTitle: '',
+    isFunded: r.is_funded,
+    fundedAmount: r.funded_amount != null ? Number(r.funded_amount) : undefined,
+  };
+}
+
+// Mock resource requests (graceful fallback when there's no token or the API fails)
+const mockResourceRequests: ResourceRequest[] = [
+  {
+    id: '1',
+    objectCode: '2000',
+    objectCodeName: 'Classified Salaries',
+    description: 'Part-time Lab Technician (20 hrs/week)',
+    amount: 28000,
+    justification: 'Support increased enrollment in laboratory courses and maintain equipment',
+    tcoNotes: 'Includes benefits at 35% - Total annual cost approximately $37,800',
+    priority: 1,
+    actionPlanId: 'ap-1',
+    actionPlanTitle: 'Implement Supplemental Instruction for Gateway Courses',
+    isFunded: false,
+  },
+  {
+    id: '2',
+    objectCode: '6000',
+    objectCodeName: 'Capital Outlay',
+    description: 'Laboratory Equipment Upgrade - Microscopes (10 units)',
+    amount: 15000,
+    justification: 'Replace aging microscopes to support Biology 101 and Microbiology courses',
+    tcoNotes: 'IT support costs: $500/year maintenance. 5-year warranty included.',
+    priority: 2,
+    actionPlanId: 'ap-1',
+    actionPlanTitle: 'Implement Supplemental Instruction for Gateway Courses',
+    isFunded: true,
+    fundedAmount: 12000,
+  },
+  {
+    id: '3',
+    objectCode: '5000',
+    objectCodeName: 'Other Operating Expenses',
+    description: 'Online Tutoring Platform Subscription',
+    amount: 8500,
+    justification: 'Annual subscription for 24/7 online tutoring services to support equity goals',
+    priority: 3,
+    actionPlanId: 'ap-2',
+    actionPlanTitle: 'Expand Online Tutoring Hours',
+    isFunded: true,
+    fundedAmount: 8500,
+  },
+  {
+    id: '4',
+    objectCode: '4000',
+    objectCodeName: 'Books and Supplies',
+    description: 'Open Educational Resources (OER) Development',
+    amount: 5000,
+    justification: 'Faculty stipends for developing zero-cost textbook alternatives',
+    priority: 4,
+    actionPlanId: 'ap-4',
+    actionPlanTitle: 'Faculty Professional Development on Equity-Minded Pedagogy',
+    isFunded: false,
+  },
+];
+
+const emptyNewRequest = {
+  actionPlanId: '',
+  objectCode: '',
+  description: '',
+  amount: '',
+  justification: '',
+  tcoNotes: '',
+};
+
 export default function ResourcesPage() {
+  const { token } = useAuthStore();
   const [showCartModal, setShowCartModal] = useState(false);
   const [showNewRequestModal, setShowNewRequestModal] = useState(false);
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
 
-  // Mock resource requests
-  const [resourceRequests, setResourceRequests] = useState<ResourceRequest[]>([
-    {
-      id: '1',
-      objectCode: '2000',
-      objectCodeName: 'Classified Salaries',
-      description: 'Part-time Lab Technician (20 hrs/week)',
-      amount: 28000,
-      justification: 'Support increased enrollment in laboratory courses and maintain equipment',
-      tcoNotes: 'Includes benefits at 35% - Total annual cost approximately $37,800',
-      priority: 1,
-      actionPlanId: 'ap-1',
-      actionPlanTitle: 'Implement Supplemental Instruction for Gateway Courses',
-      isFunded: false,
-    },
-    {
-      id: '2',
-      objectCode: '6000',
-      objectCodeName: 'Capital Outlay',
-      description: 'Laboratory Equipment Upgrade - Microscopes (10 units)',
-      amount: 15000,
-      justification: 'Replace aging microscopes to support Biology 101 and Microbiology courses',
-      tcoNotes: 'IT support costs: $500/year maintenance. 5-year warranty included.',
-      priority: 2,
-      actionPlanId: 'ap-1',
-      actionPlanTitle: 'Implement Supplemental Instruction for Gateway Courses',
-      isFunded: true,
-      fundedAmount: 12000,
-    },
-    {
-      id: '3',
-      objectCode: '5000',
-      objectCodeName: 'Other Operating Expenses',
-      description: 'Online Tutoring Platform Subscription',
-      amount: 8500,
-      justification: 'Annual subscription for 24/7 online tutoring services to support equity goals',
-      priority: 3,
-      actionPlanId: 'ap-2',
-      actionPlanTitle: 'Expand Online Tutoring Hours',
-      isFunded: true,
-      fundedAmount: 8500,
-    },
-    {
-      id: '4',
-      objectCode: '4000',
-      objectCodeName: 'Books and Supplies',
-      description: 'Open Educational Resources (OER) Development',
-      amount: 5000,
-      justification: 'Faculty stipends for developing zero-cost textbook alternatives',
-      priority: 4,
-      actionPlanId: 'ap-4',
-      actionPlanTitle: 'Faculty Professional Development on Equity-Minded Pedagogy',
-      isFunded: false,
-    },
-  ]);
+  const [resourceRequests, setResourceRequests] = useState<ResourceRequest[]>([]);
+  const [newRequest, setNewRequest] = useState(emptyNewRequest);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Load resource requests from the API; fall back to mock on error / no token.
+  useEffect(() => {
+    const load = async () => {
+      try {
+        if (token) {
+          api.setToken(token);
+          const data = (await api.listResources()) as ApiResource[];
+          setResourceRequests(data.map(toResourceRequest));
+        } else {
+          setResourceRequests(mockResourceRequests);
+        }
+      } catch (e) {
+        console.error('Failed to load resource requests', e);
+        setResourceRequests(mockResourceRequests);
+      }
+    };
+    load();
+  }, [token]);
 
   const totalRequested = resourceRequests.reduce((sum, r) => sum + r.amount, 0);
   const totalFunded = resourceRequests.reduce((sum, r) => sum + (r.fundedAmount || 0), 0);
@@ -123,7 +194,66 @@ export default function ResourcesPage() {
       req.priority = i + 1;
     });
 
+    // Optimistic local update
     setResourceRequests(newRequests);
+
+    // Persist the two reordered items
+    if (token) {
+      api.setToken(token);
+      const a = newRequests[index];
+      const b = newRequests[swapIndex];
+      Promise.all([
+        api.updateResourcePriority(a.id, a.priority),
+        api.updateResourcePriority(b.id, b.priority),
+      ]).catch((e) => console.error('Failed to persist priority change', e));
+    }
+  };
+
+  const toggleFunding = (request: ResourceRequest) => {
+    const nextFunded = !request.isFunded;
+    const nextAmount = nextFunded ? request.amount : undefined;
+
+    // Optimistic local update
+    setResourceRequests((prev) =>
+      prev.map((r) =>
+        r.id === request.id ? { ...r, isFunded: nextFunded, fundedAmount: nextAmount } : r
+      )
+    );
+
+    if (token) {
+      api.setToken(token);
+      api
+        .fundResource(request.id, nextFunded, nextAmount)
+        .catch((e) => console.error('Failed to persist funding change', e));
+    }
+  };
+
+  const handleCreateRequest = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!token) {
+      setShowNewRequestModal(false);
+      return;
+    }
+    setSubmitting(true);
+    try {
+      api.setToken(token);
+      const created = (await api.createResource({
+        action_plan_id: newRequest.actionPlanId,
+        object_code: newRequest.objectCode,
+        description: newRequest.description,
+        amount: Number(newRequest.amount) || 0,
+        justification: newRequest.justification,
+        tco_notes: newRequest.tcoNotes || undefined,
+        priority: resourceRequests.length + 1,
+      })) as ApiResource;
+      setResourceRequests((prev) => [...prev, toResourceRequest(created)]);
+      setNewRequest(emptyNewRequest);
+      setShowNewRequestModal(false);
+    } catch (err) {
+      console.error('Failed to create resource request', err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -311,11 +441,24 @@ export default function ResourcesPage() {
                 </div>
 
                 {/* Actions */}
-                {!request.isFunded && (
-                  <button className="p-2 text-brand-muted hover:text-destructive transition-colors">
-                    <Trash2 className="w-5 h-5" />
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    onClick={() => toggleFunding(request)}
+                    title={request.isFunded ? 'Mark as pending' : 'Mark as funded'}
+                    className={`p-2 transition-colors ${
+                      request.isFunded
+                        ? 'text-status-approved hover:text-brand-muted'
+                        : 'text-brand-muted hover:text-status-approved'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-5 h-5" />
                   </button>
-                )}
+                  {!request.isFunded && (
+                    <button className="p-2 text-brand-muted hover:text-destructive transition-colors">
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
               </div>
             </Card>
           ))}
@@ -349,12 +492,16 @@ export default function ResourcesPage() {
         onClose={() => setShowNewRequestModal(false)}
         title="Add Resource Request"
       >
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={handleCreateRequest}>
           <div>
             <label className="block text-sm font-medium text-brand-text mb-1">
               Link to Action Plan <span className="text-destructive">*</span>
             </label>
-            <select className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg">
+            <select
+              value={newRequest.actionPlanId}
+              onChange={(e) => setNewRequest({ ...newRequest, actionPlanId: e.target.value })}
+              className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
+            >
               <option value="">Select an action plan...</option>
               <option value="ap-1">Implement Supplemental Instruction for Gateway Courses</option>
               <option value="ap-2">Expand Online Tutoring Hours</option>
@@ -369,7 +516,11 @@ export default function ResourcesPage() {
             <label className="block text-sm font-medium text-brand-text mb-1">
               Object Code <span className="text-destructive">*</span>
             </label>
-            <select className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg">
+            <select
+              value={newRequest.objectCode}
+              onChange={(e) => setNewRequest({ ...newRequest, objectCode: e.target.value })}
+              className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
+            >
               <option value="">Select object code...</option>
               {objectCodes.map((code) => (
                 <option key={code.code} value={code.code}>
@@ -385,6 +536,8 @@ export default function ResourcesPage() {
             </label>
             <input
               type="text"
+              value={newRequest.description}
+              onChange={(e) => setNewRequest({ ...newRequest, description: e.target.value })}
               className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               placeholder="Brief description of the resource"
             />
@@ -396,6 +549,8 @@ export default function ResourcesPage() {
             </label>
             <input
               type="number"
+              value={newRequest.amount}
+              onChange={(e) => setNewRequest({ ...newRequest, amount: e.target.value })}
               className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               placeholder="0.00"
             />
@@ -407,6 +562,8 @@ export default function ResourcesPage() {
             </label>
             <textarea
               rows={3}
+              value={newRequest.justification}
+              onChange={(e) => setNewRequest({ ...newRequest, justification: e.target.value })}
               className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               placeholder="Explain why this resource is needed and how it supports the action plan"
             />
@@ -418,16 +575,18 @@ export default function ResourcesPage() {
             </label>
             <textarea
               rows={2}
+              value={newRequest.tcoNotes}
+              onChange={(e) => setNewRequest({ ...newRequest, tcoNotes: e.target.value })}
               className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               placeholder="Any ongoing costs, maintenance, or total cost of ownership considerations"
             />
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" onClick={() => setShowNewRequestModal(false)}>
+            <Button variant="outline" type="button" onClick={() => setShowNewRequestModal(false)}>
               Cancel
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={submitting}>
               <ShoppingCart className="w-4 h-4 mr-2" />
               Add to Cart
             </Button>

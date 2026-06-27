@@ -19,6 +19,8 @@ import {
   Unlink,
 } from 'lucide-react';
 
+const Divider = () => <div className="w-px h-6 bg-surface-2 mx-1" />;
+
 export interface RichTextEditorProps {
   value?: string;
   onChange?: (value: string) => void;
@@ -283,8 +285,6 @@ export function RichTextEditor({
       </button>
     );
   };
-
-  const Divider = () => <div className="w-px h-6 bg-surface-2 mx-1" />;
 
   return (
     <div className={`border border-brand-line rounded-lg overflow-hidden focus-within:border-brand-primary focus-within:ring-[3px] focus-within:ring-brand-primary-bg ${className}`}>

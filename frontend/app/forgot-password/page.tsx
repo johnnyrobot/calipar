@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
@@ -13,19 +13,15 @@ function ForgotPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-
   // Pre-fill email from query params (if redirected from login)
   const prefillEmail = searchParams.get('email');
 
-  useEffect(() => {
-    if (prefillEmail) {
-      setEmail(decodeURIComponent(prefillEmail));
-    }
-  }, [prefillEmail]);
+  const [email, setEmail] = useState(() =>
+    prefillEmail ? decodeURIComponent(prefillEmail) : ''
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   const isFirebaseEnabled = isFirebaseConfigured();
 
