@@ -23,6 +23,7 @@ from models.user import User, UserRole
 from models.organization import Organization, OrganizationType
 from models.program_review import ProgramReview, ReviewStatus, ReviewType
 from models.action_plan import ActionPlan, ActionPlanStatus
+from models.strategic_initiative import StrategicInitiative
 from models.audit import AuditTrail, AuditAction
 
 _engine = create_engine(
@@ -302,3 +303,70 @@ def test_action_plans_scoped_to_faculty_department():
     assert resp.status_code == 200
     titles = [p["title"] for p in resp.json()]
     assert titles == ["A plan"]
+
+
+# ----------------------- initiative mapping (map/unmap) ----------------------
+
+def _seed_plan_and_initiative():
+    with Session(_engine) as s:
+        author = User(email=f"ap_author_{uuid4()}@example.edu", full_name="AP Author",
+                      role=UserRole.CHAIR, firebase_uid=f"uid-{uuid4()}")
+        org = Organization(name="Math", type=OrganizationType.DEPARTMENT)
+        s.add(author)
+        s.add(org)
+        s.commit()
+        s.refresh(author)
+        s.refresh(org)
+        review = ProgramReview(org_id=org.id, author_id=author.id, cycle_year="2025-2026")
+        init = StrategicInitiative(goal_number=3, code="3.1", title="Goal 3",
+                                   description="Increase success")
+        s.add(review)
+        s.add(init)
+        s.commit()
+        s.refresh(review)
+        s.refresh(init)
+        plan = ActionPlan(review_id=review.id, title="Plan", description="d")
+        s.add(plan)
+        s.commit()
+        s.refresh(plan)
+        s.refresh(author)
+        return author, plan.id, init.id, org.id
+
+
+def test_map_then_unmap_initiative():
+    author, plan_id, init_id, _ = _seed_plan_and_initiative()
+    client = _client_as(author)
+
+    mapped = client.post(f"/api/action-plans/{plan_id}/map-initiative",
+                         json={"initiative_id": str(init_id)})
+    assert mapped.status_code == 200, mapped.text
+    assert [i["id"] for i in mapped.json()["initiatives"]] == [str(init_id)]
+
+    unmapped = client.delete(f"/api/action-plans/{plan_id}/map-initiative/{init_id}")
+    assert unmapped.status_code == 200, unmapped.text
+    assert unmapped.json()["initiatives"] == []
+
+    # unmapping again is a no-op (idempotent), still 200
+    assert client.delete(f"/api/action-plans/{plan_id}/map-initiative/{init_id}").status_code == 200
+
+
+def test_faculty_cannot_map_out_of_department_plan():
+    _, plan_id, init_id, org_id = _seed_plan_and_initiative()
+    # a faculty member in a DIFFERENT department
+    with Session(_engine) as s:
+        other_org = Organization(name="Other", type=OrganizationType.DEPARTMENT)
+        s.add(other_org)
+        s.commit()
+        s.refresh(other_org)
+        outsider = User(email=f"outsider_{uuid4()}@example.edu", full_name="Outsider",
+                        role=UserRole.FACULTY, department_id=other_org.id,
+                        firebase_uid=f"uid-{uuid4()}")
+        s.add(outsider)
+        s.commit()
+        s.refresh(outsider)
+
+    client = _client_as(outsider)
+    assert client.post(f"/api/action-plans/{plan_id}/map-initiative",
+                       json={"initiative_id": str(init_id)}).status_code == 403
+    assert client.delete(
+        f"/api/action-plans/{plan_id}/map-initiative/{init_id}").status_code == 403

@@ -454,6 +454,12 @@ class ApiClient {
     });
   }
 
+  async unmapInitiative(planId: string, initiativeId: string) {
+    return this.request(`/api/action-plans/${planId}/map-initiative/${initiativeId}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Resources endpoints
   async createResource(data: {
     action_plan_id: string;

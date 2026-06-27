@@ -224,6 +224,17 @@ async def update_action_plan(
     )
 
 
+def _assert_plan_write_access(plan: ActionPlan, current_user: User, session: Session) -> None:
+    """Faculty may only modify action plans whose review is in their department."""
+    if current_user.role == UserRole.FACULTY and current_user.department_id:
+        review = session.get(ProgramReview, plan.review_id)
+        if not review or review.org_id != current_user.department_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only modify action plans in your department.",
+            )
+
+
 @router.post("/action-plans/{plan_id}/map-initiative", response_model=ActionPlanResponse)
 async def map_initiative(
     plan_id: UUID,
@@ -238,6 +249,7 @@ async def map_initiative(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Action plan not found",
         )
+    _assert_plan_write_access(plan, current_user, session)
 
     initiative = session.get(StrategicInitiative, mapping_data.initiative_id)
     if not initiative:
@@ -263,4 +275,36 @@ async def map_initiative(
         session.commit()
 
     # Return updated plan with initiatives
+    return await get_action_plan(plan_id, session, current_user)
+
+
+@router.delete(
+    "/action-plans/{plan_id}/map-initiative/{initiative_id}",
+    response_model=ActionPlanResponse,
+)
+async def unmap_initiative(
+    plan_id: UUID,
+    initiative_id: UUID,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Remove a strategic-initiative mapping from an action plan."""
+    plan = session.get(ActionPlan, plan_id)
+    if not plan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Action plan not found",
+        )
+    _assert_plan_write_access(plan, current_user, session)
+
+    mapping = session.exec(
+        select(ActionPlanMapping).where(
+            ActionPlanMapping.action_plan_id == plan_id,
+            ActionPlanMapping.initiative_id == initiative_id,
+        )
+    ).first()
+    if mapping:
+        session.delete(mapping)
+        session.commit()
+
     return await get_action_plan(plan_id, session, current_user)

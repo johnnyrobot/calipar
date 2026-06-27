@@ -289,6 +289,8 @@ export default function PlanningPage() {
   const handleSavePlan = async () => {
     if (!editedPlan) return;
     const plan = editedPlan;
+    // Mapping changes are diffed against the plan as it was before editing.
+    const original = (apiPlans ?? mockActionPlans).find((p) => p.id === plan.id);
     // Optimistically reflect the edit locally (keeps demo / no-token mode working).
     setApiPlans((prev) =>
       (prev ?? mockActionPlans).map((p) =>
@@ -298,15 +300,31 @@ export default function PlanningPage() {
     try {
       if (token) {
         api.setToken(token);
-        const updated = (await api.updateActionPlan(plan.id, {
+        let updated = (await api.updateActionPlan(plan.id, {
           title: plan.title,
           description: plan.description,
           status: plan.status,
           addresses_equity_gap: plan.addressesEquityGap,
         })) as ActionPlanResponse;
+
+        // Persist initiative-mapping changes: map newly-checked initiatives and
+        // unmap unchecked ones (resolving each objective code to its initiative id).
+        const before = new Set(original?.mappedInitiatives ?? []);
+        const after = new Set(plan.mappedInitiatives);
+        const idOf = (code: string) =>
+          apiInitiatives?.find((i) => i.code === code)?.id;
+        for (const code of [...after].filter((c) => !before.has(c))) {
+          const id = idOf(code);
+          if (id) updated = (await api.mapInitiative(plan.id, id)) as ActionPlanResponse;
+        }
+        for (const code of [...before].filter((c) => !after.has(c))) {
+          const id = idOf(code);
+          if (id) updated = (await api.unmapInitiative(plan.id, id)) as ActionPlanResponse;
+        }
+
         const mapped = mapActionPlan(updated);
         // Reconcile with the server response, preserving the resource-request count
-        // (not returned by this endpoint).
+        // (not returned by these endpoints).
         setApiPlans((prev) =>
           (prev ?? mockActionPlans).map((p) =>
             p.id === mapped.id ? { ...mapped, resourceRequests: p.resourceRequests } : p
