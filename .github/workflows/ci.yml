@@ -11,6 +11,11 @@ jobs:
     name: Frontend (tsc · lint · build)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Puppeteer (e2e-only devDep) downloads a Chromium binary in its install hook;
+    # that download intermittently stalls and hangs `npm ci` until the job timeout.
+    # tsc/lint/build don't need the browser, so skip it for reliable CI.
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: "1"
     defaults:
       run:
         working-directory: frontend
