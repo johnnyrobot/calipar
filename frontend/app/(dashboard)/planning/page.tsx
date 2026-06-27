@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import {
   Target,
@@ -65,6 +65,23 @@ interface ActionPlanResponse {
   initiatives: InitiativeResponse[];
 }
 
+// Minimal shape needed to populate the "Program Review" selector in the
+// create-action-plan modal (an action plan belongs to a program review).
+interface ReviewOption {
+  id: string;
+  org_name?: string | null;
+  cycle_year: string;
+}
+
+const EMPTY_NEW_PLAN = {
+  reviewId: '',
+  title: '',
+  description: '',
+  initiativeCode: '',
+  addressesEquityGap: false,
+  justification: '',
+};
+
 // Goal colors aren't stored in the backend, so map them by ISMP goal number.
 const goalColors: Record<number, string> = {
   1: 'bg-blue-500',
@@ -127,6 +144,12 @@ export default function PlanningPage() {
   // Backend-loaded data; null means "not loaded" so the mock fallback is used.
   const [apiGoals, setApiGoals] = useState<StrategicGoal[] | null>(null);
   const [apiPlans, setApiPlans] = useState<ActionPlan[] | null>(null);
+  // Raw initiatives (for mapping code→id) and reviews (for the create selector).
+  const [apiInitiatives, setApiInitiatives] = useState<InitiativeResponse[] | null>(null);
+  const [reviews, setReviews] = useState<ReviewOption[]>([]);
+  // New-action-plan modal form state.
+  const [newPlan, setNewPlan] = useState(EMPTY_NEW_PLAN);
+  const [creatingPlan, setCreatingPlan] = useState(false);
 
   // ISMP Strategic Goals (fallback used when the backend is unavailable)
   const mockStrategicGoals: StrategicGoal[] = [
@@ -244,12 +267,17 @@ export default function PlanningPage() {
       if (!token) return;
       try {
         api.setToken(token);
-        const [initiatives, plans] = await Promise.all([
+        const [initiatives, plans, reviewList] = await Promise.all([
           api.listInitiatives() as Promise<InitiativeResponse[]>,
           api.listActionPlans() as Promise<ActionPlanResponse[]>,
+          api.listReviews() as Promise<ReviewOption[]>,
         ]);
-        if (initiatives.length) setApiGoals(buildGoals(initiatives));
+        if (initiatives.length) {
+          setApiGoals(buildGoals(initiatives));
+          setApiInitiatives(initiatives);
+        }
         setApiPlans(plans.map(mapActionPlan));
+        setReviews(reviewList);
       } catch (error) {
         console.error('Failed to load planning data:', error);
         // Keep the mock fallback on error.
@@ -290,6 +318,54 @@ export default function PlanningPage() {
     } finally {
       setEditingPlanId(null);
       setEditedPlan(null);
+    }
+  };
+
+  const closeNewPlanModal = () => {
+    setShowNewPlanModal(false);
+    setNewPlan(EMPTY_NEW_PLAN);
+  };
+
+  // Backend requires a justification whenever the plan addresses an equity gap.
+  const newPlanValid =
+    !!newPlan.reviewId &&
+    !!newPlan.title.trim() &&
+    !!newPlan.description.trim() &&
+    (!newPlan.addressesEquityGap || !!newPlan.justification.trim());
+
+  const handleCreatePlan = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!token || !newPlanValid || creatingPlan) return;
+    setCreatingPlan(true);
+    try {
+      api.setToken(token);
+      let created = (await api.createActionPlan({
+        review_id: newPlan.reviewId,
+        title: newPlan.title.trim(),
+        description: newPlan.description.trim(),
+        addresses_equity_gap: newPlan.addressesEquityGap,
+        justification: newPlan.justification.trim() || undefined,
+      })) as ActionPlanResponse;
+
+      // Optionally link the selected ISMP initiative (mapInitiative needs the
+      // initiative's id, which we resolve from the loaded list by its code).
+      const initiativeId = apiInitiatives?.find(
+        (i) => i.code === newPlan.initiativeCode
+      )?.id;
+      if (initiativeId) {
+        try {
+          created = (await api.mapInitiative(created.id, initiativeId)) as ActionPlanResponse;
+        } catch (err) {
+          console.error('Failed to link initiative to the new plan:', err);
+        }
+      }
+
+      setApiPlans((prev) => [mapActionPlan(created), ...(prev ?? [])]);
+      closeNewPlanModal();
+    } catch (error) {
+      console.error('Failed to create action plan:', error);
+    } finally {
+      setCreatingPlan(false);
     }
   };
 
@@ -816,16 +892,40 @@ export default function PlanningPage() {
       {/* New Action Plan Modal */}
       <Modal
         isOpen={showNewPlanModal}
-        onClose={() => setShowNewPlanModal(false)}
+        onClose={closeNewPlanModal}
         title="Create New Action Plan"
       >
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={handleCreatePlan}>
+          <div>
+            <label className="block text-sm font-medium text-brand-text mb-1">
+              Program Review
+            </label>
+            <select
+              value={newPlan.reviewId}
+              onChange={(e) => setNewPlan((p) => ({ ...p, reviewId: e.target.value }))}
+              className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
+            >
+              <option value="">Select a program review...</option>
+              {reviews.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {(r.org_name ?? 'Program Review') + ' — ' + r.cycle_year}
+                </option>
+              ))}
+            </select>
+            {reviews.length === 0 && (
+              <p className="mt-1 text-xs text-brand-muted">
+                No program reviews available — an action plan must belong to a review.
+              </p>
+            )}
+          </div>
           <div>
             <label className="block text-sm font-medium text-brand-text mb-1">
               Action Plan Title
             </label>
             <input
               type="text"
+              value={newPlan.title}
+              onChange={(e) => setNewPlan((p) => ({ ...p, title: e.target.value }))}
               className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               placeholder="Enter a descriptive title"
             />
@@ -836,6 +936,8 @@ export default function PlanningPage() {
             </label>
             <textarea
               rows={3}
+              value={newPlan.description}
+              onChange={(e) => setNewPlan((p) => ({ ...p, description: e.target.value }))}
               className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
               placeholder="Describe the action plan and expected outcomes"
             />
@@ -844,7 +946,11 @@ export default function PlanningPage() {
             <label className="block text-sm font-medium text-brand-text mb-1">
               Link to ISMP Initiative
             </label>
-            <select className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg">
+            <select
+              value={newPlan.initiativeCode}
+              onChange={(e) => setNewPlan((p) => ({ ...p, initiativeCode: e.target.value }))}
+              className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
+            >
               <option value="">Select an initiative...</option>
               {strategicGoals.flatMap(goal =>
                 goal.objectives.map(obj => (
@@ -859,17 +965,33 @@ export default function PlanningPage() {
             <input
               type="checkbox"
               id="equity-gap"
+              checked={newPlan.addressesEquityGap}
+              onChange={(e) => setNewPlan((p) => ({ ...p, addressesEquityGap: e.target.checked }))}
               className="w-4 h-4 text-brand-primary border-brand-line rounded focus:ring-brand-primary"
             />
             <label htmlFor="equity-gap" className="text-sm text-brand-text">
               This action plan addresses an equity gap
             </label>
           </div>
+          {newPlan.addressesEquityGap && (
+            <div>
+              <label className="block text-sm font-medium text-brand-text mb-1">
+                Justification <span className="text-status-review">*</span>
+              </label>
+              <textarea
+                rows={2}
+                value={newPlan.justification}
+                onChange={(e) => setNewPlan((p) => ({ ...p, justification: e.target.value }))}
+                className="w-full px-3 py-2 border border-brand-line bg-surface rounded-lg focus:outline-none focus:border-brand-primary focus:ring-[3px] focus:ring-brand-primary-bg"
+                placeholder="Required: explain how this plan addresses the equity gap"
+              />
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" onClick={() => setShowNewPlanModal(false)}>
+            <Button type="button" variant="outline" onClick={closeNewPlanModal}>
               Cancel
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={!newPlanValid} isLoading={creatingPlan} loadingText="Creating...">
               Create Action Plan
             </Button>
           </div>
