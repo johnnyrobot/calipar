@@ -1,6 +1,12 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+# Puppeteer (a devDependency used only for e2e tests) runs an install hook that
+# downloads a Chromium binary. On alpine that download stalls with no timeout and
+# hangs `npm ci` until CI's 6-hour job limit. The browser is needed neither to
+# build nor to run the production image, so skip the download.
+ENV PUPPETEER_SKIP_DOWNLOAD=1
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 RUN npm ci
 
 FROM node:20-alpine AS builder
