@@ -15,7 +15,7 @@ from sqlmodel import Session, select
 
 from database import get_session
 from models.audit import AuditTrail
-from models.user import User
+from models.user import User, UserRole
 from routers.auth import get_current_user
 
 router = APIRouter()
@@ -64,6 +64,14 @@ async def list_activity(
     query = select(AuditTrail)
     if entity_type:
         query = query.where(AuditTrail.entity_type == entity_type)
+
+    # Access control: faculty (the least-privileged role) may only see their own
+    # activity — the audit trail spans every org/entity, so an unscoped feed would
+    # leak cross-tenant information. Elevated roles (chair/dean/proc/admin) see the
+    # full feed, matching the reviews listing's role gating.
+    if current_user.role == UserRole.FACULTY:
+        query = query.where(AuditTrail.user_id == current_user.id)
+
     query = query.order_by(AuditTrail.created_at.desc()).limit(limit)
 
     entries = session.exec(query).all()

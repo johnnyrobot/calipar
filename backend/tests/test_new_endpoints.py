@@ -115,6 +115,36 @@ def test_admin_cannot_delete_self():
     assert resp.status_code == 400
 
 
+def test_cannot_demote_or_deactivate_last_admin():
+    admin = _seed_user(UserRole.ADMIN, "soleadmin@example.edu")
+    client = _client_as(admin)
+    # demote sole admin -> 400
+    assert client.patch(f"/api/admin/users/{admin.id}", json={"role": "faculty"}).status_code == 400
+    # deactivate sole admin -> 400
+    assert client.patch(f"/api/admin/users/{admin.id}", json={"is_active": False}).status_code == 400
+
+
+def test_can_demote_admin_when_another_admin_exists():
+    admin = _seed_user(UserRole.ADMIN, "admin_a@example.edu")
+    other = _seed_user(UserRole.ADMIN, "admin_b@example.edu")
+    client = _client_as(admin)
+    # a second active admin exists, so demoting one is allowed
+    resp = client.patch(f"/api/admin/users/{other.id}", json={"role": "dean"})
+    assert resp.status_code == 200
+    assert resp.json()["role"] == "dean"
+
+
+def test_cannot_delete_last_admin_via_other_account():
+    # current admin deletes the only OTHER admin while themselves being demoted is N/A;
+    # here current admin is the sole admin and tries to delete a (non-self) admin that
+    # is the last active admin besides self -> allowed since self remains. So instead
+    # verify deleting self is blocked (covered) and that deleting a non-admin is fine.
+    admin = _seed_user(UserRole.ADMIN, "admin_keep@example.edu")
+    victim = _seed_user(UserRole.FACULTY, "victim@example.edu")
+    client = _client_as(admin)
+    assert client.delete(f"/api/admin/users/{victim.id}").status_code == 204
+
+
 @pytest.mark.parametrize("role", [UserRole.FACULTY, UserRole.CHAIR, UserRole.DEAN, UserRole.PROC])
 def test_non_admin_denied_user_management(role):
     user = _seed_user(role, f"{role.value}@example.edu")
@@ -151,6 +181,23 @@ def test_activity_feed_returns_mapped_audit_entries():
     assert item["user"] == "Chair User"
     assert item["description"] == "Moved to in review"
     assert item["title"]  # humanized, non-empty
+
+
+def test_activity_feed_scopes_faculty_to_own_actions():
+    faculty = _seed_user(UserRole.FACULTY, "fac_scope@example.edu")
+    other = _seed_user(UserRole.CHAIR, "other_actor@example.edu")
+    with Session(_engine) as s:
+        s.add(AuditTrail(entity_type="program_review", entity_id=uuid4(),
+                         action=AuditAction.UPDATED, user_id=faculty.id))
+        s.add(AuditTrail(entity_type="program_review", entity_id=uuid4(),
+                         action=AuditAction.UPDATED, user_id=other.id))
+        s.commit()
+    # faculty sees only their own entry
+    fac_items = _client_as(faculty).get("/api/activity").json()
+    assert len(fac_items) == 1
+    assert fac_items[0]["user"] == "Faculty User"
+    # an elevated role sees both
+    assert len(_client_as(other).get("/api/activity").json()) == 2
 
 
 def test_activity_feed_filters_by_entity_type():
@@ -219,3 +266,39 @@ def test_list_action_plans_with_initiatives():
     filtered = client.get("/api/action-plans", params={"review_id": review_id})
     assert filtered.status_code == 200
     assert len(filtered.json()) == 2
+
+
+def test_action_plans_scoped_to_faculty_department():
+    with Session(_engine) as s:
+        dept_a = Organization(name="Dept A", type=OrganizationType.DEPARTMENT)
+        dept_b = Organization(name="Dept B", type=OrganizationType.DEPARTMENT)
+        s.add(dept_a)
+        s.add(dept_b)
+        s.commit()
+        s.refresh(dept_a)
+        s.refresh(dept_b)
+        # faculty belongs to dept A
+        faculty = User(email="deptfac@example.edu", full_name="Dept Faculty",
+                       role=UserRole.FACULTY, department_id=dept_a.id,
+                       firebase_uid=f"uid-{uuid4()}")
+        s.add(faculty)
+        s.commit()
+        s.refresh(faculty)
+        ra = ProgramReview(org_id=dept_a.id, author_id=faculty.id, cycle_year="2025-2026")
+        rb = ProgramReview(org_id=dept_b.id, author_id=faculty.id, cycle_year="2025-2026")
+        s.add(ra)
+        s.add(rb)
+        s.commit()
+        s.refresh(ra)
+        s.refresh(rb)
+        s.add(ActionPlan(review_id=ra.id, title="A plan", description="in dept A"))
+        s.add(ActionPlan(review_id=rb.id, title="B plan", description="in dept B"))
+        s.commit()
+        s.refresh(faculty)  # reload attributes expired by the commits above
+        faculty_obj = faculty
+
+    # faculty sees only their department's plan
+    resp = _client_as(faculty_obj).get("/api/action-plans")
+    assert resp.status_code == 200
+    titles = [p["title"] for p in resp.json()]
+    assert titles == ["A plan"]

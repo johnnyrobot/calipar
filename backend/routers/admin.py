@@ -20,6 +20,17 @@ from routers.auth import get_current_user, require_role
 router = APIRouter()
 
 
+def _other_active_admins_exist(session: Session, exclude_id: UUID) -> bool:
+    """True if at least one active admin other than `exclude_id` exists."""
+    return session.exec(
+        select(User).where(
+            User.role == UserRole.ADMIN,
+            User.is_active == True,  # noqa: E712 - SQL boolean comparison
+            User.id != exclude_id,
+        )
+    ).first() is not None
+
+
 class AdminUserCreate(BaseModel):
     email: EmailStr
     full_name: str
@@ -109,6 +120,19 @@ async def update_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     updates = data.model_dump(exclude_unset=True)
+
+    # Prevent locking the platform out of admin access: refuse to demote or
+    # deactivate the last remaining active admin (covers an admin editing their
+    # own account as well as the final other admin).
+    demoting = "role" in updates and updates["role"] != UserRole.ADMIN
+    deactivating = updates.get("is_active") is False
+    if user.role == UserRole.ADMIN and (demoting or deactivating):
+        if not _other_active_admins_exist(session, user.id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot demote or deactivate the last active admin.",
+            )
+
     for field, value in updates.items():
         setattr(user, field, value)
     user.updated_at = datetime.utcnow()
@@ -133,6 +157,11 @@ async def delete_user(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You cannot delete your own account.",
+        )
+    if user.role == UserRole.ADMIN and not _other_active_admins_exist(session, user.id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete the last active admin.",
         )
     session.delete(user)
     session.commit()

@@ -12,8 +12,9 @@ from sqlmodel import Session, select
 
 from database import get_session
 from models.action_plan import ActionPlan, ActionPlanMapping, ActionPlanStatus
+from models.program_review import ProgramReview
 from models.strategic_initiative import StrategicInitiative
-from models.user import User
+from models.user import User, UserRole
 from routers.auth import get_current_user
 
 router = APIRouter()
@@ -119,6 +120,14 @@ async def list_action_plans(
     query = select(ActionPlan)
     if review_id:
         query = query.where(ActionPlan.review_id == review_id)
+
+    # Access control parity with the reviews listing: faculty only see action
+    # plans belonging to reviews in their own department.
+    if current_user.role == UserRole.FACULTY and current_user.department_id:
+        query = query.join(
+            ProgramReview, ProgramReview.id == ActionPlan.review_id
+        ).where(ProgramReview.org_id == current_user.department_id)
+
     plans = session.exec(query.order_by(ActionPlan.created_at.desc())).all()
 
     responses: List[ActionPlanResponse] = []
