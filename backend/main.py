@@ -11,7 +11,7 @@ from sqlalchemy import text
 
 from database import create_db_and_tables, engine
 from routers import auth, reviews, ai, data, planning, resources, validation, activity, admin
-from config import get_settings
+from config import get_settings, assert_production_auth_secure
 
 settings = get_settings()
 
@@ -19,12 +19,16 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
+    # Fail closed on an insecure production configuration before serving any
+    # request: in production we must verify Firebase tokens rather than trust the
+    # dev-auth header fallback (see routers/auth.get_current_user).
+    from services.firebase import get_firebase_service
+    assert_production_auth_secure(settings, get_firebase_service().is_available)
+
     # Startup: create tables directly from the SQLModel metadata.
-    # NOTE: the Alembic chain now applies cleanly to a fresh Postgres (the duplicate
-    # `auditaction` ENUM bug in 0002 is fixed and verified), BUT it does not yet cover
-    # every model — `ai_usage` and `rate_limit_config` have no migration. Generate
-    # migrations for those, then switch production to `alembic upgrade head`; until then
-    # create_all (which covers all models) remains the startup mechanism.
+    # The Alembic chain (now through 0006) covers every model and applies cleanly,
+    # but create_all stays the startup mechanism so a fresh dev/SQLite DB boots
+    # without running migrations; production should run `alembic upgrade head`.
     create_db_and_tables()
     yield
     # Shutdown: cleanup if needed

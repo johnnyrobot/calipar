@@ -95,6 +95,15 @@ async def get_current_user(
                 detail=str(e),
             )
     else:
+        # No Firebase verification available. This dev fallback trusts the header
+        # value as the caller's identity, so it must NEVER run in production
+        # (startup also refuses to boot in that case — defense in depth here).
+        from config import get_settings
+        if get_settings().is_production:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication is not available.",
+            )
         # Development mode: token IS the firebase_uid or user_id
         firebase_uid = token
         logger.debug(f"Development mode: using token as identifier: {firebase_uid}")
@@ -184,6 +193,13 @@ async def login(
                 detail=str(e),
             )
     else:
+        # Dev fallback (no Firebase verification) — must never run in production.
+        from config import get_settings
+        if get_settings().is_production:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication is not available.",
+            )
         # Development mode: token IS the firebase_uid
         firebase_uid = request.id_token
         logger.info(f"Development login: {firebase_uid}")
@@ -239,9 +255,19 @@ async def seed_user(
     session: Session = Depends(get_session),
 ):
     """
-    Seed a user for development.
-    This endpoint should be disabled in production.
+    Seed a user for development only.
+
+    This endpoint creates a user with a caller-chosen role and is unauthenticated
+    by design (it bootstraps dev/demo accounts). It is therefore HARD-DISABLED in
+    production — otherwise anyone could create an admin account and take over.
     """
+    from config import get_settings
+    if get_settings().is_production:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not found",
+        )
+
     # Check if user already exists
     existing = session.exec(
         select(User).where(
