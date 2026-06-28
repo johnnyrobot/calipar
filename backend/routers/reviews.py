@@ -13,8 +13,21 @@ from sqlmodel import Session, select
 from database import get_session
 from models.program_review import ProgramReview, ReviewSection, ReviewStatus, ReviewType, SectionStatus
 from models.organization import Organization
-from models.user import User
+from models.user import User, UserRole
 from routers.auth import get_current_user
+
+
+def _assert_review_access(review: ProgramReview, current_user: User) -> None:
+    """Faculty may only read/modify reviews in their own department.
+
+    CHAIR/DEAN/PROC/ADMIN are org-wide (matching list_reviews' faculty-only filter).
+    """
+    if current_user.role == UserRole.FACULTY and current_user.department_id:
+        if review.org_id != current_user.department_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only access reviews in your department.",
+            )
 
 router = APIRouter()
 
@@ -27,9 +40,13 @@ class ReviewCreate(BaseModel):
 
 
 class ReviewUpdate(BaseModel):
-    """Update program review request."""
+    """Update program review request.
+
+    `status` is intentionally NOT settable here — review state transitions flow
+    only through the role-gated submit / validate / approve endpoints, so a
+    generic PATCH can't be used to bypass the approval workflow.
+    """
     content: Optional[dict] = None
-    status: Optional[ReviewStatus] = None
 
 
 class ReviewResponse(BaseModel):
@@ -124,6 +141,13 @@ async def create_review(
     current_user: User = Depends(get_current_user),
 ):
     """Create a new program review."""
+    # Faculty may only create reviews for their own department.
+    if current_user.role == UserRole.FACULTY and current_user.department_id:
+        if review_data.org_id != current_user.department_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only create reviews for your department.",
+            )
     review = ProgramReview(
         **review_data.model_dump(),
         author_id=current_user.id,
@@ -147,6 +171,7 @@ async def get_review(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Review not found",
         )
+    _assert_review_access(review, current_user)
     return _enrich_review(review, session)
 
 
@@ -164,6 +189,7 @@ async def update_review(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Review not found",
         )
+    _assert_review_access(review, current_user)
 
     # Update fields
     update_data = review_data.model_dump(exclude_unset=True)
@@ -190,6 +216,7 @@ async def submit_review(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Review not found",
         )
+    _assert_review_access(review, current_user)
 
     if review.status != ReviewStatus.DRAFT:
         raise HTTPException(
@@ -212,6 +239,13 @@ async def list_sections(
     current_user: User = Depends(get_current_user),
 ):
     """List all sections for a program review."""
+    review = session.get(ProgramReview, review_id)
+    if not review:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Review not found",
+        )
+    _assert_review_access(review, current_user)
     sections = session.exec(
         select(ReviewSection).where(ReviewSection.review_id == review_id)
     ).all()
@@ -234,6 +268,7 @@ async def update_section(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Review not found",
         )
+    _assert_review_access(review, current_user)
 
     # Find or create section
     section = session.exec(

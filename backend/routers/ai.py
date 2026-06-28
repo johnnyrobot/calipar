@@ -312,7 +312,7 @@ async def socratic_guidance(
 
 
 @router.get("/status")
-async def ai_status():
+async def ai_status(current_user: User = Depends(get_current_user)):
     """
     Check AI service availability.
     Returns whether Gemini API is configured and available.

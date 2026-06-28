@@ -101,6 +101,20 @@ async def get_validation_scores(
     current_user: User = Depends(get_current_user),
 ):
     """Get all validation scores for a review."""
+    review = session.get(ProgramReview, review_id)
+    if not review:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Review not found",
+        )
+    # Faculty may only read scores for reviews in their own department.
+    if current_user.role == UserRole.FACULTY and current_user.department_id:
+        if review.org_id != current_user.department_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only access reviews in your department.",
+            )
+
     scores = session.exec(
         select(ValidationScore).where(ValidationScore.review_id == review_id)
     ).all()

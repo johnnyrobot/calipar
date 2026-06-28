@@ -14,10 +14,30 @@ from sqlmodel import Session, select
 from database import get_session
 from models.resource_request import ResourceRequest
 from models.action_plan import ActionPlan
-from models.user import User
-from routers.auth import get_current_user
+from models.program_review import ProgramReview
+from models.user import User, UserRole
+from routers.auth import get_current_user, require_role
 
 router = APIRouter()
+
+
+def _resource_org_id(resource: ResourceRequest, session: Session) -> Optional[UUID]:
+    """Resolve a resource request's owning department via action_plan -> review."""
+    plan = session.get(ActionPlan, resource.action_plan_id)
+    if not plan:
+        return None
+    review = session.get(ProgramReview, plan.review_id)
+    return review.org_id if review else None
+
+
+def _assert_resource_access(resource: ResourceRequest, current_user: User, session: Session) -> None:
+    """Faculty may only touch resource requests in their own department."""
+    if current_user.role == UserRole.FACULTY and current_user.department_id:
+        if _resource_org_id(resource, session) != current_user.department_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only access resource requests in your department.",
+            )
 
 
 class ResourceCreate(BaseModel):
@@ -104,6 +124,15 @@ async def create_resource(
             detail="Resource must be linked to a valid action plan",
         )
 
+    # Faculty may only attach requests to action plans in their own department.
+    if current_user.role == UserRole.FACULTY and current_user.department_id:
+        review = session.get(ProgramReview, action_plan.review_id)
+        if not review or review.org_id != current_user.department_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only create resource requests in your department.",
+            )
+
     # Validate object code
     code_prefix = resource_data.object_code[:4]
     if code_prefix not in VALID_OBJECT_CODES:
@@ -131,6 +160,14 @@ async def list_resources(
     if action_plan_id:
         query = query.where(ResourceRequest.action_plan_id == action_plan_id)
 
+    # Faculty are scoped to their own department's requests.
+    if current_user.role == UserRole.FACULTY and current_user.department_id:
+        query = (
+            query.join(ActionPlan, ActionPlan.id == ResourceRequest.action_plan_id)
+            .join(ProgramReview, ProgramReview.id == ActionPlan.review_id)
+            .where(ProgramReview.org_id == current_user.department_id)
+        )
+
     resources = session.exec(query.order_by(ResourceRequest.priority)).all()
     return resources
 
@@ -138,9 +175,9 @@ async def list_resources(
 @router.get("/summary", response_model=ResourceSummary)
 async def get_resource_summary(
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    _: User = Depends(require_role(UserRole.CHAIR, UserRole.DEAN, UserRole.PROC, UserRole.ADMIN)),
 ):
-    """Get budget committee summary view of all resource requests."""
+    """Get budget committee summary view of all resource requests (CHAIR+/PROC/ADMIN)."""
     resources = session.exec(select(ResourceRequest)).all()
 
     total_requested = sum(r.amount for r in resources)
@@ -199,6 +236,7 @@ async def update_resource(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Resource request not found",
         )
+    _assert_resource_access(resource, current_user, session)
 
     # Update fields
     update_data = resource_data.model_dump(exclude_unset=True)
@@ -226,6 +264,7 @@ async def update_priority(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Resource request not found",
         )
+    _assert_resource_access(resource, current_user, session)
 
     resource.priority = priority_data.priority
     resource.updated_at = datetime.utcnow()
@@ -240,9 +279,9 @@ async def update_funding(
     resource_id: UUID,
     funding_data: FundingUpdate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    _: User = Depends(require_role(UserRole.PROC, UserRole.ADMIN)),
 ):
-    """Mark a resource as funded (Admin only in production)."""
+    """Mark a resource as funded — budget authority only (PROC/ADMIN)."""
     resource = session.get(ResourceRequest, resource_id)
     if not resource:
         raise HTTPException(

@@ -172,6 +172,7 @@ async def get_action_plan(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Action plan not found",
         )
+    _assert_plan_write_access(plan, current_user, session)
 
     # Get mapped initiatives
     mappings = session.exec(
