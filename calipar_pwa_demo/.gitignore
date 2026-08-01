@@ -46,3 +46,7 @@ calipar-demo-workspace-*.json
 # .assetsignore, serwist.config.js and scripts/verify/artifacts.mjs; keep it out
 # of Git history too. Re-download rather than committing it.
 openrouter-llms-full.txt
+
+# Local issue tracker. docs/agents/issue-tracker.md configures specs and tickets
+# to live at .scratch/<feature-slug>/; they stay local to the working copy.
+.scratch/
