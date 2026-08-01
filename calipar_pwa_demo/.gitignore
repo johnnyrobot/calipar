@@ -1,0 +1,48 @@
+# Dependencies and Next.js output
+node_modules/
+.next/
+out/
+
+# Test, coverage, and audit output
+coverage/
+.lighthouseci/
+playwright-report/
+test-results/
+blob-report/
+
+# Cloudflare and generated deployment output
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# Serwist generated artifacts
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+serviceAccountKey.json
+
+# Editor and operating-system files
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# TypeScript
+*.tsbuildinfo
+
+# Local workspace exports
+calipar-demo-workspace-*.json
+
+# Local reference dump (3.5 MB). Already excluded from asset uploads by
+# .assetsignore, serwist.config.js and scripts/verify/artifacts.mjs; keep it out
+# of Git history too. Re-download rather than committing it.
+openrouter-llms-full.txt

@@ -1,0 +1,22 @@
+# Asset uploads are rooted at ./out. These patterns are defense in depth.
+*.map
+**/*.map
+.DS_Store
+**/.DS_Store
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+!/.dev.vars.example
+*.key
+*.pem
+*.p12
+*.pfx
+**/serviceAccountKey.json
+openrouter-llms-full.txt
+node_modules/
+.git/
+.wrangler/
+coverage/
+test-results/
+playwright-report/
