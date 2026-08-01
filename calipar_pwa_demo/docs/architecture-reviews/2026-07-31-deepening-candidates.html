@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Architecture review — calipar_pwa_demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      .seam { stroke-dasharray: 4 4; }
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+      .hatch {
+        background-image: repeating-linear-gradient(
+          45deg, #fecaca, #fecaca 4px, #fee2e2 4px, #fee2e2 8px
+        );
+      }
+      .mermaid { display: flex; justify-content: center; }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 antialiased">
+    <main class="max-w-5xl mx-auto px-6 py-14 space-y-16">
+
+      <header class="space-y-6">
+        <div>
+          <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Architecture review</p>
+          <h1 class="font-serif text-4xl mt-2">calipar_pwa_demo</h1>
+          <p class="text-sm text-slate-500 mt-1">31 July 2026 · 5 deepening opportunities</p>
+        </div>
+
+        <div class="flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-600 border-y border-slate-200 py-3">
+          <span class="flex items-center gap-2"><span class="inline-block w-4 h-3 border border-slate-400"></span> module</span>
+          <span class="flex items-center gap-2"><svg width="24" height="6"><line x1="0" y1="3" x2="24" y2="3" stroke="#64748b" stroke-width="2" class="seam"/></svg> seam</span>
+          <span class="flex items-center gap-2"><svg width="24" height="6"><line x1="0" y1="3" x2="24" y2="3" stroke="#dc2626" stroke-width="2"/></svg> leakage</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-4 h-3 deep"></span> deep module</span>
+        </div>
+
+        <div class="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
+          No <code class="font-mono text-xs">CONTEXT.md</code> and no ADRs exist yet, so nothing here re-litigates a recorded decision.
+          Domain nouns are taken from <code class="font-mono text-xs">lib/domain/types.ts</code>: <em>workspace</em>, <em>review</em>,
+          <em>action plan</em>, <em>resource request</em>, <em>activity</em>.
+        </div>
+      </header>
+
+      <section id="candidates" class="space-y-14">
+
+        <!-- ============ CANDIDATE 1 ============ -->
+        <article id="c1" class="space-y-5">
+          <div class="flex items-start justify-between gap-4">
+            <h2 class="font-serif text-2xl">1 · Give workspace derivations an interface</h2>
+            <span class="shrink-0 text-xs font-medium uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">Strong</span>
+          </div>
+
+          <div class="font-mono text-xs text-slate-600 space-y-0.5">
+            <div>lib/domain/selectors.ts <span class="text-red-600">— zero call sites</span></div>
+            <div>app/(demo)/{dashboard,data,planning,resources,reviews,chat,activity}/page.tsx</div>
+            <div>components/review-editor.tsx · lib/db/repository.ts:850</div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <!-- BEFORE: mass diagram + fan-out -->
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Before — shallow, unused</p>
+              <div class="flex gap-3 items-end h-[100px] mb-4">
+                <div class="flex-1">
+                  <div class="border-2 border-slate-400 bg-slate-100 h-[44px] flex items-center justify-center text-[10px] uppercase tracking-wider">interface</div>
+                  <div class="border-2 border-t-0 border-slate-300 bg-white h-[48px] flex items-center justify-center text-[10px] uppercase tracking-wider text-slate-400">impl</div>
+                  <p class="text-[10px] text-center mt-1 font-mono text-slate-500">selectors.ts</p>
+                </div>
+                <div class="flex-[2] text-[11px] text-slate-600 pb-6">
+                  4 exported functions.<br/>
+                  Imported by <span class="text-red-600 font-medium">its own test only</span>.<br/>
+                  Deletion test: nothing moves.
+                </div>
+              </div>
+              <div class="border-t border-slate-200 pt-3">
+                <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-2">meanwhile, inline in pages</p>
+                <div class="space-y-1 text-[10px] font-mono">
+                  <div class="flex justify-between"><span>completed-section count</span><span class="text-red-600">×6</span></div>
+                  <div class="flex justify-between"><span>success / equity / SLO rate</span><span class="text-red-600">×4</span></div>
+                  <div class="flex justify-between"><span>filter by plan status</span><span class="text-red-600">×3 per column</span></div>
+                  <div class="flex justify-between"><span>currency formatter</span><span class="text-red-600">×2</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- AFTER -->
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">After — deep</p>
+              <div class="flex gap-3 items-end h-[100px] mb-4">
+                <div class="flex-1">
+                  <div class="border-2 border-slate-900 deep text-white h-[22px] flex items-center justify-center text-[10px] uppercase tracking-wider">interface</div>
+                  <div class="border-2 border-t-0 border-slate-900 bg-slate-50 h-[70px] flex items-center justify-center text-[10px] uppercase tracking-wider text-slate-500">implementation</div>
+                  <p class="text-[10px] text-center mt-1 font-mono text-slate-500">workspace derivations</p>
+                </div>
+                <div class="flex-[2] text-[11px] text-slate-600 pb-6">
+                  Named derivations.<br/>
+                  Every page reads them.<br/>
+                  Rate rounding lives in one place.
+                </div>
+              </div>
+              <div class="border-t border-slate-200 pt-3">
+                <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-2">pages become</p>
+                <div class="text-[10px] font-mono text-slate-600 leading-relaxed">
+                  reviewReadiness(review)<br/>
+                  outcomeRates(snapshot)<br/>
+                  plansByStatus(snapshot)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-md bg-red-50 border border-red-200 p-4 text-sm space-y-2">
+            <p class="font-medium text-red-900">Two derivations already disagree in shipped UI</p>
+            <ul class="text-red-800 space-y-1 text-[13px]">
+              <li>· <code class="font-mono text-xs">data/page.tsx:8-10</code> rounds rates to <strong>1</strong> decimal; <code class="font-mono text-xs">repository.ts:850</code> <code class="font-mono text-xs">safeRate</code> rounds to <strong>2</strong>. Same rate, different number on <code class="font-mono text-xs">/data/</code> vs <code class="font-mono text-xs">/dashboard/</code>.</li>
+              <li>· <code class="font-mono text-xs">resources/page.tsx:27</code> sums <strong>all</strong> requests; <code class="font-mono text-xs">repository.ts:911-916</code> sums only <code class="font-mono text-xs">requested</code> + <code class="font-mono text-xs">recommended</code>. The two pages show different pipeline totals.</li>
+            </ul>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-1">Problem</p>
+              <p>Derivations have no interface, so each page writes its own and they drift.</p>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-1">Solution</p>
+              <p>One module owns every derived workspace value; pages read it instead of recomputing.</p>
+            </div>
+          </div>
+
+          <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-1 text-sm text-slate-700">
+            <li>· leverage: one interface, 8 call sites</li>
+            <li>· locality: rounding fixed once</li>
+            <li>· the two disagreements become impossible</li>
+            <li>· derivations testable without React</li>
+          </ul>
+        </article>
+
+        <!-- ============ CANDIDATE 2 ============ -->
+        <article id="c2" class="space-y-5">
+          <div class="flex items-start justify-between gap-4">
+            <h2 class="font-serif text-2xl">2 · Put the commit invariant behind an interface</h2>
+            <span class="shrink-0 text-xs font-medium uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">Strong</span>
+          </div>
+
+          <div class="font-mono text-xs text-slate-600">
+            lib/db/repository.ts:333, 412, 473, 534, 603
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Before — invariant copy-pasted 5×</p>
+              <pre class="mermaid">
+flowchart TD
+  A[updateReview] --> T1[["transaction rw<br/>+ activity<br/>+ publish"]]
+  B[submitReview] --> T2[["transaction rw<br/>+ activity<br/>+ publish"]]
+  C[upsertActionPlan] --> T3[["transaction rw<br/>+ activity<br/>+ publish"]]
+  D[upsertResourceRequest] --> T4[["transaction rw<br/>+ activity<br/>+ publish"]]
+  E[deleteResourceRequest] --> T5[["transaction rw<br/>+ activity<br/>+ publish"]]
+  classDef dup fill:#fee2e2,stroke:#dc2626,stroke-width:2px;
+  class T1,T2,T3,T4,T5 dup
+              </pre>
+            </div>
+
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">After — one place to get it right</p>
+              <pre class="mermaid">
+flowchart TD
+  A[updateReview] --> K
+  B[submitReview] --> K
+  C[upsertActionPlan] --> K
+  D[upsertResourceRequest] --> K
+  E[deleteResourceRequest] --> K
+  K[["commit()<br/>transaction + activity + publish"]]
+  classDef deep fill:#0f172a,stroke:#0f172a,color:#fff,stroke-width:2px;
+  class K deep
+              </pre>
+            </div>
+          </div>
+
+          <div class="rounded-md bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900">
+            <span class="font-medium">AGENTS.md states this as a hard rule</span> — “Repository mutations and corresponding activity records must commit in one transaction.”
+            Today it is enforced by convention across 5 call sites, not by an interface. A sixth mutator can silently omit the activity or the publish.
+          </div>
+
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">The same gap at the call sites</p>
+            <div class="text-[13px] space-y-1.5 text-slate-700">
+              <div>· <code class="font-mono text-xs">expectedRevision</code> passed at only <strong>3 of 9</strong> mutation sites.</div>
+              <div>· <code class="font-mono text-xs">planning/page.tsx:65</code> passes it with <strong>no handler</strong> for the <code class="font-mono text-xs">CONFLICT</code> it can raise.</div>
+              <div>· <code class="font-mono text-xs">resources/page.tsx</code> never passes it on any path.</div>
+              <div>· <code class="font-mono text-xs">chat/page.tsx:109</code> writes outside its own <code class="font-mono text-xs">try</code> — a failure is an unhandled rejection with no UI.</div>
+              <div>· the catch-and-stringify idiom is written <strong>12×</strong>, while <code class="font-mono text-xs">workspace-provider.tsx:26-30</code> already has it extracted as <code class="font-mono text-xs">errorMessage()</code> — unexported.</div>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-1">Problem</p>
+              <p>The atomicity-and-notify invariant lives in 5 implementations instead of 1 interface.</p>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-1">Solution</p>
+              <p>Mutators declare <em>what</em> changed; a commit module owns transaction, activity, and publish.</p>
+            </div>
+          </div>
+
+          <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-1 text-sm text-slate-700">
+            <li>· locality: invariant in one module</li>
+            <li>· new mutators can't forget the activity</li>
+            <li>· one test proves atomicity for all</li>
+            <li>· interface shrinks; implementation absorbs it</li>
+          </ul>
+        </article>
+
+        <!-- ============ CANDIDATE 3 ============ -->
+        <article id="c3" class="space-y-5">
+          <div class="flex items-start justify-between gap-4">
+            <h2 class="font-serif text-2xl">3 · Make the workspace seam real with a second adapter</h2>
+            <span class="shrink-0 text-xs font-medium uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">Strong</span>
+          </div>
+
+          <div class="font-mono text-xs text-slate-600 space-y-0.5">
+            <div>components/workspace-provider.tsx · 12 calling modules</div>
+            <div>vitest.config.ts:34 <span class="text-red-600">— coverage include: ["lib/**/*.ts"]</span></div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Before — one adapter, hypothetical seam</p>
+              <svg viewBox="0 0 300 250" class="w-full h-[250px]">
+                <text x="150" y="16" text-anchor="middle" class="text-[9px] uppercase" fill="#64748b" style="font-size:9px;letter-spacing:1px">12 calling modules</text>
+                <g fill="#f1f5f9" stroke="#94a3b8">
+                  <rect x="10" y="26" width="60" height="18"/><rect x="80" y="26" width="60" height="18"/>
+                  <rect x="150" y="26" width="60" height="18"/><rect x="220" y="26" width="60" height="18"/>
+                  <rect x="10" y="50" width="60" height="18"/><rect x="80" y="50" width="60" height="18"/>
+                  <rect x="150" y="50" width="60" height="18"/><rect x="220" y="50" width="60" height="18"/>
+                  <rect x="45" y="74" width="60" height="18"/><rect x="115" y="74" width="60" height="18"/>
+                  <rect x="185" y="74" width="60" height="18"/><rect x="115" y="98" width="60" height="18"/>
+                </g>
+                <line x1="10" y1="132" x2="290" y2="132" stroke="#64748b" stroke-width="2" class="seam"/>
+                <text x="150" y="147" text-anchor="middle" fill="#64748b" style="font-size:9px;letter-spacing:1px">useWorkspace() — seam</text>
+                <rect x="80" y="162" width="140" height="42" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+                <text x="150" y="187" text-anchor="middle" fill="#334155" style="font-size:10px">WorkspaceProvider</text>
+                <text x="150" y="222" text-anchor="middle" fill="#dc2626" style="font-size:10px">one adapter only</text>
+                <text x="150" y="238" text-anchor="middle" fill="#dc2626" style="font-size:9px">tests must vi.mock the module path</text>
+              </svg>
+            </div>
+
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">After — two adapters, real seam</p>
+              <svg viewBox="0 0 300 250" class="w-full h-[250px]">
+                <text x="150" y="16" text-anchor="middle" fill="#64748b" style="font-size:9px;letter-spacing:1px">12 calling modules</text>
+                <g fill="#f1f5f9" stroke="#94a3b8">
+                  <rect x="10" y="26" width="60" height="18"/><rect x="80" y="26" width="60" height="18"/>
+                  <rect x="150" y="26" width="60" height="18"/><rect x="220" y="26" width="60" height="18"/>
+                  <rect x="10" y="50" width="60" height="18"/><rect x="80" y="50" width="60" height="18"/>
+                  <rect x="150" y="50" width="60" height="18"/><rect x="220" y="50" width="60" height="18"/>
+                  <rect x="45" y="74" width="60" height="18"/><rect x="115" y="74" width="60" height="18"/>
+                  <rect x="185" y="74" width="60" height="18"/><rect x="115" y="98" width="60" height="18"/>
+                </g>
+                <line x1="10" y1="132" x2="290" y2="132" stroke="#0f172a" stroke-width="2" class="seam"/>
+                <text x="150" y="147" text-anchor="middle" fill="#0f172a" style="font-size:9px;letter-spacing:1px">useWorkspace() — seam</text>
+                <rect x="20" y="162" width="120" height="42" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+                <text x="80" y="180" text-anchor="middle" fill="#334155" style="font-size:9px">WorkspaceProvider</text>
+                <text x="80" y="194" text-anchor="middle" fill="#64748b" style="font-size:8px">IndexedDB</text>
+                <rect x="160" y="162" width="120" height="42" fill="#ecfdf5" stroke="#047857" stroke-width="2"/>
+                <text x="220" y="180" text-anchor="middle" fill="#047857" style="font-size:9px">FixtureWorkspace</text>
+                <text x="220" y="194" text-anchor="middle" fill="#64748b" style="font-size:8px">loading / error / ready</text>
+                <text x="150" y="230" text-anchor="middle" fill="#047857" style="font-size:10px">two adapters justify the seam</text>
+              </svg>
+            </div>
+          </div>
+
+          <div class="rounded-md bg-red-50 border border-red-200 p-4 text-sm space-y-2">
+            <p class="font-medium text-red-900">The missing seam has already produced the same defect twice</p>
+            <ul class="text-red-800 space-y-1 text-[13px]">
+              <li>· <code class="font-mono text-xs">components/review-editor.tsx</code> latched the review at mount and never recovered — <strong>fixed today</strong>, and it needed the repo's first component test to prove.</li>
+              <li>· <code class="font-mono text-xs">reviews/new/page.tsx:19</code> <code class="font-mono text-xs">useState(programs[0]?.id ?? "")</code> latches to <code class="font-mono text-xs">""</code> on a non-ready first render — <strong>still live</strong>, papered over at <code class="font-mono text-xs">:32</code> and <code class="font-mono text-xs">:63</code>.</li>
+              <li>· 7 modules collapse <code class="font-mono text-xs">loading</code> and <code class="font-mono text-xs">error</code> into the same <code class="font-mono text-xs">return null</code>; <code class="font-mono text-xs">reviews/new</code> has no guard at all.</li>
+            </ul>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-1">Problem</p>
+              <p>The seam has one adapter, so mount-ordering defects are unreachable from tests and invisible to the coverage gate.</p>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-1">Solution</p>
+              <p>Add a fixture adapter that supplies each state, and widen coverage past <code class="font-mono text-xs">lib/</code>.</p>
+            </div>
+          </div>
+
+          <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-1 text-sm text-slate-700">
+            <li>· the interface becomes the test surface</li>
+            <li>· mount-ordering testable in milliseconds</li>
+            <li>· no <code class="font-mono text-xs">vi.mock</code> of module paths</li>
+            <li>· locality: one place defines the 3 states</li>
+          </ul>
+        </article>
+
+        <!-- ============ CANDIDATE 4 ============ -->
+        <article id="c4" class="space-y-5">
+          <div class="flex items-start justify-between gap-4">
+            <h2 class="font-serif text-2xl">4 · Give the free-only / ZDR policy its own interface</h2>
+            <span class="shrink-0 text-xs font-medium uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-900">Worth exploring</span>
+          </div>
+
+          <div class="font-mono text-xs text-slate-600">
+            worker/index.ts:574, 591, 628, 656-666, 756, 853-862
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Before — policy spread across 6 sites</p>
+              <div class="space-y-1.5">
+                <div class="h-9 border-l-4 border-red-400 bg-red-50 pl-3 flex items-center text-[11px] font-mono">isFreeModel — :574</div>
+                <div class="h-9 border-l-4 border-red-400 bg-red-50 pl-3 flex items-center text-[11px] font-mono">upstreamError — :591</div>
+                <div class="h-9 border-l-4 border-red-400 bg-red-50 pl-3 flex items-center text-[11px] font-mono">shouldRetry — :628</div>
+                <div class="h-9 border-l-4 border-red-400 bg-red-50 pl-3 flex items-center text-[11px] font-mono">max_price / zdr — :656</div>
+                <div class="h-9 border-l-4 border-red-400 bg-red-50 pl-3 flex items-center text-[11px] font-mono">assertZeroReportedCost — :756</div>
+                <div class="h-9 border-l-4 border-red-400 bg-red-50 pl-3 flex items-center text-[11px] font-mono">stream model check — :853</div>
+              </div>
+              <p class="text-[11px] text-red-700 mt-3">Reachable only by constructing a Request, minting a signed cookie, and stubbing global fetch.</p>
+            </div>
+
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">After — one internal seam</p>
+              <div class="h-[132px] deep text-white rounded flex flex-col items-center justify-center">
+                <p class="text-[10px] uppercase tracking-wider opacity-70">module</p>
+                <p class="text-sm mt-1">free-only routing policy</p>
+                <p class="text-[10px] mt-2 opacity-70 font-mono">buildRequest · acceptModel · acceptUsage</p>
+              </div>
+              <div class="mt-3 space-y-1.5">
+                <div class="h-9 border-l-4 border-slate-300 bg-slate-50 pl-3 flex items-center text-[11px] font-mono text-slate-500">openRouterRequest — calls it</div>
+                <div class="h-9 border-l-4 border-slate-300 bg-slate-50 pl-3 flex items-center text-[11px] font-mono text-slate-500">streamChat — calls it</div>
+              </div>
+              <p class="text-[11px] text-emerald-700 mt-3">Testable as plain values. No HTTP, no cookie, no fetch stub.</p>
+            </div>
+          </div>
+
+          <div class="rounded-md bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900">
+            <span class="font-medium">This module is already deep, and should stay that way.</span>
+            <code class="font-mono text-xs">handleRequest</code> over 1350 lines is a small interface with a large implementation — correct.
+            The proposal is an <em>internal</em> seam, private to the implementation and used by its own tests. Nothing new is exported.
+          </div>
+
+          <div class="rounded-lg border border-slate-200 bg-white p-4 text-[13px] text-slate-700 space-y-1.5">
+            <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">What the missing seam costs today</p>
+            <div>· every authenticated test round-trips <code class="font-mono text-xs">/api/ai/session</code> with a faked Turnstile just to mint a cookie.</div>
+            <div>· that offsets the fetch stub, so assertions index <code class="font-mono text-xs">mock.calls[1]</code> and count <code class="font-mono text-xs">toHaveBeenCalledTimes(2)</code> to skip it.</div>
+            <div>· the four-arm <code class="font-mono text-xs">task</code> switch is restated <strong>4×</strong> — schema, prompt, validator, token limit.</div>
+            <div>· the error envelope from <code class="font-mono text-xs">AIErrorPayload</code> is hand-rebuilt <strong>3×</strong> (<code class="font-mono text-xs">:82</code>, <code class="font-mono text-xs">:816</code>, <code class="font-mono text-xs">:1278</code>).</div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-1">Problem</p>
+              <p>The product's central safety claim has no interface — it is six checks reachable only through HTTP.</p>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-1">Solution</p>
+              <p>One internal module owns the routing policy; the transport calls it.</p>
+            </div>
+          </div>
+
+          <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-1 text-sm text-slate-700">
+            <li>· policy assertions need no fetch stub</li>
+            <li>· locality: one module to audit</li>
+            <li>· external interface unchanged</li>
+            <li>· leverage: 2 transports, 1 policy</li>
+          </ul>
+        </article>
+
+        <!-- ============ CANDIDATE 5 ============ -->
+        <article id="c5" class="space-y-5">
+          <div class="flex items-start justify-between gap-4">
+            <h2 class="font-serif text-2xl">5 · One SSE codec instead of two implementations</h2>
+            <span class="shrink-0 text-xs font-medium uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-900">Worth exploring</span>
+          </div>
+
+          <div class="font-mono text-xs text-slate-600">
+            worker/index.ts:770, 893-902 · lib/ai/client.ts:198-219 · lib/ai/contracts.ts:128-132
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Before — mirrored, unlinked</p>
+              <pre class="mermaid">
+flowchart LR
+  W["worker<br/>sseEvent + read loop"] -. "wire format<br/>agreed by hand" .-> C["client<br/>dispatch + read loop"]
+  W --> WT["worker test<br/>string fixtures"]
+  C --> CT["client test<br/>string fixtures"]
+  classDef leak stroke:#dc2626,stroke-width:2px,fill:#fee2e2;
+  class W,C leak
+              </pre>
+              <p class="text-[11px] text-red-700 mt-2">Buffering loop written verbatim twice. Error strings duplicated. Event names are string literals on both sides despite <code class="font-mono">ChatStreamEvent</code> existing.</p>
+            </div>
+
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">After — one module, two directions</p>
+              <pre class="mermaid">
+flowchart LR
+  K["SSE codec<br/>encode / decode"]
+  W["worker"] --> K
+  C["client"] --> K
+  K --> KT["one round-trip test"]
+  classDef deep fill:#0f172a,stroke:#0f172a,color:#fff,stroke-width:2px;
+  class K deep
+              </pre>
+              <p class="text-[11px] text-emerald-700 mt-2">Encode and decode tested against each other rather than against two sets of hand-written strings.</p>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-1">Problem</p>
+              <p>Producer and consumer implement the same wire format twice and are verified by two independent string fixtures.</p>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-1">Solution</p>
+              <p>A codec module in <code class="font-mono text-xs">lib/ai/</code> that both sides call, keyed off <code class="font-mono text-xs">ChatStreamEvent</code>.</p>
+            </div>
+          </div>
+
+          <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-1 text-sm text-slate-700">
+            <li>· drift between the two becomes impossible</li>
+            <li>· locality: framing in one module</li>
+            <li>· round-trip test replaces string matching</li>
+            <li>· event names derived from the type</li>
+          </ul>
+        </article>
+
+      </section>
+
+      <!-- ============ TOP RECOMMENDATION ============ -->
+      <section id="top-recommendation">
+        <div class="rounded-xl border-2 border-slate-900 bg-white p-8 space-y-4">
+          <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Top recommendation</p>
+          <h2 class="font-serif text-3xl">
+            <a href="#c3" class="hover:underline">3 · Make the workspace seam real with a second adapter</a>
+          </h2>
+          <p class="text-slate-700">
+            The other four are latent. This one has already cost a bug twice — once fixed today, once still live at
+            <code class="font-mono text-xs">reviews/new/page.tsx:19</code>. Twelve modules cross this seam, it has one adapter,
+            and the coverage gate cannot see any of them. Adding the fixture adapter makes the interface the test surface and turns
+            candidates 1 and 2 into refactors you can verify rather than refactors you have to trust.
+          </p>
+          <p class="text-sm text-slate-500">
+            Sequence: 3 → 1 → 2. Candidates 4 and 5 are worker-side and independent of the other three.
+          </p>
+        </div>
+      </section>
+
+      <footer class="text-xs text-slate-400 pt-4 border-t border-slate-200">
+        Generated for calipar_pwa_demo · vocabulary from the codebase-design skill
+      </footer>
+
+    </main>
+  </body>
+</html>

@@ -156,6 +156,8 @@ that AI inputs remain entirely on-device.
 | Artifact/security checks | `scripts/verify/`, `.assetsignore`, `public/.assetsignore` |
 | Tests | `tests/unit/`, `tests/worker/`, `tests/e2e/`, `tests/a11y/` |
 | Architecture/privacy/release docs | `docs/ARCHITECTURE.md`, `docs/PRIVACY_AND_AI.md`, `docs/TESTING.md`, `docs/CLOUDFLARE_DEPLOY.md` |
+| Session handoffs | `docs/handoffs/` — carry-over context for continuing work. Newest: `2026-07-31-workspace-seam.md` |
+| Architecture reviews | `docs/architecture-reviews/` — deepening candidates with before/after diagrams. Newest: `2026-07-31-deepening-candidates.html`; candidates 2, 4 and 5 are still open |
 
 Package versions are pinned in `package.json` and `package-lock.json`. At this
 handoff, the lockfile SHA-1 is
