@@ -1,4 +1,4 @@
-import type { DashboardSummary } from "@/lib/db/repository";
+import type { WorkspaceDerivations } from "@/lib/domain/derivations";
 import type { WorkspaceState } from "@/components/workspace-provider";
 import {
   createEmptyReviewSections,
@@ -31,7 +31,9 @@ export function makeWorkspaceData(over: Partial<WorkspaceData> = {}): WorkspaceD
   };
 }
 
-export function makeSummary(over: Partial<DashboardSummary> = {}): DashboardSummary {
+export function makeDerivations(
+  over: Partial<WorkspaceDerivations> = {},
+): WorkspaceDerivations {
   return {
     reviewCounts: { draft: 0, in_review: 0, validated: 0, approved: 0 },
     totalReviews: 0,
@@ -82,11 +84,14 @@ export function errorState(message = "IndexedDB is unavailable in this browser."
 }
 
 export function readyState(
-  over: { data?: Partial<WorkspaceData>; summary?: Partial<DashboardSummary> } = {},
+  over: {
+    data?: Partial<WorkspaceData>;
+    derived?: Partial<WorkspaceDerivations>;
+  } = {},
 ): WorkspaceState {
   return {
     status: "ready",
     data: makeWorkspaceData(over.data),
-    summary: makeSummary(over.summary),
+    derived: makeDerivations(over.derived),
   };
 }

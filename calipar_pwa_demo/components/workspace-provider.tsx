@@ -3,18 +3,20 @@
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
-  getDashboardSummary,
   initializeWorkspace,
   readWorkspace,
   subscribeWorkspace,
-  type DashboardSummary,
 } from "@/lib/db/repository";
+import {
+  deriveWorkspace,
+  type WorkspaceDerivations,
+} from "@/lib/domain/derivations";
 import type { WorkspaceData } from "@/lib/domain/types";
 
 export type WorkspaceState =
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "ready"; data: WorkspaceData; summary: DashboardSummary };
+  | { status: "ready"; data: WorkspaceData; derived: WorkspaceDerivations };
 
 export interface WorkspaceContextValue {
   state: WorkspaceState;
@@ -55,11 +57,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const [data, summary] = await Promise.all([
-        readWorkspace(),
-        getDashboardSummary(),
-      ]);
-      setState({ status: "ready", data, summary });
+      // One reading of the workspace, derived in process. Two reads could
+      // disagree with each other between a write and a render — see
+      // docs/adr/0001-derivations-read-the-workspace-once.md.
+      const data = await readWorkspace();
+      setState({ status: "ready", data, derived: deriveWorkspace(data) });
     } catch (error) {
       setState({ status: "error", message: errorMessage(error) });
     }

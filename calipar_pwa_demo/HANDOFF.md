@@ -144,7 +144,7 @@ that AI inputs remain entirely on-device.
 | --- | --- |
 | App shell/routes | `app/`, `components/app-shell.tsx` |
 | Workspace seam | `components/workspace-provider.tsx` — `WorkspaceStateProvider` is the presenter that owns the private context; `WorkspaceProvider` is the IndexedDB-backed adapter around it. `useWorkspace()` is the only read interface. Tests supply state through `WorkspaceStateProvider` and never mock the module path. |
-| Component test fixtures | `tests/support/workspace-fixture.ts` — typed builders for `WorkspaceData`, `DashboardSummary` and the three workspace states |
+| Component test fixtures | `tests/support/workspace-fixture.ts` — typed builders for `WorkspaceData`, `WorkspaceDerivations` and the three workspace states |
 | Review editor/autosave | `components/review-editor.tsx`, `app/(demo)/reviews/editor/page.tsx` |
 | Browser persistence | `lib/db/database.ts`, `lib/db/repository.ts` |
 | Domain contracts/derivations | `lib/domain/`, `lib/seed/data.ts` |

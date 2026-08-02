@@ -11,7 +11,7 @@ function Probe() {
   return (
     <span data-testid="probe">
       {state.status === "ready"
-        ? `ready:${state.data.reviews.length}:${state.summary.totalReviews}`
+        ? `ready:${state.data.reviews.length}:${state.derived.totalReviews}`
         : state.status === "error"
           ? `error:${state.message}`
           : "loading"}
@@ -49,12 +49,12 @@ describe("WorkspaceStateProvider", () => {
     expect(view.getByTestId("probe").textContent).toBe("error:Storage is blocked.");
   });
 
-  it("passes a ready state's data and summary through the seam", () => {
+  it("passes a ready state's data and derivations through the seam", () => {
     const view = render(
       <WorkspaceStateProvider
         state={readyState({
           data: { reviews: [makeReview()] },
-          summary: { totalReviews: 1 },
+          derived: { totalReviews: 1 },
         })}
       >
         <Probe />

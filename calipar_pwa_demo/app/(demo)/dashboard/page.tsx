@@ -23,7 +23,7 @@ function ago(iso: string) {
 export default function DashboardPage() {
   const { state } = useWorkspace();
   if (state.status !== "ready") return null;
-  const { data, summary } = state;
+  const { data, derived } = state;
   const drafts = data.reviews.filter((review) => review.status === "draft");
   const completion =
     data.reviews.length === 0
@@ -54,8 +54,8 @@ export default function DashboardPage() {
       <section aria-label="Workspace overview" className="stat-grid">
         <article className="stat-card stat-dark">
           <span className="stat-label">ACTIVE REVIEWS</span>
-          <strong>{drafts.length + summary.reviewCounts.in_review}</strong>
-          <p><span>{summary.reviewCounts.in_review}</span> awaiting review</p>
+          <strong>{drafts.length + derived.reviewCounts.in_review}</strong>
+          <p><span>{derived.reviewCounts.in_review}</span> awaiting review</p>
           <Icon name="review" />
         </article>
         <article className="stat-card">
@@ -66,14 +66,14 @@ export default function DashboardPage() {
         </article>
         <article className="stat-card">
           <span className="stat-label">ACTION PLANS</span>
-          <strong>{summary.activeActionPlans}</strong>
+          <strong>{derived.activeActionPlans}</strong>
           <p><span>{data.actionPlans.filter((plan) => plan.addressesEquityGap).length}</span> address an equity gap</p>
           <Icon name="plan" />
         </article>
         <article className="stat-card">
           <span className="stat-label">RESOURCE PIPELINE</span>
-          <strong>{money(summary.requestedAmountCents)}</strong>
-          <p>{summary.pendingResourceRequests} requests under consideration</p>
+          <strong>{money(derived.requestedAmountCents)}</strong>
+          <p>{derived.pendingResourceRequests} requests under consideration</p>
           <Icon name="resource" />
         </article>
       </section>
@@ -111,8 +111,8 @@ export default function DashboardPage() {
           <div className="signal-icon"><Icon name="spark" /></div>
           <p className="eyebrow">SIGNAL FROM YOUR DATA</p>
           <h2>
-            {summary.latestAnalytics?.successRate
-              ? `${summary.latestAnalytics.successRate.toFixed(0)}% course success`
+            {derived.latestAnalytics?.successRate
+              ? `${derived.latestAnalytics.successRate.toFixed(0)}% course success`
               : "Your latest outcomes are ready"}
           </h2>
           <p>

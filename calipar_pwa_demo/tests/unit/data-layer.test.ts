@@ -6,9 +6,7 @@ import {
   addChatThread,
   createReview,
   deleteResourceRequest,
-  deriveAnalyticsTrend,
   exportWorkspace,
-  getDashboardSummary,
   getPreference,
   getReview,
   importWorkspace,
@@ -23,6 +21,10 @@ import {
   upsertResourceRequest,
   validateReviewSubmission,
 } from "@/lib/db/repository";
+import {
+  deriveAnalyticsTrend,
+  deriveWorkspace,
+} from "@/lib/domain/derivations";
 import { normalizeStorageError, WorkspaceError } from "@/lib/domain/errors";
 import {
   REVIEW_SECTION_KEYS,
@@ -432,16 +434,16 @@ describe("local workspace repository", () => {
   });
 
   it("derives dashboard counts and requested amounts from repository data", async () => {
-    const summary = await getDashboardSummary(database);
-    expect(summary.totalReviews).toBe(
-      Object.values(summary.reviewCounts).reduce((sum, value) => sum + value, 0),
+    const derived = deriveWorkspace(await readWorkspace(database));
+    expect(derived.totalReviews).toBe(
+      Object.values(derived.reviewCounts).reduce((sum, value) => sum + value, 0),
     );
 
     const expectedAmount = (await database.resourceRequests.toArray())
       .filter(({ status }) => ["requested", "recommended"].includes(status))
       .reduce((sum, { amountCents }) => sum + amountCents, 0);
-    expect(summary.requestedAmountCents).toBe(expectedAmount);
-    expect(summary.latestAnalytics?.successRate).toBeTypeOf("number");
+    expect(derived.requestedAmountCents).toBe(expectedAmount);
+    expect(derived.latestAnalytics?.successRate).toBeTypeOf("number");
   });
 
   it("normalizes browser storage failures without leaking implementation errors", () => {

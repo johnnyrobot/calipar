@@ -36,7 +36,7 @@ Running one test:
 
 ```bash
 # Single unit/worker file — omit --coverage, or the per-run coverage gate fails on unrelated files
-npx vitest run --config vitest.config.ts tests/unit/selectors.test.ts
+npx vitest run --config vitest.config.ts tests/unit/derivations.test.ts
 npx vitest run --config vitest.worker.config.ts -t "<test name substring>"
 
 # Single browser spec / project
@@ -67,7 +67,7 @@ IndexedDB (`calipar-demo`, Dexie, `DATABASE_VERSION = 2`) is the only database. 
 
 Every repository function takes an optional trailing `database` argument defaulting to the module singleton; tests pass their own instance (`tests/setup.ts` loads `fake-indexeddb/auto` and stubs `BroadcastChannel` to `undefined`).
 
-`components/workspace-provider.tsx` is the single read path for pages: it runs `initializeWorkspace()` (seed-once, guarded by both a meta record and a record count), then re-`refresh()`es a whole-workspace snapshot plus `getDashboardSummary()` on every published change. **Pages read derived values from that snapshot — never keep a parallel hard-coded domain array in a component.** Dashboard/analytics numbers come from `getDashboardSummary` / `deriveAnalyticsTrend`, not from the model.
+`components/workspace-provider.tsx` is the single read path for pages: it runs `initializeWorkspace()` (seed-once, guarded by both a meta record and a record count), then re-`refresh()`es on every published change with **one** `readWorkspace()` call, deriving from that single reading via `deriveWorkspace` (`lib/domain/derivations.ts`). A page gets `{ data, derived }`. **Every number a page shows comes from `derived`** — the repository reads and writes, and computes nothing. See `CONTEXT.md` for the vocabulary and `docs/adr/0001`–`0003` for why.
 
 Import/export: `exportWorkspace` emits a versioned envelope (`format`/`schemaVersion`/`seedVersion`/`appVersion`); `importWorkspace` is replace-only — version check → schema parse → sanitize → `assertReferentialIntegrity` (org/review/plan/request/thread graph) → single transaction. Reset reseeds from `lib/seed/data.ts` while preserving preferences.
 

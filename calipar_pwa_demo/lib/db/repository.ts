@@ -18,7 +18,6 @@ import {
   WORKSPACE_FORMAT,
   type ActivityRecord,
   type ActionPlan,
-  type AnalyticsSnapshot,
   type ChatMessage,
   type ChatThread,
   type PreferenceRecord,
@@ -63,22 +62,6 @@ export interface CreateReviewInput {
 export type UpdateReviewInput = Partial<
   Pick<ReviewRecord, "title" | "academicYear" | "type" | "sections">
 >;
-
-export interface DashboardSummary {
-  reviewCounts: Record<ReviewRecord["status"], number>;
-  totalReviews: number;
-  activeActionPlans: number;
-  pendingResourceRequests: number;
-  requestedAmountCents: number;
-  latestAnalytics: null | {
-    academicYear: string;
-    enrollment: number;
-    completions: number;
-    successRate: number | null;
-    equityGroupSuccessRate: number | null;
-    sloAttainmentRate: number | null;
-  };
-}
 
 const localListeners = new Set<(change: WorkspaceChange) => void>();
 let broadcastChannel: BroadcastChannel | null | undefined;
@@ -843,89 +826,6 @@ export async function importWorkspace(
   } catch (error) {
     throw normalizeStorageError(error);
   }
-}
-
-function safeRate(numerator: number, denominator: number): number | null {
-  return denominator > 0
-    ? Math.round((numerator / denominator) * 10_000) / 100
-    : null;
-}
-
-export function deriveAnalyticsTrend(
-  snapshots: AnalyticsSnapshot[],
-): Array<
-  AnalyticsSnapshot & {
-    successRate: number | null;
-    equityGroupSuccessRate: number | null;
-    sloAttainmentRate: number | null;
-  }
-> {
-  return [...snapshots]
-    .sort((a, b) => a.academicYear.localeCompare(b.academicYear))
-    .map((snapshot) => ({
-      ...snapshot,
-      successRate: safeRate(
-        snapshot.successfulEnrollments,
-        snapshot.attemptedEnrollments,
-      ),
-      equityGroupSuccessRate: safeRate(
-        snapshot.equityGroupSuccessful,
-        snapshot.equityGroupAttempted,
-      ),
-      sloAttainmentRate: safeRate(snapshot.sloMet, snapshot.sloAssessed),
-    }));
-}
-
-export async function getDashboardSummary(
-  database: CaliparDemoDB = defaultDb,
-): Promise<DashboardSummary> {
-  const [reviews, actionPlans, resources, analytics] = await database.transaction(
-    "r",
-    database.reviews,
-    database.actionPlans,
-    database.resourceRequests,
-    database.analyticsSnapshots,
-    () =>
-      Promise.all([
-        database.reviews.toArray(),
-        database.actionPlans.toArray(),
-        database.resourceRequests.toArray(),
-        database.analyticsSnapshots.toArray(),
-      ]),
-  );
-  const reviewCounts: DashboardSummary["reviewCounts"] = {
-    draft: 0,
-    in_review: 0,
-    validated: 0,
-    approved: 0,
-  };
-  for (const review of reviews) reviewCounts[review.status] += 1;
-  const latest = deriveAnalyticsTrend(analytics).at(-1);
-  return {
-    reviewCounts,
-    totalReviews: reviews.length,
-    activeActionPlans: actionPlans.filter((plan) =>
-      ["not_started", "ongoing"].includes(plan.status),
-    ).length,
-    pendingResourceRequests: resources.filter((request) =>
-      ["requested", "recommended"].includes(request.status),
-    ).length,
-    requestedAmountCents: resources
-      .filter((request) =>
-        ["requested", "recommended"].includes(request.status),
-      )
-      .reduce((sum, request) => sum + request.amountCents, 0),
-    latestAnalytics: latest
-      ? {
-          academicYear: latest.academicYear,
-          enrollment: latest.enrollment,
-          completions: latest.completions,
-          successRate: latest.successRate,
-          equityGroupSuccessRate: latest.equityGroupSuccessRate,
-          sloAttainmentRate: latest.sloAttainmentRate,
-        }
-      : null,
-  };
 }
 
 export function subscribeWorkspace(

@@ -4,9 +4,7 @@ import Dexie from "dexie";
 import { createDatabase, type CaliparDemoDB } from "@/lib/db/database";
 import {
   createReview,
-  deriveAnalyticsTrend,
   exportWorkspace,
-  getDashboardSummary,
   importWorkspace,
   initializeWorkspace,
   putPreference,
@@ -15,6 +13,10 @@ import {
   submitReview,
   updateReview,
 } from "@/lib/db/repository";
+import {
+  deriveAnalyticsTrend,
+  deriveWorkspace,
+} from "@/lib/domain/derivations";
 import { WorkspaceError } from "@/lib/domain/errors";
 import { REVIEW_SECTION_KEYS } from "@/lib/domain/types";
 import { createDemoSeed } from "@/lib/seed/data";
@@ -200,16 +202,16 @@ describe("local workspace repository", () => {
 
   it("derives dashboard and analytics rates without inventing zero denominators", async () => {
     await initializeWorkspace(database);
-    const summary = await getDashboardSummary(database);
-    expect(summary.totalReviews).toBe(4);
-    expect(summary.reviewCounts).toEqual({
+    const derived = deriveWorkspace(await readWorkspace(database));
+    expect(derived.totalReviews).toBe(4);
+    expect(derived.reviewCounts).toEqual({
       draft: 1,
       in_review: 1,
       validated: 1,
       approved: 1,
     });
-    expect(summary.latestAnalytics?.academicYear).toBe("2025-26");
-    expect(summary.latestAnalytics?.successRate).toBeCloseTo(84.06);
+    expect(derived.latestAnalytics?.academicYear).toBe("2025-26");
+    expect(derived.latestAnalytics?.successRate).toBeCloseTo(84.06);
 
     const trend = deriveAnalyticsTrend([
       {
