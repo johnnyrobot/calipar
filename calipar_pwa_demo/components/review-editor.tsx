@@ -8,12 +8,43 @@ import { useWorkspace } from "@/components/workspace-provider";
 import { expand, AIClientError } from "@/lib/ai/client";
 import { submitReview, updateReview } from "@/lib/db/repository";
 import {
+  REQUIRED_REVIEW_SECTIONS,
+  validateReviewSubmission,
+  type ReviewSubmissionValidation,
+} from "@/lib/domain/derivations";
+import { WorkspaceError } from "@/lib/domain/errors";
+import {
   REVIEW_SECTION_KEYS,
   type ReviewRecord,
   type ReviewSectionKey,
   type ReviewSections,
 } from "@/lib/domain/types";
+import { percentWidth } from "@/lib/utils/format";
 import { plainTextFromHtml } from "@/lib/utils/sanitize";
+
+/** The sections a failed submission names, if it named any. */
+function incompleteSectionNames(
+  error: unknown,
+  review: ReviewRecord,
+): string[] {
+  const details =
+    error instanceof WorkspaceError && error.code === "VALIDATION_FAILED"
+      ? error.details
+      : undefined;
+  const keys =
+    typeof details === "object" &&
+    details !== null &&
+    "incompleteSections" in details
+      ? (details as ReviewSubmissionValidation).incompleteSections
+      : [];
+  return keys.map((key) => review.sections[key].title);
+}
+
+function listSections(titles: string[]): string {
+  return titles.length > 1
+    ? `${titles.slice(0, -1).join(", ")} and ${titles.at(-1)}`
+    : (titles[0] ?? "");
+}
 
 function toSafeParagraph(text: string) {
   return `<p>${text
@@ -137,14 +168,27 @@ export function ReviewEditor() {
       setDraft(submitted);
       setNotice("Review submitted for the demo review cycle.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The review could not be submitted.");
+      // The repository knows which sections are short; say so rather than
+      // repeating "complete every required section" over six ticked ones.
+      const missing = incompleteSectionNames(error, saved);
+      setNotice(
+        missing.length
+          ? `Add content to ${listSections(missing)} before submitting.`
+          : error instanceof Error
+            ? error.message
+            : "The review could not be submitted.",
+      );
     }
   };
 
-  const completion = useMemo(
-    () => review ? Object.values(review.sections).filter((section) => section.status === "completed").length : 0,
+  // The same predicate the repository enforces on submit: marked complete *and*
+  // non-empty. Counting status alone let the button enable on a review that
+  // submitReview would then reject.
+  const incompleteSections = useMemo(
+    () => (review ? validateReviewSubmission(review).incompleteSections : REVIEW_SECTION_KEYS.slice()),
     [review],
   );
+  const completion = REQUIRED_REVIEW_SECTIONS - incompleteSections.length;
   const online = typeof navigator === "undefined" ? true : navigator.onLine;
 
   if (!id) {
@@ -197,14 +241,14 @@ export function ReviewEditor() {
           <span className={`save-state ${saveState}`} data-testid="autosave-status" role="status">
             {saveState === "saving" ? "Saving…" : saveState === "unsaved" ? "Unsaved changes" : saveState === "error" ? "Save failed" : "Saved locally"}
           </span>
-          <button className="button button-primary" data-testid="submit-review" disabled={!editable || completion < 6 || saveState === "saving"} type="button" onClick={() => void submit()}>
+          <button className="button button-primary" data-testid="submit-review" disabled={!editable || incompleteSections.length > 0 || saveState === "saving"} type="button" onClick={() => void submit()}>
             Submit review
           </button>
         </div>
       </header>
-      <div className="editor-progress" aria-label={`${completion} of 6 review sections complete`}>
-        <div><i style={{ width: `${completion / 6 * 100}%` }} /></div>
-        <span>{completion}/6 ready</span>
+      <div className="editor-progress" aria-label={`${completion} of ${REQUIRED_REVIEW_SECTIONS} review sections complete`}>
+        <div><i style={{ width: percentWidth(completion, REQUIRED_REVIEW_SECTIONS) }} /></div>
+        <span>{completion}/{REQUIRED_REVIEW_SECTIONS} ready</span>
       </div>
 
       <div className="editor-layout">

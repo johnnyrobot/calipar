@@ -13,10 +13,7 @@ import {
   submitReview,
   updateReview,
 } from "@/lib/db/repository";
-import {
-  deriveAnalyticsTrend,
-  deriveWorkspace,
-} from "@/lib/domain/derivations";
+import { deriveWorkspace } from "@/lib/domain/derivations";
 import { WorkspaceError } from "@/lib/domain/errors";
 import { REVIEW_SECTION_KEYS } from "@/lib/domain/types";
 import { createDemoSeed } from "@/lib/seed/data";
@@ -211,30 +208,8 @@ describe("local workspace repository", () => {
       approved: 1,
     });
     expect(derived.latestAnalytics?.academicYear).toBe("2025-26");
-    expect(derived.latestAnalytics?.successRate).toBeCloseTo(84.06);
-
-    const trend = deriveAnalyticsTrend([
-      {
-        id: "analytics-zero",
-        organizationId: "org-biology",
-        academicYear: "2020-21",
-        enrollment: 0,
-        completions: 0,
-        successfulEnrollments: 0,
-        attemptedEnrollments: 0,
-        equityGroup: "Demo group",
-        equityGroupSuccessful: 0,
-        equityGroupAttempted: 0,
-        sloAssessed: 0,
-        sloMet: 0,
-        activeCourses: 0,
-        updatedAt: new Date().toISOString(),
-      },
-    ]);
-    expect(trend[0]).toMatchObject({
-      successRate: null,
-      equityGroupSuccessRate: null,
-      sloAttainmentRate: null,
-    });
+    // Counts, not a rate: rounding is the formatter's business.
+    expect(derived.latestAnalytics?.successfulEnrollments).toBe(770);
+    expect(derived.latestAnalytics?.attemptedEnrollments).toBe(916);
   });
 });

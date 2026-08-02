@@ -24,6 +24,7 @@ const starterQuestions = [
 export default function ChatPage() {
   const { state } = useWorkspace();
   const data = state.status === "ready" ? state.data : null;
+  const derived = state.status === "ready" ? state.derived : null;
   const [status, setStatus] = useState<AIStatus | null>(null);
   const [statusError, setStatusError] = useState("");
   const [sessionReady, setSessionReady] = useState(false);
@@ -47,6 +48,19 @@ export default function ChatPage() {
     });
     return () => { active = false; };
   }, []);
+
+  // The one context value. The disclosure below renders this, and `send`
+  // transmits this — so what the panel claims Mission-Bot can see cannot drift
+  // from what actually leaves the browser. AGENTS.md requires that disclosure.
+  const aiContext = useMemo(
+    () =>
+      (derived?.reviews ?? []).slice(0, 3).map((review) => ({
+        id: review.id,
+        title: review.title,
+        text: `${review.academicYear}; ${review.status}; completed sections: ${review.completeSections}/${review.requiredSections}`,
+      })),
+    [derived],
+  );
 
   const thread = data?.chatThreads[0];
   const messages = useMemo(
@@ -115,16 +129,11 @@ export default function ChatPage() {
     abortRef.current = controller;
     let answer = "";
     try {
-      const context = data.reviews.slice(0, 3).map((review) => ({
-        id: review.id,
-        title: review.title,
-        text: `${review.academicYear}; ${review.status}; completed sections: ${Object.values(review.sections).filter((section) => section.status === "completed").length}/6`,
-      }));
       const meta = await streamChat(
         {
           message: text,
           history: messages.slice(-8).map((item) => ({ role: item.role, content: item.content })),
-          context,
+          context: aiContext,
         },
         {
           onMeta: (value) => setModel(value.model),
@@ -228,7 +237,7 @@ export default function ChatPage() {
           <p className="eyebrow">CONTEXT BOUNDARY</p>
           <h2>What Mission-Bot can see</h2>
           <p>Up to three review summaries are included with a question. Full narratives and the rest of your workspace are not sent automatically.</p>
-          <ul>{data.reviews.slice(0, 3).map((review) => <li key={review.id}><Icon name="review" /><span>{review.title}<small>Title, year, status, section count</small></span></li>)}</ul>
+          <ul>{aiContext.map((item) => <li key={item.id}><Icon name="review" /><span>{item.title}<small>{item.text}</small></span></li>)}</ul>
           <div className="privacy-note"><Icon name="compass" /><p><strong>Strict privacy route</strong>Free-only, zero-data-retention endpoints are required. If none are available, AI stops.</p></div>
         </aside>
       </div>

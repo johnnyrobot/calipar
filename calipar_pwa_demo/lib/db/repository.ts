@@ -23,13 +23,13 @@ import {
   type PreferenceRecord,
   type ResourceRequest,
   type ReviewRecord,
-  type ReviewSectionKey,
   type WorkspaceData,
   type WorkspaceExport,
 } from "../domain/types";
+import { validateReviewSubmission } from "../domain/derivations";
 import { normalizeStorageError, WorkspaceError } from "../domain/errors";
 import { createDemoSeed } from "../seed/data";
-import { plainTextFromHtml, sanitizeRichText } from "../utils/sanitize";
+import { sanitizeRichText } from "../utils/sanitize";
 
 export const WORKSPACE_CHANNEL = "calipar-demo-workspace";
 const META_WORKSPACE_KEY = "workspace";
@@ -372,24 +372,6 @@ export async function updateReview(
   );
   publish({ type: "review.changed", entityId: id, occurredAt: timestamp });
   return next;
-}
-
-export interface ReviewSubmissionValidation {
-  valid: boolean;
-  incompleteSections: ReviewSectionKey[];
-}
-
-export function validateReviewSubmission(
-  review: ReviewRecord,
-): ReviewSubmissionValidation {
-  const incompleteSections = REVIEW_SECTION_KEYS.filter((key) => {
-    const section = review.sections[key];
-    return (
-      section.status !== "completed" ||
-      plainTextFromHtml(section.contentHtml).length === 0
-    );
-  });
-  return { valid: incompleteSections.length === 0, incompleteSections };
 }
 
 export async function submitReview(

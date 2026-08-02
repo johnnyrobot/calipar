@@ -4,14 +4,7 @@ import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { PageHeading } from "@/components/page-heading";
 import { useWorkspace } from "@/components/workspace-provider";
-
-function money(cents: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
-}
+import { formatCurrency, formatPercent, percentWidth } from "@/lib/utils/format";
 
 function ago(iso: string) {
   const days = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000));
@@ -24,18 +17,7 @@ export default function DashboardPage() {
   const { state } = useWorkspace();
   if (state.status !== "ready") return null;
   const { data, derived } = state;
-  const drafts = data.reviews.filter((review) => review.status === "draft");
-  const completion =
-    data.reviews.length === 0
-      ? 0
-      : Math.round(
-          data.reviews.reduce((total, review) => {
-            const done = Object.values(review.sections).filter((section) => section.status === "completed").length;
-            return total + done / 6;
-          }, 0) /
-            data.reviews.length *
-            100,
-        );
+  const { readiness } = derived;
 
   return (
     <div className="dashboard-page">
@@ -53,27 +35,27 @@ export default function DashboardPage() {
 
       <section aria-label="Workspace overview" className="stat-grid">
         <article className="stat-card stat-dark">
-          <span className="stat-label">ACTIVE REVIEWS</span>
-          <strong>{drafts.length + derived.reviewCounts.in_review}</strong>
+          <span className="stat-label">OPEN REVIEWS</span>
+          <strong>{derived.openReviewCount}</strong>
           <p><span>{derived.reviewCounts.in_review}</span> awaiting review</p>
           <Icon name="review" />
         </article>
         <article className="stat-card">
           <span className="stat-label">AVERAGE READINESS</span>
-          <strong>{completion}%</strong>
-          <div className="stat-meter"><i style={{ width: `${completion}%` }} /></div>
-          <p>Across all review sections</p>
+          <strong>{formatPercent(readiness.completeSections, readiness.requiredSections, 0)}</strong>
+          <div className="stat-meter"><i style={{ width: percentWidth(readiness.completeSections, readiness.requiredSections) }} /></div>
+          <p>{readiness.completeSections} of {readiness.requiredSections} review sections complete</p>
         </article>
         <article className="stat-card">
           <span className="stat-label">ACTION PLANS</span>
-          <strong>{derived.activeActionPlans}</strong>
-          <p><span>{data.actionPlans.filter((plan) => plan.addressesEquityGap).length}</span> address an equity gap</p>
+          <strong>{derived.openActionPlanCount}</strong>
+          <p><span>{derived.equityGapPlanCount}</span> address an equity gap</p>
           <Icon name="plan" />
         </article>
         <article className="stat-card">
           <span className="stat-label">RESOURCE PIPELINE</span>
-          <strong>{money(derived.requestedAmountCents)}</strong>
-          <p>{derived.pendingResourceRequests} requests under consideration</p>
+          <strong>{formatCurrency(derived.awaitingDecisionAmountCents)}</strong>
+          <p>{derived.awaitingDecisionCount} requests awaiting decision</p>
           <Icon name="resource" />
         </article>
       </section>
@@ -81,24 +63,22 @@ export default function DashboardPage() {
       <section className="dashboard-grid">
         <div className="panel review-focus">
           <div className="panel-head">
-            <div><p className="eyebrow">CONTINUE THE WORK</p><h2>Reviews in motion</h2></div>
+            <div><p className="eyebrow">CONTINUE THE WORK</p><h2>Recently worked on</h2></div>
             <Link className="text-link" href="/reviews/">View all <Icon name="arrow" /></Link>
           </div>
           <div className="review-stack">
-            {data.reviews.slice(0, 4).map((review) => {
-              const program = data.organizations.find((org) => org.id === review.organizationId);
-              const complete = Object.values(review.sections).filter((section) => section.status === "completed").length;
+            {derived.reviews.slice(0, 4).map((review) => {
               return (
                 <Link className="review-row" href={`/reviews/editor/?id=${encodeURIComponent(review.id)}`} key={review.id}>
-                  <div className="review-monogram" aria-hidden="true">{program?.name.slice(0, 2).toUpperCase() ?? "PR"}</div>
+                  <div className="review-monogram" aria-hidden="true">{review.programName.slice(0, 2).toUpperCase()}</div>
                   <div className="review-row-copy">
-                    <span>{program?.name ?? "Program"} · {review.academicYear}</span>
+                    <span>{review.programName} · {review.academicYear}</span>
                     <strong>{review.title}</strong>
-                    <div className="row-progress"><i style={{ width: `${(complete / 6) * 100}%` }} /></div>
+                    <div className="row-progress"><i style={{ width: percentWidth(review.completeSections, review.requiredSections) }} /></div>
                   </div>
                   <div className="review-row-meta">
                     <span className={`status-pill ${review.status.replace("_", "-")}`}>{review.status.replace("_", " ")}</span>
-                    <small>{complete}/6 sections</small>
+                    <small>{review.completeSections}/{review.requiredSections} sections</small>
                   </div>
                   <Icon name="chevron" />
                 </Link>
@@ -111,8 +91,8 @@ export default function DashboardPage() {
           <div className="signal-icon"><Icon name="spark" /></div>
           <p className="eyebrow">SIGNAL FROM YOUR DATA</p>
           <h2>
-            {derived.latestAnalytics?.successRate
-              ? `${derived.latestAnalytics.successRate.toFixed(0)}% course success`
+            {derived.latestAnalytics
+              ? `${formatPercent(derived.latestAnalytics.successfulEnrollments, derived.latestAnalytics.attemptedEnrollments)} course success`
               : "Your latest outcomes are ready"}
           </h2>
           <p>
@@ -144,7 +124,7 @@ export default function DashboardPage() {
           <div className="panel-head"><div><p className="eyebrow">STRATEGIC THROUGH-LINE</p><h2>Plans by institutional goal</h2></div></div>
           <div className="initiative-bars">
             {data.strategicInitiatives.slice(0, 5).map((initiative) => {
-              const count = data.actionPlans.filter((plan) => plan.initiativeId === initiative.id).length;
+              const count = derived.planCountsByInitiative[initiative.id] ?? 0;
               return (
                 <div key={initiative.id}>
                   <span>Goal {initiative.goalNumber}</span>

@@ -907,9 +907,10 @@ tbody tr:hover { background: rgba(199,229,223,.14); }
 .check-field small { margin-top: 3px; color: var(--muted); font-size: 9px; }
 
 /* Resources */
-.resource-summary { display: grid; grid-template-columns: 300px 1fr; align-items: center; gap: 30px; padding: 22px 28px; margin-bottom: 18px; color: white; border-radius: 8px; background: var(--ink); }
-.resource-summary > div:first-child > span { color: var(--tide); font-family: var(--font-mono); font-size: 9px; font-weight: 800; letter-spacing: .08em; }
-.resource-summary > div:first-child > strong { display: block; margin: 2px 0; font-family: var(--font-display); font-size: 42px; font-weight: 400; }
+.resource-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 200px)) 1fr; align-items: center; gap: 30px; padding: 22px 28px; margin-bottom: 18px; color: white; border-radius: 8px; background: var(--ink); }
+.resource-figure > span { color: var(--tide); font-family: var(--font-mono); font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+.resource-figure > strong { display: block; margin: 2px 0; font-family: var(--font-display); font-size: 30px; font-weight: 400; }
+.resource-figure:first-child > strong { font-size: 42px; }
 .resource-summary p { margin: 0; color: rgba(255,255,255,.55); font-size: 9px; }
 .resource-distribution { display: grid; grid-template-columns: repeat(4, 1fr); border-left: 1px solid rgba(255,255,255,.15); }
 .resource-distribution span { display: grid; grid-template-columns: 8px 1fr; align-items: center; gap: 7px; padding-left: 24px; color: rgba(255,255,255,.58); font-size: 8px; text-transform: uppercase; }
@@ -1167,7 +1168,8 @@ tbody tr:hover { background: rgba(199,229,223,.14); }
   .dashboard-grid { grid-template-columns: 1fr; }
   .outcome-grid { grid-template-columns: repeat(2, 1fr); }
   .data-grid { grid-template-columns: 1fr; }
-  .resource-summary { grid-template-columns: 1fr; }
+  .resource-summary { grid-template-columns: 1fr 1fr; }
+  .resource-summary .resource-distribution { grid-column: 1 / -1; }
   .resource-distribution { padding-top: 18px; border-top: 1px solid rgba(255,255,255,.15); border-left: 0; }
   .chat-layout { grid-template-columns: 1fr; }
   .chat-context { display: none; }

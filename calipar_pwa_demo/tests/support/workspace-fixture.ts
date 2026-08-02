@@ -1,4 +1,7 @@
-import type { WorkspaceDerivations } from "@/lib/domain/derivations";
+import {
+  deriveWorkspace,
+  type WorkspaceDerivations,
+} from "@/lib/domain/derivations";
 import type { WorkspaceState } from "@/components/workspace-provider";
 import {
   createEmptyReviewSections,
@@ -35,12 +38,36 @@ export function makeDerivations(
   over: Partial<WorkspaceDerivations> = {},
 ): WorkspaceDerivations {
   return {
+    reviews: [],
     reviewCounts: { draft: 0, in_review: 0, validated: 0, approved: 0 },
     totalReviews: 0,
-    activeActionPlans: 0,
-    pendingResourceRequests: 0,
-    requestedAmountCents: 0,
+    openReviewCount: 0,
+    readiness: { completeSections: 0, requiredSections: 0 },
+    workingReview: null,
+    programs: [],
+    analyticsByProgram: {},
     latestAnalytics: null,
+    plansByStatus: {
+      not_started: [],
+      ongoing: [],
+      complete: [],
+      institutionalized: [],
+    },
+    totalActionPlans: 0,
+    openActionPlanCount: 0,
+    equityGapPlanCount: 0,
+    planCountsByInitiative: {},
+    requests: [],
+    requestCountsByStatus: {
+      requested: 0,
+      recommended: 0,
+      funded: 0,
+      declined: 0,
+    },
+    totalRequestAmountCents: 0,
+    awaitingDecisionCount: 0,
+    awaitingDecisionAmountCents: 0,
+    fundedAmountCents: 0,
     ...over,
   };
 }
@@ -83,15 +110,21 @@ export function errorState(message = "IndexedDB is unavailable in this browser."
   return { status: "error", message };
 }
 
+/**
+ * Derivations default to what the supplied records actually derive to, so a
+ * fixture cannot show a page a number its own data disagrees with. Override
+ * `derived` only to test a value deliberately out of step with the records.
+ */
 export function readyState(
   over: {
     data?: Partial<WorkspaceData>;
     derived?: Partial<WorkspaceDerivations>;
   } = {},
 ): WorkspaceState {
+  const data = makeWorkspaceData(over.data);
   return {
     status: "ready",
-    data: makeWorkspaceData(over.data),
-    derived: makeDerivations(over.derived),
+    data,
+    derived: { ...deriveWorkspace(data), ...over.derived },
   };
 }

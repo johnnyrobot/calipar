@@ -19,11 +19,10 @@ import {
   updateReview,
   upsertActionPlan,
   upsertResourceRequest,
-  validateReviewSubmission,
 } from "@/lib/db/repository";
 import {
-  deriveAnalyticsTrend,
   deriveWorkspace,
+  validateReviewSubmission,
 } from "@/lib/domain/derivations";
 import { normalizeStorageError, WorkspaceError } from "@/lib/domain/errors";
 import {
@@ -407,43 +406,25 @@ describe("local workspace repository", () => {
     ).rejects.toMatchObject({ code: "VALIDATION_FAILED" });
   });
 
-  it("derives rates from explicit numerators and handles zero denominators", () => {
-    const snapshot = {
-      id: "analytics-test",
-      organizationId: "org-biology",
-      academicYear: "2026-27",
-      enrollment: 50,
-      completions: 10,
-      successfulEnrollments: 3,
-      attemptedEnrollments: 4,
-      equityGroup: "Synthetic group",
-      equityGroupSuccessful: 0,
-      equityGroupAttempted: 0,
-      sloAssessed: 5,
-      sloMet: 4,
-      activeCourses: 8,
-      updatedAt: "2026-07-29T20:00:00.000Z",
-    };
-    expect(deriveAnalyticsTrend([snapshot])).toEqual([
-      expect.objectContaining({
-        successRate: 75,
-        equityGroupSuccessRate: null,
-        sloAttainmentRate: 80,
-      }),
-    ]);
-  });
-
-  it("derives dashboard counts and requested amounts from repository data", async () => {
+  it("derives counts and resource amounts from repository data", async () => {
     const derived = deriveWorkspace(await readWorkspace(database));
     expect(derived.totalReviews).toBe(
       Object.values(derived.reviewCounts).reduce((sum, value) => sum + value, 0),
     );
 
-    const expectedAmount = (await database.resourceRequests.toArray())
-      .filter(({ status }) => ["requested", "recommended"].includes(status))
-      .reduce((sum, { amountCents }) => sum + amountCents, 0);
-    expect(derived.requestedAmountCents).toBe(expectedAmount);
-    expect(derived.latestAnalytics?.successRate).toBeTypeOf("number");
+    const stored = await database.resourceRequests.toArray();
+    const sum = (statuses: string[]) =>
+      stored
+        .filter(({ status }) => statuses.includes(status))
+        .reduce((total, { amountCents }) => total + amountCents, 0);
+    expect(derived.awaitingDecisionAmountCents).toBe(
+      sum(["requested", "recommended"]),
+    );
+    expect(derived.totalRequestAmountCents).toBe(
+      sum(["requested", "recommended", "funded", "declined"]),
+    );
+    expect(derived.fundedAmountCents).toBe(sum(["funded"]));
+    expect(derived.latestAnalytics?.attemptedEnrollments).toBeTypeOf("number");
   });
 
   it("normalizes browser storage failures without leaking implementation errors", () => {

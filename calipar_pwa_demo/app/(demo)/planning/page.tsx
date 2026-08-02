@@ -18,6 +18,7 @@ const statusLabels: Record<ActionPlanStatus, string> = {
 export default function PlanningPage() {
   const { state } = useWorkspace();
   const data = state.status === "ready" ? state.data : null;
+  const derived = state.status === "ready" ? state.derived : null;
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -25,19 +26,19 @@ export default function PlanningPage() {
   const [equity, setEquity] = useState(false);
   const [justification, setJustification] = useState("");
   const [error, setError] = useState("");
-  if (!data) return null;
-  const editableReview = data.reviews.find((review) => review.status === "draft") ?? data.reviews[0];
+  if (!data || !derived) return null;
+  const workingReview = derived.workingReview;
   const initiative = data.strategicInitiatives[0];
 
   const create = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!editableReview || !initiative) return;
+    if (!workingReview || !initiative) return;
     const now = new Date().toISOString();
     try {
       await upsertActionPlan({
         id: crypto.randomUUID(),
-        reviewId: editableReview.id,
-        organizationId: editableReview.organizationId,
+        reviewId: workingReview.id,
+        organizationId: workingReview.organizationId,
         initiativeId: initiative.id,
         title,
         description,
@@ -74,16 +75,18 @@ export default function PlanningPage() {
         actions={<button className="button button-primary" type="button" onClick={() => setOpen(true)}><Icon name="plus" /> Add action plan</button>}
       />
       <section className="planning-overview">
-        <div><span>{data.actionPlans.length}</span><p>plans connected to review findings</p></div>
-        <div><span>{data.actionPlans.filter((plan) => plan.status === "ongoing").length}</span><p>currently in motion</p></div>
-        <div><span>{data.actionPlans.filter((plan) => plan.addressesEquityGap).length}</span><p>explicitly address an equity gap</p></div>
+        <div><span>{derived.totalActionPlans}</span><p>plans connected to review findings</p></div>
+        <div><span>{derived.plansByStatus.ongoing.length}</span><p>currently in motion</p></div>
+        <div><span>{derived.equityGapPlanCount}</span><p>explicitly address an equity gap</p></div>
       </section>
       <div className="plan-board" aria-label="Action plans by status">
-        {(["not_started", "ongoing", "complete", "institutionalized"] as ActionPlanStatus[]).map((status) => (
+        {(["not_started", "ongoing", "complete", "institutionalized"] as ActionPlanStatus[]).map((status) => {
+          const plans = derived.plansByStatus[status];
+          return (
           <section className="plan-column" key={status}>
-            <header><span className={`status-dot ${status}`} /><h2>{statusLabels[status]}</h2><em>{data.actionPlans.filter((plan) => plan.status === status).length}</em></header>
+            <header><span className={`status-dot ${status}`} /><h2>{statusLabels[status]}</h2><em>{plans.length}</em></header>
             <div>
-              {data.actionPlans.filter((plan) => plan.status === status).map((plan) => {
+              {plans.map((plan) => {
                 const initiativeItem = data.strategicInitiatives.find((item) => item.id === plan.initiativeId);
                 return (
                   <article className="plan-card" key={plan.id}>
@@ -95,10 +98,11 @@ export default function PlanningPage() {
                   </article>
                 );
               })}
-              {!data.actionPlans.some((plan) => plan.status === status) ? <p className="column-empty">No plans here yet.</p> : null}
+              {plans.length === 0 ? <p className="column-empty">No plans here yet.</p> : null}
             </div>
           </section>
-        ))}
+          );
+        })}
       </div>
       <Modal open={open} title="Add an action plan" description="Connect a specific next step to a program review and institutional goal." onClose={() => setOpen(false)}>
         <form onSubmit={create}>

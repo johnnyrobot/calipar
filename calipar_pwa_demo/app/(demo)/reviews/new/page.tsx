@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Icon } from "@/components/icon";
 import { PageHeading } from "@/components/page-heading";
 import { useWorkspace } from "@/components/workspace-provider";
@@ -12,10 +12,7 @@ import type { ReviewType } from "@/lib/domain/types";
 export default function NewReviewPage() {
   const router = useRouter();
   const { state } = useWorkspace();
-  const programs = useMemo(
-    () => state.status === "ready" ? state.data.organizations.filter((org) => org.type === "program") : [],
-    [state],
-  );
+  const programs = state.status === "ready" ? state.derived.programs : [];
   // `programs` is empty until the workspace snapshot is ready, so state holds
   // only the visitor's override and the effective program is derived. Latching
   // the first program at mount would pin this to "" forever on a slow snapshot.

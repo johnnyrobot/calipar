@@ -5,21 +5,26 @@ import { useMemo, useState } from "react";
 import { Icon } from "@/components/icon";
 import { PageHeading } from "@/components/page-heading";
 import { useWorkspace } from "@/components/workspace-provider";
+import { percentWidth } from "@/lib/utils/format";
 
 export default function ReviewsPage() {
   const { state } = useWorkspace();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
-  const data = state.status === "ready" ? state.data : null;
+  const derived = state.status === "ready" ? state.derived : null;
+  // Search text is typed here and exists nowhere else, so this filter cannot be
+  // derived from the workspace. Everything it filters already is.
   const reviews = useMemo(() => {
-    if (!data) return [];
-    return data.reviews.filter((review) => {
-      const program = data.organizations.find((org) => org.id === review.organizationId);
-      const matchText = `${review.title} ${program?.name ?? ""}`.toLowerCase().includes(query.toLowerCase());
-      return matchText && (status === "all" || review.status === status);
-    });
-  }, [data, query, status]);
-  if (!data) return null;
+    if (!derived) return [];
+    return derived.reviews.filter(
+      (review) =>
+        `${review.title} ${review.programName}`
+          .toLowerCase()
+          .includes(query.toLowerCase()) &&
+        (status === "all" || review.status === status),
+    );
+  }, [derived, query, status]);
+  if (!derived) return null;
 
   return (
     <div>
@@ -54,19 +59,17 @@ export default function ReviewsPage() {
       {reviews.length ? (
         <div className="portfolio-grid">
           {reviews.map((review) => {
-            const program = data.organizations.find((org) => org.id === review.organizationId);
-            const completed = Object.values(review.sections).filter((section) => section.status === "completed").length;
             return (
               <article className="portfolio-card" key={review.id}>
                 <div className="portfolio-top">
                   <span className={`status-pill ${review.status.replace("_", "-")}`}>{review.status.replace("_", " ")}</span>
                   <span>{review.type}</span>
                 </div>
-                <p className="eyebrow">{program?.name ?? "Program"} · {review.academicYear}</p>
+                <p className="eyebrow">{review.programName} · {review.academicYear}</p>
                 <h2>{review.title}</h2>
                 <div className="portfolio-progress">
-                  <div><i style={{ width: `${completed / 6 * 100}%` }} /></div>
-                  <span>{completed} of 6 sections complete</span>
+                  <div><i style={{ width: percentWidth(review.completeSections, review.requiredSections) }} /></div>
+                  <span>{review.completeSections} of {review.requiredSections} sections complete</span>
                 </div>
                 <Link className="card-link" href={`/reviews/editor/?id=${encodeURIComponent(review.id)}`}>
                   {review.status === "draft" ? "Continue review" : "View review"} <Icon name="arrow" />
