@@ -7,10 +7,10 @@ import {
   deriveAnalyticsTrend,
   exportWorkspace,
   getDashboardSummary,
-  getWorkspaceSnapshot,
   importWorkspace,
   initializeWorkspace,
   putPreference,
+  readWorkspace,
   resetWorkspace,
   submitReview,
   updateReview,
@@ -35,20 +35,20 @@ describe("local workspace repository", () => {
     await initializeWorkspace(database);
     await initializeWorkspace(database);
 
-    const snapshot = await getWorkspaceSnapshot(database);
-    expect(snapshot.organizations).toHaveLength(5);
+    const workspace = await readWorkspace(database);
+    expect(workspace.organizations).toHaveLength(5);
     expect(
-      snapshot.organizations.filter(({ type }) => type === "institution"),
+      workspace.organizations.filter(({ type }) => type === "institution"),
     ).toHaveLength(1);
     expect(
-      snapshot.organizations.filter(({ type }) => type === "program"),
+      workspace.organizations.filter(({ type }) => type === "program"),
     ).toHaveLength(4);
-    expect(snapshot.strategicInitiatives).toHaveLength(5);
-    expect(snapshot.reviews).toHaveLength(4);
-    expect(snapshot.actionPlans).toHaveLength(3);
-    expect(snapshot.resourceRequests).toHaveLength(4);
-    expect(snapshot.activities).toHaveLength(10);
-    expect(snapshot.analyticsSnapshots).toHaveLength(5);
+    expect(workspace.strategicInitiatives).toHaveLength(5);
+    expect(workspace.reviews).toHaveLength(4);
+    expect(workspace.actionPlans).toHaveLength(3);
+    expect(workspace.resourceRequests).toHaveLength(4);
+    expect(workspace.activities).toHaveLength(10);
+    expect(workspace.analyticsSnapshots).toHaveLength(5);
   });
 
   it("migrates legacy records to the current revision fields", async () => {
@@ -169,10 +169,10 @@ describe("local workspace repository", () => {
     });
 
     await resetWorkspace(database);
-    const snapshot = await getWorkspaceSnapshot(database);
-    expect(snapshot.reviews).toHaveLength(4);
-    expect(snapshot.chatThreads).toHaveLength(0);
-    expect(snapshot.preferences).toContainEqual(
+    const workspace = await readWorkspace(database);
+    expect(workspace.reviews).toHaveLength(4);
+    expect(workspace.chatThreads).toHaveLength(0);
+    expect(workspace.preferences).toContainEqual(
       expect.objectContaining({ key: "theme", value: "dark" }),
     );
   });

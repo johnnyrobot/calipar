@@ -213,7 +213,7 @@ export async function initializeWorkspace(
   }
 }
 
-export async function getWorkspaceSnapshot(
+export async function readWorkspace(
   database: CaliparDemoDB = defaultDb,
 ): Promise<WorkspaceData> {
   try {
@@ -718,7 +718,7 @@ export async function exportWorkspace(
   appVersion = DEFAULT_APP_VERSION,
   database: CaliparDemoDB = defaultDb,
 ): Promise<WorkspaceExport> {
-  const data = await getWorkspaceSnapshot(database);
+  const data = await readWorkspace(database);
   return WorkspaceExportSchema.parse({
     format: WORKSPACE_FORMAT,
     schemaVersion: SCHEMA_VERSION,

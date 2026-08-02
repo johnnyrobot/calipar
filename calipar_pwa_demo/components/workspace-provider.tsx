@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
   getDashboardSummary,
-  getWorkspaceSnapshot,
   initializeWorkspace,
+  readWorkspace,
   subscribeWorkspace,
   type DashboardSummary,
 } from "@/lib/db/repository";
@@ -56,7 +56,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     try {
       const [data, summary] = await Promise.all([
-        getWorkspaceSnapshot(),
+        readWorkspace(),
         getDashboardSummary(),
       ]);
       setState({ status: "ready", data, summary });

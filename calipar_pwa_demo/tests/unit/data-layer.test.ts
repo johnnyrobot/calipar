@@ -11,11 +11,11 @@ import {
   getDashboardSummary,
   getPreference,
   getReview,
-  getWorkspaceSnapshot,
   importWorkspace,
   initializeWorkspace,
   listReviews,
   putPreference,
+  readWorkspace,
   resetWorkspace,
   subscribeWorkspace,
   updateReview,
@@ -44,7 +44,7 @@ describe("local workspace repository", () => {
   });
 
   it("seeds exactly once with deterministic, referentially valid records", async () => {
-    const first = await getWorkspaceSnapshot(database);
+    const first = await readWorkspace(database);
     expect(first.organizations).toHaveLength(5);
     expect(first.strategicInitiatives).toHaveLength(5);
     expect(first.reviews).toHaveLength(4);
@@ -54,7 +54,7 @@ describe("local workspace repository", () => {
     expect(first.analyticsSnapshots).toHaveLength(5);
 
     await initializeWorkspace(database);
-    const second = await getWorkspaceSnapshot(database);
+    const second = await readWorkspace(database);
     expect(second).toEqual(first);
 
     const organizationIds = new Set(first.organizations.map(({ id }) => id));
@@ -182,13 +182,13 @@ describe("local workspace repository", () => {
     });
 
     await resetWorkspace(database);
-    const snapshot = await getWorkspaceSnapshot(database);
-    expect(snapshot.reviews).toHaveLength(4);
-    expect(snapshot.reviews.some(({ id }) => id === "review-biology-2025")).toBe(
+    const workspace = await readWorkspace(database);
+    expect(workspace.reviews).toHaveLength(4);
+    expect(workspace.reviews.some(({ id }) => id === "review-biology-2025")).toBe(
       true,
     );
-    expect(snapshot.chatThreads).toHaveLength(0);
-    expect(snapshot.preferences).toContainEqual(
+    expect(workspace.chatThreads).toHaveLength(0);
+    expect(workspace.preferences).toContainEqual(
       expect.objectContaining({ key: "theme", value: "dark" }),
     );
   });
@@ -376,7 +376,7 @@ describe("local workspace repository", () => {
 
     const imported = await importWorkspace(JSON.stringify(replacement), database);
     expect(imported.data.reviews).toHaveLength(1);
-    expect((await getWorkspaceSnapshot(database)).reviews).toHaveLength(1);
+    expect((await readWorkspace(database)).reviews).toHaveLength(1);
   });
 
   it("rejects future versions and bad references without changing data", async () => {
