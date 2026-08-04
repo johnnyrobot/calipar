@@ -73,9 +73,70 @@ export function runWrangler(args, options = {}) {
   );
 }
 
+/**
+ * Parse wrangler.jsonc. The file is JSONC — wrangler supports comments there
+ * and the extension says so — but JSON.parse does not, so a comment in the
+ * config used to crash every Cloudflare script with a bare SyntaxError.
+ *
+ * The scan is string-aware: a `//` or `/*` inside a quoted value (a URL, say)
+ * must not be treated as the start of a comment.
+ */
+export function parseJsonc(raw) {
+  let out = "";
+  let inString = false;
+  let inLine = false;
+  let inBlock = false;
+  for (let index = 0; index < raw.length; index += 1) {
+    const char = raw[index];
+    const next = raw[index + 1];
+    if (inLine) {
+      if (char === "\n") {
+        inLine = false;
+        out += char;
+      }
+      continue;
+    }
+    if (inBlock) {
+      if (char === "*" && next === "/") {
+        inBlock = false;
+        index += 1;
+      }
+      continue;
+    }
+    if (inString) {
+      out += char;
+      if (char === "\\") {
+        out += next ?? "";
+        index += 1;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+      out += char;
+      continue;
+    }
+    if (char === "/" && next === "/") {
+      inLine = true;
+      index += 1;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      inBlock = true;
+      index += 1;
+      continue;
+    }
+    out += char;
+  }
+  // Trailing commas are also legal in JSONC and illegal in JSON.
+  return JSON.parse(out.replace(/,(\s*[}\]])/g, "$1"));
+}
+
 export function assertConfigIdentity() {
   const raw = readFileSync(WRANGLER_CONFIG, "utf8");
-  const config = JSON.parse(raw);
+  const config = parseJsonc(raw);
   if (config.name !== PROJECT_NAME) {
     fail(
       `wrangler.jsonc names ${JSON.stringify(config.name)} instead of ${PROJECT_NAME}.`,
