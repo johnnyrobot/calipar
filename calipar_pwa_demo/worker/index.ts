@@ -526,7 +526,12 @@ async function createSession(
   }
   let verification: { success?: boolean };
   try {
-    verification = (await result.json()) as { success?: boolean };
+    // Bounded like every other upstream read. Cloudflare's own siteverify is
+    // not attacker-influenced, but leaving one unbounded .json() in the file
+    // invites the next one to be copied from it.
+    verification = JSON.parse(
+      await readBoundedText(result, AI_LIMITS.structuredBytes),
+    ) as { success?: boolean };
   } catch {
     throw new ApiError(
       "AI_UNAVAILABLE",

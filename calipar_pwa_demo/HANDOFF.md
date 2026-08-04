@@ -1,10 +1,17 @@
 # CALIPAR PWA Demo Handoff
 
-Updated: 2026-08-04 (America/Los_Angeles). Previously 2026-08-03, which recorded
-the accessibility-contrast fixes, and 2026-07-31, revised that day after the
-WebKit editor-opening diagnosis and the workspace-seam work. This revision
-re-measured the local gates, corrected the stale verification table, and brought
-the Git-state and security-snapshot sections up to the current tree.
+Updated: 2026-08-04 (America/Los_Angeles), second revision — Phases A–C of
+`docs/plans/2026-08-04-public-beta-readiness.md` are implemented. Previously
+2026-08-04 (first revision, which re-measured the local gates), 2026-08-03
+(accessibility-contrast fixes), and 2026-07-31 (WebKit editor-opening diagnosis
+and workspace-seam work).
+
+**What changed in this revision.** The three Worker abuse findings are fixed and
+unit-tested, the AI evaluation harness that `docs/TESTING.md` has specified since
+the first handoff now exists and runs, the WCAG 2.5.3 brand-link defect and the
+axe tag gap that hid it are both closed, and CI has been moved to where GitHub
+will execute it. Phase D — the live Cloudflare preview, canary, and promotion —
+is deliberately untouched and remains entirely open.
 
 ## Executive status
 
@@ -24,11 +31,11 @@ are:
    critical one was an unlabeled settings file input. `npm run test:a11y` now
    passes 11/11. See “Accessibility failures — resolved” below.
 2. Lighthouse `lhci autorun` still exits 1 on `/` and `/dashboard/`. **Narrowed
-   2026-08-03**: all four category budgets now pass and accessibility scores
-   1.00 on both URLs; what remains are per-audit `lighthouse:recommended`
-   failures — JavaScript payload, render blocking, request-chain depth, a CSP
-   inspector issue — plus one genuine WCAG 2.5.3 brand-link defect that the axe
-   suite is currently blind to.
+   again 2026-08-04**: the WCAG 2.5.3 brand-link defect is now fixed and the axe
+   suite can see it (blocker 6 below). Four per-audit `lighthouse:recommended`
+   failures remain and are diagnosed rather than fixed — see “Lighthouse
+   residual, diagnosed 2026-08-04”. All four category budgets still pass;
+   accessibility is 1.00 on both URLs.
 3. ~~One WebKit editor-opening timing failure.~~ **Resolved.** It was not a
    flake. `ReviewEditor` latched its copy of the review at mount
    (`useState(() => source ?? null)`) and never re-read it, so when navigation
@@ -36,14 +43,27 @@ are:
    stayed on “Opening review…” permanently. Fixed by deriving the review rather
    than latching it. The full E2E suite now passes 37/37 with 5 skipped. See
    “WebKit editor-opening race” below.
-4. Codex Security scan `a68f98b4-8e52-4630-96b2-90a25ee518ec` was last observed
-   on 2026-07-30 running in reporting at 8/15 artifacts. Its six findings are
-   not sealed and no final `report.md` exists. That observation is now several
-   days old, its workspace is an OS-temporary path, and the live tree has moved
-   substantially since the scanned snapshot — re-confirm the scan is alive
-   before acting on any of it. See “Snapshot/finalization hazard”.
+4. Codex Security scan `a68f98b4-8e52-4630-96b2-90a25ee518ec` remains unsealed
+   and is now **unreachable** — the Codex Security tool was not available in the
+   2026-08-04 working session, so the scan could not be loaded, finalized, or
+   confirmed alive. It was last observed on 2026-07-30 running in reporting at
+   8/15 artifacts, its workspace is an OS-temporary path, and the tree has moved
+   far past the scanned snapshot. **Do not treat it as a source of truth.** Its
+   three abuse findings are now fixed in code — see “Security finding
+   disposition” — but a fresh scan against the release commit is still owed.
 5. No authenticated Cloudflare preview, live OpenRouter canary, promotion, or
    production smoke test has been completed or verified in this handoff.
+6. ~~One genuine WCAG 2.5.3 brand-link defect the axe suite was blind to.~~
+   **Resolved 2026-08-04** in `cedf2fd`. Both causes are closed: the axe tag list
+   now includes `wcag21a`/`wcag22a` and explicitly enables
+   `label-content-name-mismatch`, and the `aria-label` on the brand link is gone
+   so its accessible name contains its visible text. `npm run test:a11y` passes
+   12/12, up from 11 — `/reviews/editor/` was added to the sweep, having been
+   required by both artifact verifiers but never checked for accessibility.
+7. **CI is moved but unproven.** `pwa-demo-ci.yml` now lives at the parent
+   repository root where GitHub will execute it, and the nested `.github/` is
+   gone. It has **not been pushed and no PR has been opened**, so no workflow run
+   has ever been observed. A green local run is not evidence CI works.
 
 Do not describe this build as launched, production-ready, fully accessible, or
 security-cleared until those gates are closed with fresh evidence.
@@ -203,27 +223,33 @@ The package permits Node 20.9 through 22.x. CI is configured for Node 20, so a
 clean Node 20 run is still required before release even though the local Node
 22 checks below are valid development evidence.
 
-Two dates appear below. **Re-measured 2026-08-04** means the command was run
-against the current tree for this revision. **2026-08-03** means the result is
-carried over from the previous revision and has not been re-run since; the
-browser and build suites need a quiet host, so they were left alone.
+Every row below was **re-measured 2026-08-04 (second revision)** against the
+current tree, at host load average 2.3–2.8. Nothing is carried over. E2E,
+Lighthouse, and a11y verdicts are only trustworthy on a quiet host — check
+`uptime` before believing any of them.
 
-| Check | Current result | Measured |
+| Check | Current result | Previous |
 | --- | --- | --- |
-| `npm run typecheck` | Pass | 2026-08-04 |
-| `npm run lint` | Pass, zero warnings | 2026-08-04 |
-| `npm run test:unit` | Pass: 11 files, 75 tests | 2026-08-04 |
-| Unit coverage, `lib/**` | 93.16% statements, 89.40% branches, 93.20% functions, 93.92% lines. Gate: 85 statements, 80 branches, 85 functions, 85 lines | 2026-08-04 |
-| Unit coverage, `components/**` | 36.86% statements, 42.54% branches, 32.84% functions, 39.56% lines. Gate: 25 statements, 28 branches, 25 functions, 27 lines | 2026-08-04 |
-| `npm run test:worker` | Pass: 1 file, 29 tests | 2026-08-04 |
-| Worker coverage | 92.41% statements, 86.10% branches, 96.55% functions, 93.57% lines | 2026-08-04 |
-| `npm run build` | Pass: 15 static pages; Serwist precached 51 URLs totaling 1.47 MB | 2026-08-03 |
-| `npm run verify:artifacts` | Pass: 156 exported assets; manifest digest `d62c4f88c6966002` | 2026-08-03 |
-| `npm run cloudflare:limits` | Pass: 156 assets, 1,779,381 bytes, within static Free limits | 2026-08-03 |
-| `npm run cloudflare:dry-run` | Pass: Worker upload 34.71 KiB / gzip 8.96 KiB (9,291 bytes), no upload | 2026-08-03 |
-| `npm run test:e2e` | Pass: 37 passed, 5 skipped, 0 failures | 2026-08-03 |
-| `npm run test:a11y` | Pass: 11 passed (was 6 passed, 5 failed) | 2026-08-03 |
-| `npm run test:lighthouse` | Fail on both collected URLs | 2026-08-03 |
+| `npm run typecheck` | Pass | Pass |
+| `npm run lint` | Pass, zero warnings | Pass |
+| `npm run test:unit` | Pass: 12 files, 87 tests | 11 files, 75 tests |
+| Unit coverage, `lib/**` | `lib/ai` 92.77 / 82.97 / 100 / 96.05, `lib/db` 92.41 / 92.30 / 90.16 / 92.59, `lib/domain` 100 / 96.77 / 100 / 100, `lib/utils` 83.33 / 76.92 / 85.71 / 83.33 (statements / branches / functions / lines). Gate: 85 / 80 / 85 / 85 | — |
+| Unit coverage, `components/**` | 36.86 / 42.54 / 32.83 / 39.55. Gate: 25 / 28 / 25 / 27 | unchanged |
+| `npm run test:worker` | Pass: 4 files, 68 tests | 1 file, 29 tests |
+| Worker coverage | 93.40% statements, 86.87% branches, 97.56% functions, 94.23% lines. Gate: 90 / 85 / 90 / 90 | 92.41 / 86.10 / 96.55 / 93.57 |
+| `npm run test:eval` | Pass: 5 files, 45 tests | **did not exist** |
+| `npm run build` | Pass: 15 static pages; Serwist precached 51 URLs totaling 1.48 MB | 1.47 MB |
+| `npm run verify:artifacts` | Pass: 156 exported assets; manifest digest `95b0a5801f0729f7` | `d62c4f88c6966002` |
+| `npm run cloudflare:limits` | Pass: 156 assets, 1,792,789 bytes, within static Free limits | 1,779,381 bytes |
+| `npm run cloudflare:dry-run` | Pass: Worker gzip 10,926 bytes against a 3 MiB ceiling; all three rate-limit bindings reported registered. **Needs no authentication** | gzip 9,291 bytes |
+| `npm run test:e2e` | Pass: 41 passed, 19 skipped, 0 failures | 37 passed, 5 skipped |
+| `npm run test:a11y` | Pass: 12 passed, with `wcag21a`/`wcag22a` asserted and `label-content-name-mismatch` enabled | 11 passed, weaker tag list |
+| `npm run test:lighthouse` | Fail on both collected URLs — four per-audit failures, all four category budgets pass | Fail, five per-audit failures |
+| `npm run verify` | **Pass end to end**, including the new `test:eval` step | — |
+
+The skipped E2E count rose from 5 to 19 because `ai-abuse.spec.ts` is scoped to
+`chromium-desktop` and the live-AI canary grew from one test to three; all are
+skips by design, not silent failures.
 
 Both coverage rows are aggregates over the configured glob in `vitest.config.ts`,
 which excludes `lib/seed/**`, `lib/domain/types.ts`, and the icon components. The
@@ -398,7 +424,42 @@ passing result. If an individual zero-weight audit is genuinely not actionable,
 disable *that audit* with a recorded justification rather than dropping the
 preset. Reports are under `test-results/lighthouse/` (gitignored).
 
-#### `label-content-name-mismatch` — an open WCAG 2.5.3 failure the axe gate cannot see
+### Lighthouse residual, diagnosed 2026-08-04
+
+Re-measured on a quiet host (load 4.05) after the Task 10 accessibility fix and
+an explicit `browserslist`. Accessibility is **1.00** on both URLs and
+`label-content-name-mismatch` is gone. Performance 0.85 on `/`, 0.84–0.85 on
+`/dashboard/`. Four per-audit failures remain, each diagnosed:
+
+| Audit | Measurement | Diagnosis |
+| --- | --- | --- |
+| `legacy-javascript` | 13,705 bytes in one chunk; signals `Array.prototype.at`, `.flat`, `.flatMap`, `Object.fromEntries`, `Object.hasOwn`, `String.prototype.trimEnd`, `.trimStart` | **Not fixed by browserslist.** An explicit modern baseline (Chrome/Edge 92, Firefox 90, Safari 15.4, plus the Android and Samsung engines) raised global coverage 81.44% → 83.92% and left this audit byte-for-byte identical. Next 16 emits the chunk into the main graph regardless of targets, and it is **not** loaded with `nomodule`. Fixing it means changing how Next bundles, not how the project is configured. |
+| `unused-javascript` | ~99 KB across two chunks: 73,239 of 110,368 bytes (69%) and 28,583 of 71,245 | **Not a lazy-loading problem, and `recharts` is not the cause.** The large chunk contains `dompurify`, `zod`, and `scheduler`; `recharts` is absent from the bundle entirely. Most of a validation or sanitisation library's surface is unreachable from any single page, so this figure is largely structural. `next/dynamic` has nothing here to defer. |
+| `render-blocking-resources` | one request, 12,690-byte CSS, ~120–130 ms | `styles/globals.css`, the hand-authored design system. Render-blocking by design. |
+| `inspector-issues` | one issue, type "Content security policy", no sub-items | `'unsafe-inline'` in the `script-src` of `public/_headers`. Next's inline bootstrap needs it, and `output: "export"` means there is no server to mint a nonce. Removing it breaks the app. |
+
+**Nothing here was worked around.** The preset and the category budgets are
+untouched, and no audit was disabled. Two of the four (`legacy-javascript`,
+`inspector-issues`) look structural to Next static export rather than to this
+codebase; deciding whether to disable those two individually, with the
+justification recorded above, is a judgement call left to the owner.
+
+**Unrelated finding worth acting on.** Six declared dependencies are imported
+nowhere in `app/`, `components/`, or `lib/`: `recharts`, `react-markdown`,
+`lucide-react`, `clsx`, `tailwind-merge`, and `zustand`. They are already
+tree-shaken out, so removing them changes no Lighthouse number — but it removes
+real install time and supply-chain surface. Not removed here: dropping
+dependencies needs `npm install`, which the release rules forbid mid-release.
+
+#### `label-content-name-mismatch` — RESOLVED 2026-08-04 (was: a WCAG 2.5.3 failure the axe gate could not see)
+
+**Both causes below are now closed** (`cedf2fd`). The `aria-label` is deleted, so
+the accessible name comes from the content and contains the visible text; the
+tag list gained `wcag21a`/`wcag22a` and the rule is explicitly enabled. Verified
+red-then-green: with the tags widened and the rule on, `/dashboard/` failed with
+`label-content-name-mismatch: serious` on `.brand[aria-label="CALIPAR dashboard"]`
+before the fix, and the suite passes 12/12 after. The original analysis follows,
+because the two-independent-causes structure is the reusable lesson.
 
 Lighthouse flags the sidebar brand link in `components/app-shell.tsx:21`:
 
@@ -409,8 +470,8 @@ Lighthouse flags the sidebar brand link in `components/app-shell.tsx:21`:
 Its visible text is "CALIPAR" plus "Program Review · Demo", but its accessible
 name is "CALIPAR dashboard". WCAG 2.5.3 (Label in Name, **Level A**) requires the
 accessible name to contain the visible label text, so speech-input users saying
-"CALIPAR program review" cannot address the control. This predates the contrast
-work and is still open.
+"CALIPAR program review" cannot address the control. (Historical: this was the
+state before `cedf2fd`; the `aria-label` no longer exists.)
 
 **`npm run test:a11y` will never catch it**, for two independent reasons, and
 both must be fixed to close the gap:
@@ -477,16 +538,53 @@ handoff claim token, provider credentials, or cookies into this repository.
 Load the authoritative scan context through the Codex Security tool before
 continuing, and stop if it is no longer `running`.
 
-### Reportable findings
+### Security finding disposition (2026-08-04)
 
-| Severity | Finding | Primary remediation direction |
+Four of the six are fixed in code and covered by tests. Two are not.
+
+| Severity | Finding | Disposition |
 | --- | --- | --- |
-| Medium | Mission-Bot retransmits browser-local chat history without disclosing it | Make history transmission explicit, bounded, and accurately disclosed |
-| Medium | Public AI session route buffers oversized bodies before rejecting them | Enforce the 64 KiB limit incrementally before full buffering |
-| Medium | Fresh Turnstile sessions reset the AI rate-limit identity | Bind abuse limits to a stable edge/client dimension and limit session minting |
-| Low | Preview upload does not enforce content-based secret scanning | Run the content scanner inside the upload gate, not as an optional sibling check |
-| Low | AI stream output is unbounded across Worker and browser | Cap aggregate SSE bytes/events, cancel upstream, and bound browser accumulation |
-| Low | Structured AI responses are fully buffered without output limits | Bound upstream bytes, strings, arrays, and aggregate serialized output |
+| Medium | Fresh Turnstile sessions reset the AI rate-limit identity | **Fixed** in `f77da0f`. `worker/limits.ts` keys the ceiling on a salted digest of `CF-Connecting-IP` — 20/60s per network on task routes, 5/60s per session beneath it, and 2/60s on minting itself, checked before the body read and before Turnstile is contacted. Covered by `tests/worker/limits.test.ts` (11 tests), three request-level tests, and `tests/e2e/ai-abuse.spec.ts` against real workerd. |
+| Medium | Public AI session route buffers oversized bodies before rejecting them | **Fixed** in `85956b7`. `worker/body.ts` enforces the ceiling during the read and cancels the source. The test asserts the reader stopped early, which is the only falsifiable signal for a memory bound. |
+| Low | AI stream output is unbounded across Worker and browser | **Fixed** in `cb27d72`. `worker/stream.ts` caps aggregate bytes, single-line length, event count, and wall-clock, cancelling upstream on breach; `lib/ai/client.ts` bounds the browser accumulator by decoded-chunk count. |
+| Low | Structured AI responses are fully buffered without output limits | **Fixed** in `cb27d72`. `readBoundedText` bounds the upstream read; `assertString`/`assertStringArray` bound field length, item count, and per-item length. |
+| Medium | Mission-Bot retransmits browser-local chat history without disclosing it | **Open — not addressed.** This is a disclosure and product-copy question, not an abuse bound, and was outside the plan's scope. History is already bounded (`AI_LIMITS.historyMessages` 10, `historyMessageCharacters` 2,000) but the chat UI does not say it is retransmitted. Still owed. |
+| Low | Preview upload does not enforce content-based secret scanning | **Open — not addressed.** `scripts/verify/artifacts.mjs` scans for secret patterns but `upload-preview.mjs` does not invoke it; it remains an optional sibling check. Phase D work. |
+
+**A fresh scan is still owed.** These dispositions come from reading the code and
+from a code-review pass over the Phase A diff on 2026-08-04, **not** from a
+sealed scan — the Codex Security tool was unavailable in that session, so scan
+`a68f98b4-…` could not be loaded, finalized, or even confirmed alive. Start a new
+scan against the release commit before claiming security completion.
+
+#### Review pass over the Phase A diff, 2026-08-04
+
+An independent review of `895a5e3..HEAD` across `worker/`, `lib/ai/`, and
+`wrangler.jsonc` confirmed all three abuse findings genuinely remediated and
+found **no new high-confidence weaknesses**. Specifically confirmed: the mint
+limit cannot be bypassed by spoofing `CF-Connecting-IP` (Cloudflare's edge sets
+it, and it is not client-controllable for requests that reach a Worker); a
+missing binding fails closed to 503 rather than allowing the request; the
+declared-`Content-Length` edge cases (absent, empty, non-numeric, negative) are
+harmless because the incremental per-chunk check applies unconditionally;
+`pendingText` cannot grow past its ceiling even when the model is never
+announced; and the free-only/zero-cost invariant still holds on both paths. No
+`console.*` call exists anywhere in `worker/`, and every browser-facing error
+message is a static string, so no new path can emit a prompt, a secret, or an
+upstream body.
+
+Two sub-threshold observations came out of it:
+
+- The Turnstile siteverify response was read with an unbounded `.json()` — the
+  one upstream read that had escaped the bounded pattern. Low risk, since the
+  endpoint is Cloudflare's own, but **fixed anyway**: leaving a single unbounded
+  read in the file invites the next one to be copied from it.
+- `worker/limits.ts` salts the bucket key with `env.AI_SESSION_SECRET ?? ""`
+  rather than the validated `sessionSecret()` helper, so an unset secret yields
+  an empty salt. **Left as is**: it is only reachable in a deployment where
+  `sessionSecret()` would reject every request with 503 moments later, so AI is
+  already entirely non-functional there. Recorded rather than changed, because
+  reordering the checks would trade a non-issue for a real behaviour change.
 
 Existing completed write-ups:
 
@@ -573,29 +671,34 @@ fixes, the eval harness design, and a debugging methodology with the feedback
 loops this repository actually supports. Read it before starting any of the
 items in this section — it supersedes them where they disagree.
 
-It also records something this handoff previously did not: **all six Codex
-Security findings are still live in the code.** They were written up, not fixed.
-`worker/index.ts:487` still keys the rate limiter on a self-minted
-`crypto.randomUUID()`, `/api/ai/session` is still unrate-limited, `readJsonBody`
-still buffers before it measures, and neither the Worker nor the browser caps AI
-output. `AGENTS.md:126-128` already requires all three bounds.
+**Phases A, B, and C of that plan are now implemented** (Tasks 1–14; Task 13 is
+diagnosed rather than fixed, see the Lighthouse section). Phase D — Task 15,
+preview → canary → promote — is untouched and is the remaining work.
+
+The plan's central claim, that all six Codex Security findings were written up
+but never fixed, was correct. Four of the six are now fixed; see "Security
+finding disposition" for what is closed and what is not.
 
 ### P0: make the release gate honest and green
 
 1. ~~Fix the five axe failures listed above.~~ Done 2026-08-03.
-2. ~~Rerun `npm run test:a11y` and verify all 11 tests pass.~~ Done — 11/11.
-3. ~~Diagnose the WebKit editor-opening race.~~ Done — see above. The full E2E
-   matrix passes 37/37 with 5 skipped.
-4. ~~Rerun Lighthouse~~ — done 2026-08-03; accessibility now 1.00 on both URLs
-   and all four category budgets pass. Still address, without weakening budgets:
-   the `label-content-name-mismatch` brand-link defect, the `inspector-issues`
-   CSP entry, and the JavaScript/critical-rendering findings (unused JS, legacy
-   polyfill, render-blocking request, request-chain depth).
-5. Close the axe tag gap so the suite can see WCAG 2.1/2.2 Level A: widen the
-   tag list in `tests/a11y/routes.spec.ts` and explicitly enable
-   `label-content-name-mismatch`. Expect it to go red until item 4's brand link
-   is fixed.
-6. Rerun `npm run verify:full` from a clean build under Node 20.
+2. ~~Rerun `npm run test:a11y`.~~ Done — now **12/12** with `/reviews/editor/`
+   added to the sweep.
+3. ~~Diagnose the WebKit editor-opening race.~~ Done. E2E now 41 passed,
+   19 skipped.
+4. ~~Close the `label-content-name-mismatch` brand-link defect~~ — done
+   2026-08-04 (`cedf2fd`), verified red-then-green.
+5. ~~Close the axe tag gap~~ — done in the same commit; `wcag21a`/`wcag22a` are
+   asserted and the rule is explicitly enabled.
+6. **Open:** the four remaining Lighthouse per-audit failures. Diagnosed in
+   detail above; two look structural to Next static export. Decide whether to
+   disable those two individually with the recorded justification, or accept the
+   non-zero exit. **Do not weaken the preset or the category budgets.**
+7. **Open:** rerun `npm run verify:full` from a clean `npm ci` under **Node 20**.
+   All evidence in this handoff is Node 22.23.0. `npm run verify` passes end to
+   end locally, including the new `test:eval` step.
+8. **Open:** remove the six unused dependencies (see the Lighthouse section) —
+   needs an `npm install`, so do it outside a release window.
 
 Measure E2E on an unloaded machine. During the diagnosis above, three
 consecutive runs produced contradictory failure rates (10%, 33%, 100%) purely
@@ -604,26 +707,36 @@ because host load reached 48; the same suite was clean at load 7. Check
 configured 2 as invalid — it starves workerd and manufactures failures that
 look like application bugs.
 
-### P0: complete the running security scan
+### P0: run a fresh security scan
 
-Use the main-agent fallback authorization to finish the two reports, validate
-all six packages, prevalidate canonical JSON, handle the snapshot mismatch
-safely, finalize once, restore the current worktree, and run the sealed bundle
-validator. Do not report the findings as final or attach final scan outputs
-until completion succeeds.
+The 2026-07-30 scan could not be reached on 2026-08-04 — the Codex Security tool
+was not available — so it was **not** finalized, and no attempt was made to
+perform the finalization ritual against a scan whose liveness could not be
+confirmed. Do not hand-write `report.md`.
+
+Start a **fresh** scan against the release commit. That is the more valuable
+artifact regardless of the old scan's fate: it covers the code actually being
+shipped, with the three abuse findings already remediated. The per-finding
+disposition is recorded above and should be carried into the new scan rather
+than re-derived.
 
 ### P1: CI integration
 
-~~Review the untracked directory as a new package.~~ **Done.** The package is
-tracked as of `c5d1518`, generated output and secret-bearing local config are
-excluded by the nested `.gitignore`, and the a11y fixes are committed.
+~~Review the untracked directory as a new package.~~ **Done.** Tracked as of
+`c5d1518`.
 
-What remains: `.github/workflows/pwa-demo-ci.yml` is still only a template
-sitting in a nested `.github/`, which GitHub does not execute. If CI integration
-is approved, move or copy it into the parent repository's root
-`.github/workflows/` alongside `ci.yml`, keeping all commands scoped to
-`calipar_pwa_demo/`. Until then this package has **no CI coverage at all** —
-every gate in the table above is a local run.
+~~Move the workflow somewhere GitHub executes it.~~ **Done 2026-08-04**
+(`5d47188`). `pwa-demo-ci.yml` now lives at
+`/Users/laccd/code/calipar/.github/workflows/`, the nested `.github/` is gone,
+a `test:eval` step was added, and the evidence-upload path was corrected — it
+pointed at `coverage/` and `playwright-report/`, neither of which has ever
+existed, so it was silently discarding the reports it exists to preserve.
+
+**What remains, and it is the whole point:** the branch has not been pushed and
+no PR has been opened, so **the workflow has never been observed running**.
+Until a push produces a green run on GitHub, this package still has no proven CI
+and every gate in the table above is a local run. A green local run is not
+evidence CI works.
 
 ### P1: Cloudflare preview and live AI validation
 
@@ -667,9 +780,17 @@ The PWA demo is ready to hand to users only when all of the following are
 evidenced for the same source snapshot:
 
 - ~~The directory is reviewed and intentionally tracked in Git.~~ Done.
-- CI runs the gates from a workflow GitHub actually executes, not a nested
-  template.
-- `npm ci` and `npm run verify:full` pass under the release Node version.
+- ~~The Worker bounds abuse by something the caller does not choose, bounds
+  request bodies before buffering, and bounds AI output.~~ Done 2026-08-04,
+  unit-tested and verified against real workerd.
+- ~~`npm run test:eval` exists and asserts AI policy and grounding.~~ Done —
+  45 tests, in `npm run verify` and in the CI workflow.
+- ~~Axe asserts WCAG 2.1/2.2 Level A, including
+  `label-content-name-mismatch`.~~ Done — 12/12.
+- CI runs the gates from a workflow GitHub actually executes — the workflow is
+  moved, but **a green run on GitHub has not been observed**.
+- `npm ci` and `npm run verify:full` pass under the release Node version
+  (Node 20; all current evidence is Node 22).
 - Axe has no serious or critical findings on included routes.
 - Lighthouse budgets pass without unjustified suppressions.
 - The Codex Security scan is sealed and its report reviewed; material findings
@@ -682,7 +803,18 @@ evidenced for the same source snapshot:
   are smoke-tested.
 - A previous verified version ID is retained for rollback.
 
-Until then, the accurate status is: **implemented local-first demo with strong
-core tests; the axe gate and all four Lighthouse category budgets now pass, but
-one WCAG 2.5.3 defect, the Lighthouse per-audit preset, security finalization,
-and live deployment verification remain open**.
+Until then, the accurate status is: **implemented local-first demo whose abuse
+controls, AI policy evaluation, and accessibility gate are now real and tested —
+`npm run verify` passes end to end; but CI has never been observed running, the
+Lighthouse per-audit preset still exits non-zero, no security scan is sealed
+against the shipped code, and nothing has been deployed or validated against a
+live provider**.
+
+Phase D of `docs/plans/2026-08-04-public-beta-readiness.md` is the remaining
+work, and every step of it needs explicit approval: `robots.txt`/`noindex` for
+an unlisted beta, a clean Node 20 `npm ci && npm run verify:full`, Cloudflare
+account and plan confirmation, four interactively created secrets,
+`cloudflare:preview`, header/route/service-worker verification against the exact
+returned URL, the four-request live canary, abuse checks against real bindings,
+`cloudflare:promote` of the exact tested version ID, a production smoke test, and
+a retained rollback version UUID.
