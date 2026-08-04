@@ -14,6 +14,7 @@ import type {
   SocraticRequest,
   SocraticResponse,
 } from "./contracts";
+import { AI_LIMITS } from "./contracts";
 
 export * from "./contracts";
 
@@ -163,6 +164,7 @@ export async function streamChat(
   let currentEvent = "message";
   let dataLines: string[] = [];
   let completed: AICompletionMeta | undefined;
+  let receivedCharacters = 0;
 
   const dispatch = () => {
     if (dataLines.length === 0) return;
@@ -197,7 +199,21 @@ export async function streamChat(
 
   while (true) {
     const { done, value } = await reader.read();
-    buffer += decoder.decode(value, { stream: !done });
+    // Count the decoded chunk, not buffer.length: buffer persists across
+    // iterations, so adding its length each pass double-counts and the cap
+    // would fire far too early.
+    const chunk = decoder.decode(value, { stream: !done });
+    receivedCharacters += chunk.length;
+    buffer += chunk;
+    if (
+      buffer.length > AI_LIMITS.streamLineCharacters ||
+      receivedCharacters > AI_LIMITS.streamBytes
+    ) {
+      await reader.cancel();
+      throw new AIClientError("The AI response exceeded its size limit.", {
+        code: "AI_BAD_RESPONSE",
+      });
+    }
     const lines = buffer.split(/\r?\n/);
     buffer = done ? "" : (lines.pop() ?? "");
     for (const line of lines) {

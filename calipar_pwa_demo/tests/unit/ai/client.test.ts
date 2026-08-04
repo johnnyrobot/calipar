@@ -218,4 +218,38 @@ describe("AI browser client", () => {
       model: "model:free",
     });
   });
+
+  it("aborts a stream that never terminates a line", async () => {
+    // No newline is ever emitted, so `buffer` grows without bound. Without a
+    // cap this test hangs; with one it rejects in milliseconds.
+    const endless = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(new TextEncoder().encode("x".repeat(8192)));
+      },
+    });
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(endless, { headers: { "Content-Type": "text/event-stream" } }),
+    );
+    await expect(streamChat({ message: "hi", history: [], context: [] })).rejects.toMatchObject(
+      { code: "AI_BAD_RESPONSE", message: "The AI response exceeded its size limit." },
+    );
+  });
+
+  it("aborts a stream whose aggregate size exceeds the ceiling", async () => {
+    // Every chunk is newline-terminated, so the per-line ceiling never fires;
+    // only the aggregate cap can stop this one.
+    const line = `${"y".repeat(4096)}\n`;
+    const flood = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(new TextEncoder().encode(line));
+      },
+    });
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(flood, { headers: { "Content-Type": "text/event-stream" } }),
+    );
+    await expect(streamChat({ message: "hi" })).rejects.toMatchObject({
+      code: "AI_BAD_RESPONSE",
+      message: "The AI response exceeded its size limit.",
+    });
+  });
 });

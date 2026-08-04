@@ -10,8 +10,9 @@ import {
   type ExpandRequest,
   type SocraticRequest,
 } from "../lib/ai/contracts";
-import { BodyInvalid, BodyTooLarge, readBoundedJson } from "./body";
+import { BodyInvalid, BodyTooLarge, readBoundedJson, readBoundedText } from "./body";
 import { enforceMintLimits, enforceTaskLimits, LimitExceeded } from "./limits";
+import { StreamBudget, StreamLimitExceeded } from "./stream";
 
 export interface RateLimitBinding {
   limit(options: { key: string }): Promise<{ success: boolean }>;
@@ -795,6 +796,12 @@ async function streamChat(
       upstreamReader = upstream.body!.getReader();
       void (async () => {
         const streamDecoder = new TextDecoder();
+        const budget = new StreamBudget({
+          bytes: AI_LIMITS.streamBytes,
+          lineCharacters: AI_LIMITS.streamLineCharacters,
+          events: AI_LIMITS.streamEvents,
+          milliseconds: AI_LIMITS.streamMilliseconds,
+        });
         let buffer = "";
         let selectedModel: string | undefined;
         let sentMeta = false;
@@ -865,6 +872,7 @@ async function streamChat(
           if (text) {
             if (!selectedModel) {
               pendingText += text;
+              budget.addBuffer(pendingText.length);
             } else {
               if (!sentMeta) {
                 controller.enqueue(
@@ -873,9 +881,11 @@ async function streamChat(
                 sentMeta = true;
               }
               if (pendingText) {
+                budget.addEvent();
                 controller.enqueue(sseEvent("delta", { text: pendingText }));
                 pendingText = "";
               }
+              budget.addEvent();
               controller.enqueue(sseEvent("delta", { text }));
             }
           }
@@ -884,7 +894,10 @@ async function streamChat(
         try {
           while (true) {
             const { done, value } = await upstreamReader!.read();
+            budget.checkTime();
+            if (value) budget.addChunk(value.byteLength);
             buffer += streamDecoder.decode(value, { stream: !done });
+            budget.addBuffer(buffer.length);
             const lines = buffer.split(/\r?\n/);
             buffer = done ? "" : (lines.pop() ?? "");
             for (const line of lines) consume(line);
@@ -921,7 +934,18 @@ async function streamChat(
             }),
           );
         } catch (error) {
-          if (error instanceof ApiError) emitError(error);
+          if (error instanceof StreamLimitExceeded) {
+            // Release the upstream connection rather than abandoning it: the
+            // provider is still producing, and we have stopped relaying.
+            await upstreamReader?.cancel();
+            emitError(
+              new ApiError(
+                "AI_BAD_RESPONSE",
+                502,
+                "The AI response exceeded its size limit.",
+              ),
+            );
+          } else if (error instanceof ApiError) emitError(error);
           else {
             emitError(
               new ApiError(
@@ -1068,7 +1092,13 @@ Narrative:\n${value.content}`,
   };
 }
 
-function assertString(value: unknown, name: string): string {
+// Field-level ceilings. A JSON-schema-constrained response is still provider
+// output: nothing upstream guarantees a field is short or an array is small.
+function assertString(
+  value: unknown,
+  name: string,
+  max: number = AI_LIMITS.structuredFieldCharacters,
+): string {
   if (typeof value !== "string") {
     throw new ApiError(
       "AI_BAD_RESPONSE",
@@ -1076,10 +1106,21 @@ function assertString(value: unknown, name: string): string {
       `The AI response omitted ${name}.`,
     );
   }
+  if (value.length > max) {
+    throw new ApiError(
+      "AI_BAD_RESPONSE",
+      502,
+      `The AI response exceeded the size limit for ${name}.`,
+    );
+  }
   return value;
 }
 
-function assertStringArray(value: unknown, name: string): string[] {
+function assertStringArray(
+  value: unknown,
+  name: string,
+  maxItems: number = AI_LIMITS.structuredItems,
+): string[] {
   if (
     !Array.isArray(value) ||
     value.some((entry) => typeof entry !== "string")
@@ -1088,6 +1129,18 @@ function assertStringArray(value: unknown, name: string): string[] {
       "AI_BAD_RESPONSE",
       502,
       `The AI response returned invalid ${name}.`,
+    );
+  }
+  if (
+    value.length > maxItems ||
+    value.some(
+      (entry) => (entry as string).length > AI_LIMITS.structuredFieldCharacters,
+    )
+  ) {
+    throw new ApiError(
+      "AI_BAD_RESPONSE",
+      502,
+      `The AI response exceeded the size limit for ${name}.`,
     );
   }
   return value as string[];
@@ -1105,7 +1158,13 @@ function validateStructuredResult(
       "The AI response did not match the required schema.",
     );
   }
-  const rawEvidence = assertStringArray(value.evidenceIds, "evidenceIds");
+  // Bound the list before filtering: the filter drops invented ids silently, so
+  // without a cap a flood of them is work we do and never report.
+  const rawEvidence = assertStringArray(
+    value.evidenceIds,
+    "evidenceIds",
+    AI_LIMITS.structuredItems,
+  );
   const evidenceIds = rawEvidence.filter((id) => allowedEvidence.has(id));
   const common = {
     insufficientData: value.insufficientData,
@@ -1176,9 +1235,23 @@ async function runStructured(
     },
     provider: { require_parameters: true },
   });
+  // `upstream.json()` has no ceiling; read the body bounded instead.
+  let raw: string;
+  try {
+    raw = await readBoundedText(upstream, AI_LIMITS.structuredBytes);
+  } catch (error) {
+    if (error instanceof BodyTooLarge) {
+      throw new ApiError("AI_BAD_RESPONSE", 502, error.message);
+    }
+    throw new ApiError(
+      "AI_BAD_RESPONSE",
+      502,
+      "The AI provider response could not be read.",
+    );
+  }
   let result: JsonRecord;
   try {
-    const parsed = (await upstream.json()) as unknown;
+    const parsed = JSON.parse(raw) as unknown;
     if (!isObject(parsed)) throw new Error("not an object");
     result = parsed;
   } catch {

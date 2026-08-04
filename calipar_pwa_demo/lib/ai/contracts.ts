@@ -5,6 +5,15 @@ export const AI_LIMITS = {
   historyMessageCharacters: 2_000,
   contextCharacters: 12_000,
   contextRecords: 6,
+  // Output ceilings. Legitimate replies are capped upstream at max_tokens 700
+  // (a few KiB); these bound a hostile or broken provider, per AGENTS.md:126-128.
+  streamBytes: 256 * 1024,
+  streamLineCharacters: 64 * 1024,
+  streamEvents: 2_000,
+  streamMilliseconds: 60_000,
+  structuredBytes: 128 * 1024,
+  structuredFieldCharacters: 4_000,
+  structuredItems: 20,
 } as const;
 
 export type AIErrorCode =

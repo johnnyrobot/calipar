@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { AI_LIMITS } from "../../lib/ai/contracts";
 import {
   handleRequest,
   type Env,
@@ -920,13 +921,123 @@ describe("CALIPAR AI Worker", () => {
       request("/api/ai/analyze", {
         method: "POST",
         headers: { Cookie: cookie, "CF-Connecting-IP": "203.0.113.9" },
-        body: JSON.stringify({ prompt: "Summarise", evidence: [] }),
+        body: JSON.stringify({ content: "A short narrative" }),
       }),
       targetEnv,
     );
     expect(response.status).toBe(429);
     const body = (await response.json()) as { error: { code: string } };
     expect(body.error.code).toBe("AI_RATE_LIMITED");
+  });
+
+  it("cuts off an oversized upstream stream without emitting unbounded output", async () => {
+    const targetEnv = env();
+    const cookie = await createCookie(targetEnv);
+    // A provider that never stops. The body must be a stream, not a string, so
+    // the relay reads it incrementally and the budget can intervene.
+    const flood = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(
+          new TextEncoder().encode(
+            `data: {"model":"x:free","choices":[{"delta":{"content":"${"a".repeat(4096)}"}}]}\n\n`,
+          ),
+        );
+      },
+    });
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(flood, { headers: { "Content-Type": "text/event-stream" } }),
+    );
+    const response = await handleRequest(
+      request("/api/ai/chat", {
+        method: "POST",
+        headers: { Cookie: cookie },
+        body: JSON.stringify({ message: "hi", history: [], context: [] }),
+      }),
+      targetEnv,
+    );
+    const text = await response.text();
+    expect(text).toContain("event: error");
+    expect(text).toContain("size limit");
+    expect(text.length).toBeLessThan(AI_LIMITS.streamBytes * 2);
+  });
+
+  it("rejects a structured response whose fields exceed the size limit", async () => {
+    const targetEnv = env();
+    const cookie = await createCookie(targetEnv);
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          model: "x:free",
+          usage: { total_tokens: 10 },
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  insufficientData: false,
+                  evidenceIds: [],
+                  summary: "z".repeat(AI_LIMITS.structuredFieldCharacters + 1),
+                  strengths: [],
+                  concerns: [],
+                  recommendations: [],
+                }),
+              },
+            },
+          ],
+        }),
+        { headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    const response = await handleRequest(
+      request("/api/ai/analyze", {
+        method: "POST",
+        headers: { Cookie: cookie },
+        body: JSON.stringify({ content: "A short narrative" }),
+      }),
+      targetEnv,
+    );
+    expect(response.status).toBe(502);
+    const body = (await response.json()) as { error: { code: string; message: string } };
+    expect(body.error.code).toBe("AI_BAD_RESPONSE");
+    expect(body.error.message).toMatch(/size limit/i);
+  });
+
+  it("rejects a structured response with too many evidence ids", async () => {
+    const targetEnv = env();
+    const cookie = await createCookie(targetEnv);
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          model: "x:free",
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  insufficientData: false,
+                  evidenceIds: Array.from(
+                    { length: AI_LIMITS.structuredItems + 1 },
+                    (_, index) => `invented-${index}`,
+                  ),
+                  summary: "ok",
+                  strengths: [],
+                  concerns: [],
+                  recommendations: [],
+                }),
+              },
+            },
+          ],
+        }),
+        { headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    const response = await handleRequest(
+      request("/api/ai/analyze", {
+        method: "POST",
+        headers: { Cookie: cookie },
+        body: JSON.stringify({ content: "A short narrative" }),
+      }),
+      targetEnv,
+    );
+    expect(response.status).toBe(502);
   });
 
   it("fails closed when a limiter binding is missing", async () => {
@@ -936,7 +1047,7 @@ describe("CALIPAR AI Worker", () => {
       request("/api/ai/analyze", {
         method: "POST",
         headers: { Cookie: cookie },
-        body: JSON.stringify({ prompt: "Summarise", evidence: [] }),
+        body: JSON.stringify({ content: "A short narrative" }),
       }),
       { ...targetEnv, AI_IP_LIMITER: undefined },
     );
