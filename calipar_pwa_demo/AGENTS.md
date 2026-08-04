@@ -179,9 +179,15 @@ repository — first committed on 2026-07-31 in `c5d1518` — and has no nested
 staging or committing; do not assume a clean per-file diff exists. Do not commit generated directories such as `node_modules/`,
 `.next/`, `out/`, `.wrangler/`, `.lighthouseci/`, or `test-results/`.
 
-The workflow under `.github/workflows/` is a template. GitHub will not execute
-it from this nested directory; moving it into the parent repository's root
-workflow directory requires explicit approval.
+The CI workflow now lives at the parent repository root, `.github/workflows/
+pwa-demo-ci.yml`, where GitHub will execute it. It is path-filtered on
+`calipar_pwa_demo/**` and runs with `working-directory: calipar_pwa_demo`.
+There is no nested `.github/` directory any more; do not recreate one, because
+GitHub does not run workflows from it.
+
+**The workflow has not yet been observed running on GitHub.** A green local run
+is not evidence CI works. Until a push produces a green run, treat CI as
+unproven and say so.
 
 ## Safety and change discipline
 

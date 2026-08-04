@@ -65,6 +65,9 @@ jobs:
       - name: Worker coverage
         run: npm run test:worker
 
+      - name: AI evaluation harness
+        run: npm run test:eval
+
       - name: Static export and Serwist precache
         run: npm run build
 
@@ -87,10 +90,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: calipar-pwa-evidence-${{ github.run_id }}
-          path: |
-            calipar_pwa_demo/test-results/
-            calipar_pwa_demo/coverage/
-            calipar_pwa_demo/playwright-report/
+          # Everything lands under test-results/ — vitest coverage, the
+          # Playwright HTML report, Lighthouse. The old paths (coverage/,
+          # playwright-report/) have never existed, so this upload was silently
+          # dropping the very evidence it was added to preserve.
+          path: calipar_pwa_demo/test-results/
           if-no-files-found: ignore
           retention-days: 14
 

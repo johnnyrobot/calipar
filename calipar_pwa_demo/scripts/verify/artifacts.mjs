@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
+import { REQUIRED_EXPORTS } from "../required-exports.mjs";
+
 const root = resolve(process.cwd());
 const output = resolve(root, "out");
 
@@ -23,21 +25,7 @@ function walk(directory) {
 walk(output);
 
 const errors = [];
-const required = [
-  "index.html",
-  "dashboard/index.html",
-  "reviews/index.html",
-  "reviews/new/index.html",
-  "reviews/editor/index.html",
-  "data/index.html",
-  "planning/index.html",
-  "resources/index.html",
-  "activity/index.html",
-  "chat/index.html",
-  "settings/index.html",
-  "manifest.webmanifest",
-  "sw.js",
-];
+const required = REQUIRED_EXPORTS;
 
 for (const requiredPath of required) {
   if (!existsSync(join(output, requiredPath))) {

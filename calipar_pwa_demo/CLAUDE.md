@@ -93,7 +93,7 @@ The Worker **constructs** the upstream call; the browser cannot influence it. `o
 
 ### Build and offline pipeline
 
-`next build` (`output: "export"`, `trailingSlash: true`) writes `out/`, then `serwist build` bundles `app/sw.ts` and injects a manifest derived from `out/` into `out/sw.js`. `scripts/verify/artifacts.mjs` then asserts the required route list exists, scans every text asset for secret patterns, and enforces Cloudflare Free limits — **adding a route means adding it to that script's `required` array.**
+`next build` (`output: "export"`, `trailingSlash: true`) writes `out/`, then `serwist build` bundles `app/sw.ts` and injects a manifest derived from `out/` into `out/sw.js`. `scripts/verify/artifacts.mjs` then asserts the required route list exists, scans every text asset for secret patterns, and enforces Cloudflare Free limits — **adding a route means adding it to `scripts/required-exports.mjs`, which is the single list both that script and `scripts/cloudflare/check-free-limits.mjs` import.**
 
 The service worker precaches shells with `navigateFallback: "/offline/index.html"` and `navigateFallbackDenylist: [/^\/api\//]`; `skipWaiting: false`. Application data lives in IndexedDB, never Cache Storage, so a SW update must never touch it.
 
@@ -113,7 +113,7 @@ The service worker precaches shells with `navigateFallback: "/offline/index.html
 - `openrouter-llms-full.txt` is a 3.5 MB local reference file, excluded by `.assetsignore` and asserted against by `verify:artifacts`. Don't ship it.
 - The Cloudflare scripts in `scripts/cloudflare/` refuse to act without explicit env confirmations (`CALIPAR_WORKER_INTENT`, `CALIPAR_CONFIRMED_NEW_WORKER`/`CALIPAR_CONFIRMED_EXISTING_WORKER=calipar-pwa-demo`). A passing `cloudflare:dry-run` proves bundle compatibility only — not a live preview, not a deploy. Preview upload, promotion, and rollback are separate, user-approved steps.
 - Playwright runs `workers: 2` deliberately — higher fan-out kills workerd locally. WebKit blocks service workers and skips `pwa.spec.ts`; PWA/offline behavior is only covered in Chromium.
-- This directory is tracked in the parent repo (`/Users/laccd/code/calipar`) and has no nested `.git` — run git commands from the parent root and check real git state before staging. `.github/workflows/pwa-demo-ci.yml` is a template — GitHub does not run workflows from a nested `.github/`, so this package currently has no CI.
+- This directory is tracked in the parent repo (`/Users/laccd/code/calipar`) and has no nested `.git` — run git commands from the parent root and check real git state before staging. CI lives at the **parent** root, `/Users/laccd/code/calipar/.github/workflows/pwa-demo-ci.yml` — GitHub does not run workflows from a nested `.github/`, so there is deliberately no `calipar_pwa_demo/.github/`. The workflow has not yet been observed running on GitHub; a green local run is not evidence CI works.
 - BSD-3-Clause with branding requirements: keep CALIPAR branding.
 
 ## Agent skills

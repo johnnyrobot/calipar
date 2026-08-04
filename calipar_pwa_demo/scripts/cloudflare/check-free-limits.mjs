@@ -1,6 +1,7 @@
 import { existsSync, lstatSync, readdirSync, readFileSync } from "node:fs";
 import { basename, relative, resolve } from "node:path";
 import { gzipSync } from "node:zlib";
+import { REQUIRED_EXPORTS } from "../required-exports.mjs";
 import { ROOT, fail } from "./lib.mjs";
 
 const MIB = 1024 * 1024;
@@ -9,24 +10,7 @@ const MAX_ASSET_BYTES = 25 * MIB;
 const MAX_WORKER_GZIP_BYTES = 3 * MIB;
 const OUT = resolve(ROOT, "out");
 
-const required = [
-  ".assetsignore",
-  "_headers",
-  "index.html",
-  "404.html",
-  "manifest.webmanifest",
-  "sw.js",
-  "dashboard/index.html",
-  "reviews/index.html",
-  "reviews/new/index.html",
-  "reviews/editor/index.html",
-  "data/index.html",
-  "planning/index.html",
-  "resources/index.html",
-  "activity/index.html",
-  "chat/index.html",
-  "settings/index.html",
-];
+const required = REQUIRED_EXPORTS;
 
 const forbiddenBasenames = new Set([
   ".env",
