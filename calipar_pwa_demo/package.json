@@ -8,6 +8,19 @@
     "node": ">=20.9.0 <23",
     "npm": ">=10"
   },
+  "//browserslist": "Explicit modern baseline. Without it the default query pulls in kaios 2.5, op_mini, and chrome 109, which forces Next to ship ~14 KB of polyfill (Lighthouse legacy-javascript, signal Array.prototype.at). This floor is the first version of each engine with Array.prototype.at: Chrome/Edge 92, Firefox 90, Safari 15.4. The demo is a PWA requiring service workers and IndexedDB, so nothing below that could run it anyway.",
+  "browserslist": [
+    "chrome >= 92",
+    "edge >= 92",
+    "firefox >= 90",
+    "safari >= 15.4",
+    "ios_saf >= 15.4",
+    "and_chr >= 92",
+    "android >= 92",
+    "samsung >= 16",
+    "opera >= 78",
+    "not dead"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build && npm run pwa:build",
