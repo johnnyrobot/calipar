@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-Node 20.9+ and <23, npm 10+. Install with `npm ci` (never `npm install` during a release).
+Node 22.19+ and <23, npm 10+. Install with `npm ci` (never `npm install` during a release). **The Node 20 floor was wrong** — `jsdom@30` pulls `undici@8`, which needs `webidl.util.markAsUncloneable` and declares `engines: node >=22.19.0`. On Node 20 every jsdom test file fails to start its worker.
 
 ```bash
 npm run dev                 # Next dev server, frontend only — no /api/*

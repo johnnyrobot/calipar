@@ -44,7 +44,7 @@ The current implementation and release status are documented in
 
 ## Setup and commands
 
-Use Node.js 20.9 or newer and earlier than Node 23, with npm 10 or newer.
+Use Node.js 22.19 or newer and earlier than Node 23, with npm 10 or newer. The floor was 20.9 until 2026-08-04; the first CI run proved that false, because jsdom@30 depends on undici@8, which requires a Node API that does not exist in Node 20.
 Install the lockfile exactly:
 
 ```bash

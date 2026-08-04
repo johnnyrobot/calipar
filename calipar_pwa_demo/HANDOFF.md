@@ -60,10 +60,17 @@ are:
    so its accessible name contains its visible text. `npm run test:a11y` passes
    12/12, up from 11 — `/reviews/editor/` was added to the sweep, having been
    required by both artifact verifiers but never checked for accessibility.
-7. **CI is moved but unproven.** `pwa-demo-ci.yml` now lives at the parent
-   repository root where GitHub will execute it, and the nested `.github/` is
-   gone. It has **not been pushed and no PR has been opened**, so no workflow run
-   has ever been observed. A green local run is not evidence CI works.
+7. **CI now runs, and its first run found a real defect.** `pwa-demo-ci.yml`
+   moved to the parent repository root and fired for the first time on PR #1
+   (run `30956933461`, 2026-08-04). It failed at `test:unit` with
+   `webidl.util.markAsUncloneable is not a function` — **all 12 jsdom test files
+   failed to start their workers on Node 20**, because `jsdom@30` depends on
+   `undici@8`, which declares `engines: node >=22.19.0`. The `engines` floor of
+   `>=20.9.0` was simply false, and no local run could have caught it: every
+   local check had been on Node 22.23.0. Engines and both CI jobs are corrected
+   to Node 22. **This is exactly the class of thing "a green local run is not
+   evidence CI works" was pointing at.** Status is still not green — awaiting the
+   re-run.
 
 Do not describe this build as launched, production-ready, fully accessible, or
 security-cleared until those gates are closed with fresh evidence.
@@ -219,9 +226,13 @@ Next.js 16.2.12
 Wrangler 4.115.0
 ```
 
-The package permits Node 20.9 through 22.x. CI is configured for Node 20, so a
-clean Node 20 run is still required before release even though the local Node
-22 checks below are valid development evidence.
+The package permits Node 22.19 through 22.x, and CI now runs Node 22. **The
+previous "clean Node 20 run required before release" item was impossible**, not
+merely undone: the first CI run (2026-08-04, PR #1) failed every jsdom test file
+with `webidl.util.markAsUncloneable is not a function`, because `jsdom@30`
+depends on `undici@8`, which declares `engines: node >=22.19.0`. The engines
+floor and both CI jobs were corrected to match reality. Local Node 22 evidence
+is therefore the release evidence, not a stand-in for it.
 
 Every row below was **re-measured 2026-08-04 (second revision)** against the
 current tree, at host load average 2.3–2.8. Nothing is carried over. E2E,
@@ -694,9 +705,10 @@ finding disposition" for what is closed and what is not.
    detail above; two look structural to Next static export. Decide whether to
    disable those two individually with the recorded justification, or accept the
    non-zero exit. **Do not weaken the preset or the category budgets.**
-7. **Open:** rerun `npm run verify:full` from a clean `npm ci` under **Node 20**.
-   All evidence in this handoff is Node 22.23.0. `npm run verify` passes end to
-   end locally, including the new `test:eval` step.
+7. **Open:** rerun `npm run verify:full` from a clean `npm ci`. This is now a
+   Node 22 run — see the environment note above for why Node 20 was never
+   viable. `npm run verify` already passes end to end locally, including the new
+   `test:eval` step.
 8. **Open:** remove the six unused dependencies (see the Lighthouse section) —
    needs an `npm install`, so do it outside a release window.
 
@@ -790,7 +802,7 @@ evidenced for the same source snapshot:
 - CI runs the gates from a workflow GitHub actually executes — the workflow is
   moved, but **a green run on GitHub has not been observed**.
 - `npm ci` and `npm run verify:full` pass under the release Node version
-  (Node 20; all current evidence is Node 22).
+  (Node 22.19+, which is what CI now runs).
 - Axe has no serious or critical findings on included routes.
 - Lighthouse budgets pass without unjustified suppressions.
 - The Codex Security scan is sealed and its report reviewed; material findings
@@ -812,7 +824,7 @@ live provider**.
 
 Phase D of `docs/plans/2026-08-04-public-beta-readiness.md` is the remaining
 work, and every step of it needs explicit approval: `robots.txt`/`noindex` for
-an unlisted beta, a clean Node 20 `npm ci && npm run verify:full`, Cloudflare
+an unlisted beta, a clean `npm ci && npm run verify:full`, Cloudflare
 account and plan confirmation, four interactively created secrets,
 `cloudflare:preview`, header/route/service-worker verification against the exact
 returned URL, the four-request live canary, abuse checks against real bindings,

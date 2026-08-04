@@ -40,10 +40,10 @@ jobs:
       - name: Check out exact source
         uses: actions/checkout@v4
 
-      - name: Use Node.js 20
+      - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
           cache-dependency-path: calipar_pwa_demo/package-lock.json
 
@@ -112,10 +112,10 @@ jobs:
       - name: Check out exact source
         uses: actions/checkout@v4
 
-      - name: Use Node.js 20
+      - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
           cache-dependency-path: calipar_pwa_demo/package-lock.json
 

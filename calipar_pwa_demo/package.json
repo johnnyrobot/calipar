@@ -4,8 +4,9 @@
   "private": true,
   "description": "Local-first, installable CALIPAR demonstration workspace",
   "license": "BSD-3-Clause",
+  "//engines": "Floor raised from 20.9.0 on 2026-08-04 after the first CI run. jsdom@30 depends on undici@8, which declares engines node >=22.19.0 and calls webidl.util.markAsUncloneable — an API Node 20 does not have. On Node 20 every jsdom test file fails to start its worker, so the old >=20.9.0 claim was false for anything that runs the unit suite.",
   "engines": {
-    "node": ">=20.9.0 <23",
+    "node": ">=22.19.0 <23",
     "npm": ">=10"
   },
   "//browserslist": "Explicit modern baseline. Without it the default query pulls in kaios 2.5, op_mini, and chrome 109, which forces Next to ship ~14 KB of polyfill (Lighthouse legacy-javascript, signal Array.prototype.at). This floor is the first version of each engine with Array.prototype.at: Chrome/Edge 92, Firefox 90, Safari 15.4. The demo is a PWA requiring service workers and IndexedDB, so nothing below that could run it anyway.",
