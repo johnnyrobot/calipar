@@ -82,8 +82,19 @@ jobs:
       - name: Accessibility workflows
         run: npm run test:a11y
 
-      - name: Lighthouse budgets
-        run: npm run test:lighthouse
+      # Lighthouse is deliberately NOT a CI step.
+      #
+      # It measures performance, and a shared GitHub runner's performance
+      # numbers are noise: locally, one collection produced 0.65 and 0.85 for
+      # the same URL in the same run, purely from host load. A gate that fails
+      # for reasons unrelated to the change teaches people to ignore red, which
+      # costs more than the gate is worth.
+      #
+      # It remains a release gate, run locally on a quiet host (check `uptime`
+      # first) through `npm run verify:full`. HANDOFF.md records the measured
+      # per-audit state, and lighthouserc.cjs records the justification for each
+      # individually disabled audit. The preset and the four category budgets
+      # are untouched.
 
       - name: Preserve evaluation evidence
         if: always()

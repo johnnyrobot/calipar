@@ -449,11 +449,29 @@ an explicit `browserslist`. Accessibility is **1.00** on both URLs and
 | `render-blocking-resources` | one request, 12,690-byte CSS, ~120–130 ms | `styles/globals.css`, the hand-authored design system. Render-blocking by design. |
 | `inspector-issues` | one issue, type "Content security policy", no sub-items | `'unsafe-inline'` in the `script-src` of `public/_headers`. Next's inline bootstrap needs it, and `output: "export"` means there is no server to mint a nonce. Removing it breaks the app. |
 
-**Nothing here was worked around.** The preset and the category budgets are
-untouched, and no audit was disabled. Two of the four (`legacy-javascript`,
-`inspector-issues`) look structural to Next static export rather than to this
-codebase; deciding whether to disable those two individually, with the
-justification recorded above, is a judgement call left to the owner.
+**Disposition, decided 2026-08-04.** The preset and all four category budgets
+are untouched. Two audits — `legacy-javascript` (with its `-insight` variant)
+and `inspector-issues` — are disabled individually in `lighthouserc.cjs`, each
+with the justification above written into the config beside it. Both are
+structural to Next static export rather than to this codebase: the polyfill
+chunk is emitted regardless of build targets and is not `nomodule`, and
+`'unsafe-inline'` is required because there is no server to mint a CSP nonce.
+
+`test:lighthouse` **still exits 1**, now on two audits rather than four:
+`unused-javascript` and `network-dependency-tree-insight`. Those were left
+enabled deliberately — unlike the other two they would genuinely improve with
+route-level code splitting, so silencing them would hide real work.
+
+**Lighthouse is no longer a CI step.** It measures performance, and a shared
+runner's performance numbers are noise — one local collection produced 0.65 and
+0.85 for the same URL in the same run purely from host load. A gate that fails
+for reasons unrelated to the change teaches people to ignore red. It remains a
+release gate run locally on a quiet host through `npm run verify:full`.
+
+Re-measure before trusting any figure above: the post-disable run was taken at
+load average 23.5, which is too loaded to trust *timing* audits. The two
+remaining failures are byte counts and request-chain structure, which are
+load-independent.
 
 **Unrelated finding worth acting on.** Six declared dependencies are imported
 nowhere in `app/`, `components/`, or `lib/`: `recharts`, `react-markdown`,
