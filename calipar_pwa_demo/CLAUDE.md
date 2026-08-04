@@ -101,7 +101,7 @@ The service worker precaches shells with `navigateFallback: "/offline/index.html
 - `openrouter-llms-full.txt` is a 3.5 MB local reference file, excluded by `.assetsignore` and asserted against by `verify:artifacts`. Don't ship it.
 - The Cloudflare scripts in `scripts/cloudflare/` refuse to act without explicit env confirmations (`CALIPAR_WORKER_INTENT`, `CALIPAR_CONFIRMED_NEW_WORKER`/`CALIPAR_CONFIRMED_EXISTING_WORKER=calipar-pwa-demo`). A passing `cloudflare:dry-run` proves bundle compatibility only — not a live preview, not a deploy. Preview upload, promotion, and rollback are separate, user-approved steps.
 - Playwright runs `workers: 2` deliberately — higher fan-out kills workerd locally. WebKit blocks service workers and skips `pwa.spec.ts`; PWA/offline behavior is only covered in Chromium.
-- This directory is untracked in the parent repo and has no nested `.git`. Check real git state before staging. `.github/workflows/pwa-demo-ci.yml` is a template — GitHub does not run workflows from a nested `.github/`.
+- This directory is tracked in the parent repo (`/Users/laccd/code/calipar`) and has no nested `.git` — run git commands from the parent root and check real git state before staging. `.github/workflows/pwa-demo-ci.yml` is a template — GitHub does not run workflows from a nested `.github/`, so this package currently has no CI.
 - BSD-3-Clause with branding requirements: keep CALIPAR branding.
 
 ## Agent skills
