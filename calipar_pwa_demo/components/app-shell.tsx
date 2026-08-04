@@ -16,9 +16,14 @@ const nav: Array<{ href: string; label: string; icon: IconName }> = [
   { href: "/activity/", label: "Activity", icon: "activity" },
 ];
 
+// No aria-label on the link: the accessible name comes from the content —
+// "CALIPAR Program Review · Demo" — which contains the visible text and so
+// satisfies WCAG 2.5.3 Label in Name. Substituting a different aria-label
+// would reopen the defect; the rule is about the name containing the visible
+// text, not about having a name at all.
 function Brand() {
   return (
-    <Link aria-label="CALIPAR dashboard" className="brand" href="/dashboard/">
+    <Link className="brand" href="/dashboard/">
       <span className="brand-mark" aria-hidden="true">
         <i />
         <i />

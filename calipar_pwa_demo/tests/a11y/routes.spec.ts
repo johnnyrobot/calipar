@@ -7,6 +7,9 @@ const routes = [
   "/dashboard/",
   "/reviews/",
   "/reviews/new/",
+  // Required by both artifact verifiers but absent from this sweep until now.
+  // A deterministic seeded id, so the editor has something to render.
+  "/reviews/editor/?id=review-biology-2025",
   "/data/",
   "/planning/",
   "/resources/",
@@ -26,8 +29,13 @@ for (const route of routes) {
     }
 
     await expect(page.locator("body")).toBeVisible();
+    // wcag21a and wcag22a were missing, so no WCAG 2.1/2.2 Level A criterion
+    // was asserted at all. label-content-name-mismatch is the only axe rule in
+    // that gap, and it ships enabled: false because it is experimental — both
+    // had to change or the hole stayed open.
     const results = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa"])
+      .options({ rules: { "label-content-name-mismatch": { enabled: true } } })
       .analyze();
 
     const materialViolations = results.violations.filter((violation) =>
