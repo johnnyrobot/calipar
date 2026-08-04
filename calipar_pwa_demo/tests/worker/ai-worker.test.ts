@@ -9,16 +9,19 @@ import {
 const origin = "https://calipar.example";
 const sessionSecret = "test-session-secret-that-is-longer-than-32-characters";
 
+function allowingLimiter(): RateLimitBinding {
+  return { limit: vi.fn(async () => ({ success: true })) };
+}
+
 function env(overrides: Partial<Env> = {}): Env {
-  const limiter: RateLimitBinding = {
-    limit: vi.fn(async () => ({ success: true })),
-  };
   return {
     OPENROUTER_API_KEY: "test-openrouter-key",
     TURNSTILE_SECRET_KEY: "test-turnstile-secret",
     TURNSTILE_SITE_KEY: "test-turnstile-site-key",
     AI_SESSION_SECRET: sessionSecret,
-    AI_RATE_LIMITER: limiter,
+    AI_RATE_LIMITER: allowingLimiter(),
+    AI_IP_LIMITER: allowingLimiter(),
+    AI_MINT_LIMITER: allowingLimiter(),
     BUILD_SHA: "abc123",
     APP_VERSION: "1.0.0",
     ...overrides,
@@ -888,5 +891,57 @@ describe("CALIPAR AI Worker", () => {
       env(),
     );
     expect(unknownApi.status).toBe(404);
+  });
+
+  it("bounds session minting by network, not by session", async () => {
+    const mint: RateLimitBinding = { limit: vi.fn(async () => ({ success: false })) };
+    const response = await handleRequest(
+      request("/api/ai/session", {
+        method: "POST",
+        headers: { "CF-Connecting-IP": "203.0.113.9" },
+        body: JSON.stringify({ turnstileToken: "valid-token" }),
+      }),
+      env({ AI_MINT_LIMITER: mint }),
+    );
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("60");
+    // The mint limit must short-circuit before Turnstile is ever contacted.
+    expect(fetch).not.toHaveBeenCalled();
+    const body = (await response.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("AI_RATE_LIMITED");
+  });
+
+  it("applies the network ceiling to task routes", async () => {
+    const targetEnv = env({
+      AI_IP_LIMITER: { limit: vi.fn(async () => ({ success: false })) },
+    });
+    const cookie = await createCookie(targetEnv);
+    const response = await handleRequest(
+      request("/api/ai/analyze", {
+        method: "POST",
+        headers: { Cookie: cookie, "CF-Connecting-IP": "203.0.113.9" },
+        body: JSON.stringify({ prompt: "Summarise", evidence: [] }),
+      }),
+      targetEnv,
+    );
+    expect(response.status).toBe(429);
+    const body = (await response.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("AI_RATE_LIMITED");
+  });
+
+  it("fails closed when a limiter binding is missing", async () => {
+    const targetEnv = env();
+    const cookie = await createCookie(targetEnv);
+    const response = await handleRequest(
+      request("/api/ai/analyze", {
+        method: "POST",
+        headers: { Cookie: cookie },
+        body: JSON.stringify({ prompt: "Summarise", evidence: [] }),
+      }),
+      { ...targetEnv, AI_IP_LIMITER: undefined },
+    );
+    expect(response.status).toBe(503);
+    const body = (await response.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("AI_NOT_CONFIGURED");
   });
 });

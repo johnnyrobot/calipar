@@ -10,6 +10,7 @@ import {
   type ExpandRequest,
   type SocraticRequest,
 } from "../lib/ai/contracts";
+import { enforceMintLimits, enforceTaskLimits, LimitExceeded } from "./limits";
 
 export interface RateLimitBinding {
   limit(options: { key: string }): Promise<{ success: boolean }>;
@@ -28,6 +29,8 @@ export interface Env {
   APP_VERSION?: string;
   ENVIRONMENT?: string;
   AI_RATE_LIMITER?: RateLimitBinding;
+  AI_IP_LIMITER?: RateLimitBinding;
+  AI_MINT_LIMITER?: RateLimitBinding;
   ASSETS?: AssetsBinding;
 }
 
@@ -465,6 +468,22 @@ function sessionSecret(env: Env): string {
   return env.AI_SESSION_SECRET;
 }
 
+/**
+ * Map a limiter failure onto the public error contract. A refused request is
+ * AI_RATE_LIMITED; a missing binding is a misconfiguration, not a rate limit,
+ * and must fail closed rather than let the request through unbounded.
+ */
+function limitError(error: unknown): ApiError {
+  if (error instanceof LimitExceeded) {
+    return new ApiError("AI_RATE_LIMITED", 429, error.message, error.retryAfter);
+  }
+  return new ApiError(
+    "AI_NOT_CONFIGURED",
+    503,
+    "AI rate limiting is not configured.",
+  );
+}
+
 async function requireSession(request: Request, env: Env): Promise<string> {
   const sessionId = await verifySession(
     cookieValue(request, SESSION_COOKIE),
@@ -477,21 +496,10 @@ async function requireSession(request: Request, env: Env): Promise<string> {
       "Complete the privacy notice and verification before using AI.",
     );
   }
-  if (!env.AI_RATE_LIMITER) {
-    throw new ApiError(
-      "AI_NOT_CONFIGURED",
-      503,
-      "AI rate limiting is not configured.",
-    );
-  }
-  const allowed = await env.AI_RATE_LIMITER.limit({ key: sessionId });
-  if (!allowed.success) {
-    throw new ApiError(
-      "AI_RATE_LIMITED",
-      429,
-      "Too many AI requests. Try again in a minute.",
-      60,
-    );
+  try {
+    await enforceTaskLimits(request, env, sessionId);
+  } catch (error) {
+    throw limitError(error);
   }
   return sessionId;
 }
@@ -500,6 +508,13 @@ async function createSession(
   request: Request,
   env: Env,
 ): Promise<Response> {
+  // Before the body read and before Turnstile is contacted: this route is public
+  // and pre-session, so it is the one an abuser reaches first.
+  try {
+    await enforceMintLimits(request, env);
+  } catch (error) {
+    throw limitError(error);
+  }
   const body = await readJsonBody(request);
   const token = boundedString(
     body.turnstileToken,
@@ -567,7 +582,9 @@ function configured(env: Env): boolean {
       env.TURNSTILE_SITE_KEY &&
       env.AI_SESSION_SECRET &&
       env.AI_SESSION_SECRET.length >= 32 &&
-      env.AI_RATE_LIMITER,
+      env.AI_RATE_LIMITER &&
+      env.AI_IP_LIMITER &&
+      env.AI_MINT_LIMITER,
   );
 }
 
