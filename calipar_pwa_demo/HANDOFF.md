@@ -181,6 +181,7 @@ that AI inputs remain entirely on-device.
 | Domain vocabulary and decisions | `CONTEXT.md` — the ubiquitous language for the workspace, derivations and activity; `docs/adr/0001`–`0003` — why derivations read the workspace once, fill the existing workspace slot, and carry their counts. Read these before changing `lib/domain/` or `components/workspace-provider.tsx` |
 | Architecture/privacy/release docs | `docs/ARCHITECTURE.md`, `docs/PRIVACY_AND_AI.md`, `docs/TESTING.md`, `docs/CLOUDFLARE_DEPLOY.md` |
 | Session handoffs | `docs/handoffs/` — carry-over context for continuing work. Newest: `2026-07-31-workspace-seam.md`. The 2026-08-03 accessibility session has no handoff of its own; its record is the “Accessibility failures — resolved” section below |
+| Implementation plans | `docs/plans/` — task-by-task plans for work not yet done. Newest: `2026-08-04-public-beta-readiness.md`, the route from here to an unlisted public beta |
 | Architecture reviews | `docs/architecture-reviews/` — deepening candidates with before/after diagrams. Newest: `2026-07-31-deepening-candidates.html`; candidates 2, 4 and 5 are still open |
 
 Package versions are pinned in `package.json` and `package-lock.json`. At this
@@ -564,6 +565,20 @@ would not complete the specifically requested scan ID. Do not abandon, fail,
 cancel, or replace the running scan without explicit user direction.
 
 ## Prioritized next work
+
+**The work below is planned in detail in
+[`docs/plans/2026-08-04-public-beta-readiness.md`](docs/plans/2026-08-04-public-beta-readiness.md).**
+That plan carries the task-by-task breakdown, the code for the Worker abuse
+fixes, the eval harness design, and a debugging methodology with the feedback
+loops this repository actually supports. Read it before starting any of the
+items in this section — it supersedes them where they disagree.
+
+It also records something this handoff previously did not: **all six Codex
+Security findings are still live in the code.** They were written up, not fixed.
+`worker/index.ts:487` still keys the rate limiter on a self-minted
+`crypto.randomUUID()`, `/api/ai/session` is still unrate-limited, `readJsonBody`
+still buffers before it measures, and neither the Worker nor the browser caps AI
+output. `AGENTS.md:126-128` already requires all three bounds.
 
 ### P0: make the release gate honest and green
 
