@@ -1,0 +1,8 @@
+data: {"id":"gen-eval-chat-grounded","model":"meta-llama/llama-3.3-8b-instruct:free","choices":[{"index":0,"delta":{"role":"assistant","content":"Course success was 812 of 1,004 attempted"}}]}
+
+data: {"id":"gen-eval-chat-grounded","model":"meta-llama/llama-3.3-8b-instruct:free","choices":[{"index":0,"delta":{"content":" enrolments in the supplied snapshot [analytics-biology-2025]."}}]}
+
+data: {"id":"gen-eval-chat-grounded","model":"meta-llama/llama-3.3-8b-instruct:free","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":80,"completion_tokens":19,"total_tokens":99,"cost":0}}
+
+data: [DONE]
+

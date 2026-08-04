@@ -1,0 +1,19 @@
+{
+  "format": "calipar-demo-workspace",
+  "schemaVersion": 2,
+  "seedVersion": 1,
+  "appVersion": "future-test",
+  "exportedAt": "2026-07-29T20:00:00.000Z",
+  "data": {
+    "organizations": [],
+    "strategicInitiatives": [],
+    "reviews": [],
+    "actionPlans": [],
+    "resourceRequests": [],
+    "analyticsSnapshots": [],
+    "activities": [],
+    "preferences": [],
+    "chatThreads": [],
+    "chatMessages": []
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "gen-eval-analyze-flood-evidence",
+  "model": "google/gemma-3-27b-it:free",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"insufficientData\": false, \"summary\": \"Course success was 812 of 1,004 attempted.\", \"strengths\": [], \"concerns\": [], \"recommendations\": [], \"evidenceIds\": [\"invented-0\", \"invented-1\", \"invented-2\", \"invented-3\", \"invented-4\", \"invented-5\", \"invented-6\", \"invented-7\", \"invented-8\", \"invented-9\", \"invented-10\", \"invented-11\", \"invented-12\", \"invented-13\", \"invented-14\", \"invented-15\", \"invented-16\", \"invented-17\", \"invented-18\", \"invented-19\", \"invented-20\"]}"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 90,
+    "completion_tokens": 40,
+    "total_tokens": 130,
+    "cost": 0
+  }
+}

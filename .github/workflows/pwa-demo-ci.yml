@@ -1,0 +1,143 @@
+name: CALIPAR PWA demo
+
+on:
+  pull_request:
+    paths:
+      - "calipar_pwa_demo/**"
+      - ".github/workflows/pwa-demo-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "calipar_pwa_demo/**"
+      - ".github/workflows/pwa-demo-ci.yml"
+  workflow_dispatch:
+    inputs:
+      cloudflare_dry_run:
+        description: "Run authenticated Cloudflare bundle validation"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: calipar-pwa-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: calipar_pwa_demo
+
+jobs:
+  verify:
+    name: Build, test, and evaluate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: calipar_pwa_demo/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Install browser engines
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint with zero warnings
+        run: npm run lint
+
+      - name: Unit and integration coverage
+        run: npm run test:unit
+
+      - name: Worker coverage
+        run: npm run test:worker
+
+      - name: AI evaluation harness
+        run: npm run test:eval
+
+      - name: Static export and Serwist precache
+        run: npm run build
+
+      - name: Inspect deploy artifacts
+        run: |
+          npm run verify:artifacts
+          npm run cloudflare:limits
+
+      - name: Browser workflows
+        run: npm run test:e2e
+
+      - name: Accessibility workflows
+        run: npm run test:a11y
+
+      # Lighthouse is deliberately NOT a CI step.
+      #
+      # It measures performance, and a shared GitHub runner's performance
+      # numbers are noise: locally, one collection produced 0.65 and 0.85 for
+      # the same URL in the same run, purely from host load. A gate that fails
+      # for reasons unrelated to the change teaches people to ignore red, which
+      # costs more than the gate is worth.
+      #
+      # It remains a release gate, run locally on a quiet host (check `uptime`
+      # first) through `npm run verify:full`. HANDOFF.md records the measured
+      # per-audit state, and lighthouserc.cjs records the justification for each
+      # individually disabled audit. The preset and the four category budgets
+      # are untouched.
+
+      - name: Preserve evaluation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: calipar-pwa-evidence-${{ github.run_id }}
+          # Everything lands under test-results/ — vitest coverage, the
+          # Playwright HTML report, Lighthouse. The old paths (coverage/,
+          # playwright-report/) have never existed, so this upload was silently
+          # dropping the very evidence it was added to preserve.
+          path: calipar_pwa_demo/test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  cloudflare-dry-run:
+    name: Authenticated Cloudflare dry run
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      inputs.cloudflare_dry_run == true
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: calipar-pwa-release
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: calipar_pwa_demo/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Rebuild exact artifacts
+        run: npm run build
+
+      - name: Validate authenticated Worker bundle
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run cloudflare:dry-run

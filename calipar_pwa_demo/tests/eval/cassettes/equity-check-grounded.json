@@ -1,0 +1,15 @@
+{
+  "id": "gen-eval-equity-check-grounded",
+  "model": "google/gemma-3-27b-it:free",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"insufficientData\":false,\"findings\":[\"The supplied snapshot reports 812 successful of 1,004 attempted.\"],\"gaps\":[\"No disaggregation by student group was supplied, so no equity gap can be stated.\"],\"recommendations\":[\"Supply the disaggregated counts before drawing an equity conclusion.\"],\"evidenceIds\":[\"analytics-biology-2025\"]}"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": { "prompt_tokens": 85, "completion_tokens": 50, "total_tokens": 135, "cost": 0 }
+}

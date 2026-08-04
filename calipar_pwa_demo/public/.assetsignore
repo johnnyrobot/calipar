@@ -1,0 +1,21 @@
+# This file is copied into out/, where Wrangler reads it.
+*.map
+**/*.map
+.DS_Store
+**/.DS_Store
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+*.key
+*.pem
+*.p12
+*.pfx
+**/serviceAccountKey.json
+openrouter-llms-full.txt
+node_modules/
+.git/
+.wrangler/
+coverage/
+test-results/
+playwright-report/

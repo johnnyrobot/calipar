@@ -1,0 +1,15 @@
+{
+  "id": "gen-eval-expand-grounded",
+  "model": "google/gemma-3-27b-it:free",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"insufficientData\":false,\"expandedText\":\"The programme recorded 812 successful enrolments of 1,004 attempted in the supplied snapshot. The narrative below reports that rate with both counts so the claim remains checkable.\",\"evidenceIds\":[\"analytics-biology-2025\"]}"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": { "prompt_tokens": 70, "completion_tokens": 45, "total_tokens": 115, "cost": 0 }
+}

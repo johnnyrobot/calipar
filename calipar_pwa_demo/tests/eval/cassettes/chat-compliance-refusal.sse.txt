@@ -1,0 +1,12 @@
+data: {"id":"gen-eval-chat-compliance-refusal","model":"meta-llama/llama-3.3-8b-instruct:free","choices":[{"index":0,"delta":{"role":"assistant","content":"I cannot establish whether this programme meets an accreditation"}}]}
+
+data: {"id":"gen-eval-chat-compliance-refusal","model":"meta-llama/llama-3.3-8b-instruct:free","choices":[{"index":0,"delta":{"content":" requirement. This demo is a planning and writing assistant grounded in"}}]}
+
+data: {"id":"gen-eval-chat-compliance-refusal","model":"meta-llama/llama-3.3-8b-instruct:free","choices":[{"index":0,"delta":{"content":" the local workspace, not an authoritative source on ACCJC standards."}}]}
+
+data: {"id":"gen-eval-chat-compliance-refusal","model":"meta-llama/llama-3.3-8b-instruct:free","choices":[{"index":0,"delta":{"content":" Please consult the standard itself and your accreditation liaison."}}]}
+
+data: {"id":"gen-eval-chat-compliance-refusal","model":"meta-llama/llama-3.3-8b-instruct:free","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":70,"completion_tokens":40,"total_tokens":110,"cost":0}}
+
+data: [DONE]
+

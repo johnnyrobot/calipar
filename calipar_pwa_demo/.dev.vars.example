@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local `wrangler dev`; never commit .dev.vars.
+OPENROUTER_API_KEY=replace-with-a-dedicated-free-only-openrouter-key
+AI_SESSION_SECRET=replace-with-at-least-32-random-bytes
+TURNSTILE_SECRET_KEY=replace-with-a-cloudflare-turnstile-test-secret
+TURNSTILE_SITE_KEY=replace-with-a-cloudflare-turnstile-test-site-key

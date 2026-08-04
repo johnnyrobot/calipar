@@ -1,0 +1,15 @@
+{
+  "id": "gen-eval-socratic-grounded",
+  "model": "google/gemma-3-27b-it:free",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"insufficientData\":false,\"question\":\"What would you need to see across more than one year before treating this as a trend?\",\"rationale\":\"A single snapshot cannot distinguish a trend from ordinary variation.\",\"evidenceIds\":[]}"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": { "prompt_tokens": 55, "completion_tokens": 35, "total_tokens": 90, "cost": 0 }
+}
