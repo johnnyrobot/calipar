@@ -10,6 +10,7 @@ import {
   type ExpandRequest,
   type SocraticRequest,
 } from "../lib/ai/contracts";
+import { BodyInvalid, BodyTooLarge, readBoundedJson } from "./body";
 import { enforceMintLimits, enforceTaskLimits, LimitExceeded } from "./limits";
 
 export interface RateLimitBinding {
@@ -131,48 +132,21 @@ function isObject(value: unknown): value is JsonRecord {
 }
 
 async function readJsonBody(request: Request): Promise<JsonRecord> {
-  const type = request.headers.get("Content-Type")?.toLowerCase() ?? "";
-  if (!type.startsWith("application/json")) {
-    throw new ApiError(
-      "AI_VALIDATION_FAILED",
-      415,
-      "Content-Type must be application/json.",
-    );
-  }
-  const declaredLength = Number(request.headers.get("Content-Length") ?? "0");
-  if (declaredLength > AI_LIMITS.bodyBytes) {
-    throw new ApiError(
-      "AI_VALIDATION_FAILED",
-      413,
-      "The AI request is too large.",
-    );
-  }
-  const text = await request.text();
-  if (encoder.encode(text).byteLength > AI_LIMITS.bodyBytes) {
-    throw new ApiError(
-      "AI_VALIDATION_FAILED",
-      413,
-      "The AI request is too large.",
-    );
-  }
-  let value: unknown;
   try {
-    value = JSON.parse(text);
-  } catch {
+    return await readBoundedJson(request, AI_LIMITS.bodyBytes);
+  } catch (error) {
+    if (error instanceof BodyTooLarge) {
+      throw new ApiError("AI_VALIDATION_FAILED", 413, error.message);
+    }
+    if (error instanceof BodyInvalid) {
+      throw new ApiError("AI_VALIDATION_FAILED", error.status, error.message);
+    }
     throw new ApiError(
       "AI_VALIDATION_FAILED",
       400,
-      "The request body is not valid JSON.",
+      "The request body could not be read.",
     );
   }
-  if (!isObject(value)) {
-    throw new ApiError(
-      "AI_VALIDATION_FAILED",
-      400,
-      "The request body must be a JSON object.",
-    );
-  }
-  return value;
 }
 
 function boundedString(
