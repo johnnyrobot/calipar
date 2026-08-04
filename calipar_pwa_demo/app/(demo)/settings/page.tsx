@@ -128,7 +128,8 @@ export default function SettingsPage() {
           <div className="settings-actions">
             <button className="button button-primary" data-testid="settings-export" type="button" onClick={() => void exportData()}><Icon name="download" /> Export workspace</button>
             <button className="button button-ghost" type="button" onClick={() => fileRef.current?.click()}><Icon name="upload" /> Import workspace</button>
-            <input ref={fileRef} accept="application/json,.json" className="sr-only" data-testid="settings-import" type="file" onChange={(event) => void selectImport(event)} />
+            <label className="sr-only" htmlFor="settings-import-file">Import workspace from a JSON backup file</label>
+            <input ref={fileRef} accept="application/json,.json" className="sr-only" data-testid="settings-import" id="settings-import-file" type="file" onChange={(event) => void selectImport(event)} />
           </div>
         </article>
         <article className="settings-card">

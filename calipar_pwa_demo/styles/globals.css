@@ -5,22 +5,26 @@
 :root {
   --ink: #102f3d;
   --ink-deep: #07232f;
-  --sea: #0b6e75;
+  /* --sea, --muted and --warning carry text at 7-11px; each is tuned to clear
+     WCAG AA 4.5:1 on the lightest surface it lands on. Lightening any of them
+     re-breaks tests/a11y. Recompute before changing. */
+  --sea: #0b6970;
   --sea-bright: #159196;
   --tide: #68b8b0;
   --sea-light: #c7e5df;
   --coral: #e96752;
-  --coral-dark: #c64f3d;
+  --coral-dark: #b94f3c;
+  --coral-deep: #a3452f;
   --sand: #f5f0e5;
   --paper: #fffcf5;
   --mist: #e9f1ef;
   --gold: #d8a443;
   --white: #fff;
-  --muted: #61737a;
+  --muted: #5b6c73;
   --line: rgba(16, 47, 61, 0.14);
   --line-strong: rgba(16, 47, 61, 0.28);
   --success: #247565;
-  --warning: #9c641f;
+  --warning: #8f5c1c;
   --danger: #a4382d;
   --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   --font-sans: "Avenir Next", Avenir, "Century Gothic", Optima, sans-serif;
@@ -152,14 +156,17 @@ button {
   background: var(--sea);
 }
 
+/* White on --coral is only 3.22:1, and --ink on --coral is 4.36:1, so neither
+   text colour rescues the bright fill. The CTA takes the deep coral instead;
+   --coral stays as-is for the decorative rules, bars and dots that carry no text. */
 .button-coral {
   color: white;
-  background: var(--coral);
+  background: var(--coral-dark);
   box-shadow: 0 20px 38px -18px rgba(233, 103, 82, 0.8);
 }
 
 .button-coral:hover {
-  background: var(--coral-dark);
+  background: var(--coral-deep);
 }
 
 .button-light {
