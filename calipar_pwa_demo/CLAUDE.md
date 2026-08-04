@@ -73,9 +73,21 @@ Import/export: `exportWorkspace` emits a versioned envelope (`format`/`schemaVer
 
 ### Worker — `worker/index.ts`
 
-One file, one `fetch` handler. Non-`/api/` requests fall through to `env.ASSETS`; Cloudflare's `run_worker_first: ["/api/*"]` means static requests normally never reach it at all.
+`worker/index.ts` is the router and the `fetch` handler. Non-`/api/` requests fall through to `env.ASSETS`; Cloudflare's `run_worker_first: ["/api/*"]` means static requests normally never reach it at all.
 
-Routes: `GET /api/health`, `GET /api/ai/status` (public), then POST-only, same-origin-checked `/api/ai/session` and the five tasks `chat | analyze | expand | equity-check | socratic`. Task requests run through: `requireSession` (HMAC-signed `HttpOnly`/`Secure`/`SameSite=Strict` cookie, 30 min, minted only after Turnstile verification) → rate limit binding (5/60s) → bounded `readJsonBody` → per-task validators that clamp prompt, history, and context against `AI_LIMITS` in `lib/ai/contracts.ts`.
+Three sibling modules hold the abuse controls, each unit-tested directly without constructing a route:
+
+| File | Responsibility |
+| --- | --- |
+| `worker/limits.ts` | `clientKey` (salted SHA-256 of `CF-Connecting-IP`), `enforceTaskLimits`, `enforceMintLimits`, `LimitExceeded` |
+| `worker/body.ts` | `readBoundedJson` / `readBoundedText` — the byte ceiling enforced *during* the read, `BodyTooLarge`, `BodyInvalid` |
+| `worker/stream.ts` | `StreamBudget` / `StreamLimitExceeded` — four output ceilings the SSE relay consults on every read |
+
+They throw plain errors, never `ApiError` (which is not exported), and `index.ts` maps them onto the public `AIErrorCode` union at the boundary. That is what keeps them importable in isolation.
+
+Routes: `GET /api/health`, `GET /api/ai/status` (public), then POST-only, same-origin-checked `/api/ai/session` and the five tasks `chat | analyze | expand | equity-check | socratic`. Task requests run through: `requireSession` (HMAC-signed `HttpOnly`/`Secure`/`SameSite=Strict` cookie, 30 min, minted only after Turnstile verification) → `enforceTaskLimits` → bounded `readJsonBody` → per-task validators that clamp prompt, history, and context against `AI_LIMITS` in `lib/ai/contracts.ts`.
+
+**The rate limit is two-tier, and the tiers do different jobs.** A session id is a `crypto.randomUUID()` the caller mints at will, so a per-session limit is fairness, not a ceiling. `AI_IP_LIMITER` (20/60s, keyed on `clientKey`) is the abuse bound; `AI_RATE_LIMITER` (5/60s, keyed on the session) sits under it; `AI_MINT_LIMITER` (2/60s) bounds minting itself and runs as the first statement of `createSession`, before the body read and before Turnstile is contacted. Cloudflare's native limiter is the only stateful primitive available here and its `period` accepts **only 10 or 60 seconds** — no longer window is expressible, so there is no daily budget. Without `CF-Connecting-IP` every caller shares one bucket: the ceiling degrades to global rather than disappearing.
 
 The Worker **constructs** the upstream call; the browser cannot influence it. `openRouterRequest` hard-codes `model: "openrouter/free"` plus `max_price: {prompt: 0, completion: 0, request: 0}`, `data_collection: "deny"`, `zdr: true`, and responses are re-checked (`isFreeModel`, `assertZeroReportedCost`). Chat streams typed SSE (`meta`/`delta`/`done`/`error`, parsed by `streamChat` in `lib/ai/client.ts`); structured tasks are JSON-schema-constrained and revalidated field-by-field before returning. Errors normalize to the `AIErrorCode` union — never leak upstream bodies. `lib/ai/contracts.ts` is the shared type contract between browser and Worker; change both sides together.
 

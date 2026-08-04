@@ -173,10 +173,10 @@ disclosures to make a gate pass.
 
 ## Git and generated files
 
-At the handoff captured in `HANDOFF.md`, this entire directory is untracked in
-the parent `/Users/laccd/code/calipar` repository and has no nested `.git`.
-Confirm current Git state before staging or committing; do not assume a clean
-per-file diff exists. Do not commit generated directories such as `node_modules/`,
+This directory **is tracked** in the parent `/Users/laccd/code/calipar`
+repository — first committed on 2026-07-31 in `c5d1518` — and has no nested
+`.git`. Run Git commands from the parent root. Confirm current Git state before
+staging or committing; do not assume a clean per-file diff exists. Do not commit generated directories such as `node_modules/`,
 `.next/`, `out/`, `.wrangler/`, `.lighthouseci/`, or `test-results/`.
 
 The workflow under `.github/workflows/` is a template. GitHub will not execute

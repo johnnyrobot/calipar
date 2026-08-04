@@ -69,6 +69,34 @@ The Worker exposes health/status, Turnstile session, and bounded AI task
 routes. It does not expose a generic OpenRouter relay. It has no database,
 durable state, queue, scheduled reset, or paid Cloudflare storage dependency.
 
+### Worker modules
+
+`worker/index.ts` is the router and `fetch` handler. The abuse controls live in
+three siblings, each one thing and each unit-testable without a `Request`:
+
+```text
+worker/
+├── index.ts    router, fetch handler, session, prompt construction, SSE relay
+├── limits.ts   clientKey, enforceTaskLimits, enforceMintLimits, LimitExceeded
+├── body.ts     readBoundedJson, readBoundedText, BodyTooLarge, BodyInvalid
+└── stream.ts   StreamBudget, StreamLimitExceeded
+```
+
+The three modules throw plain errors; `index.ts` maps them onto the public
+`AIErrorCode` union at the boundary. `ApiError` is deliberately not exported, so
+none of them can reach back into the router — that is what keeps them testable
+in isolation.
+
+Rate limiting is two-tier. A session id is a `crypto.randomUUID()` the caller
+mints freely, so a per-session limit bounds fairness, not abuse. `AI_IP_LIMITER`
+(20/60s) keys on a salted digest of `CF-Connecting-IP` and is the ceiling;
+`AI_RATE_LIMITER` (5/60s) keys on the session beneath it; `AI_MINT_LIMITER`
+(2/60s) bounds session minting itself, before the body read and before Turnstile
+is contacted. Cloudflare's native rate limiter is the only stateful primitive
+available and its `period` accepts **only 10 or 60 seconds**, so no long-window
+budget is expressible. When `CF-Connecting-IP` is absent every caller shares one
+bucket and the ceiling degrades to a global one rather than disappearing.
+
 ## AI request flow
 
 1. The user acknowledges the AI disclosure and completes managed Turnstile.
@@ -80,8 +108,11 @@ durable state, queue, scheduled reset, or paid Cloudflare storage dependency.
    history length, and context limits.
 5. The Worker adds its own system prompt and free/privacy provider policy, then
    calls OpenRouter.
-6. Structured replies are schema-validated. Streaming replies use typed SSE
-   events and do not retry after output begins.
+6. Structured replies are schema-validated, read under a byte ceiling, and
+   bounded per field, per item, and per item count. Streaming replies use typed
+   SSE events, do not retry after output begins, and are cut off by
+   `StreamBudget` if the provider exceeds the aggregate byte, single-line,
+   event-count, or wall-clock ceiling.
 7. The browser stores accepted generated review content or local chat history
    in IndexedDB.
 
