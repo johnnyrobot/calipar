@@ -1,0 +1,15 @@
+{
+  "id": "gen-eval-analyze-invented-evidence",
+  "model": "google/gemma-3-27b-it:free",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"insufficientData\":false,\"summary\":\"Course success was 812 of 1,004 attempted enrolments.\",\"strengths\":[\"Both counts were supplied.\"],\"concerns\":[],\"recommendations\":[\"Continue monitoring.\"],\"evidenceIds\":[\"analytics-biology-2025\",\"admin-override\",\"does-not-exist\"]}"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": { "prompt_tokens": 90, "completion_tokens": 40, "total_tokens": 130, "cost": 0 }
+}

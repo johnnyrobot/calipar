@@ -1,0 +1,15 @@
+{
+  "id": "gen-eval-analyze-insufficient",
+  "model": "google/gemma-3-27b-it:free",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"insufficientData\":true,\"summary\":\"No analytics snapshot was supplied, so no rate can be reported.\",\"strengths\":[],\"concerns\":[\"The narrative refers to outcomes that were not provided as evidence.\"],\"recommendations\":[\"Attach the analytics snapshot for the year in question.\"],\"evidenceIds\":[]}"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": { "prompt_tokens": 60, "completion_tokens": 30, "total_tokens": 90, "cost": 0 }
+}
