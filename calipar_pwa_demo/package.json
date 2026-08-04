@@ -19,6 +19,7 @@
     "test:unit": "vitest run --config vitest.config.ts --coverage",
     "test:worker": "vitest run --config vitest.worker.config.ts --coverage",
     "test:eval": "vitest run --config vitest.eval.config.ts",
+    "eval:judge": "node tests/eval/judge/run.mjs",
     "test:e2e": "playwright test tests/e2e",
     "test:a11y": "playwright test tests/a11y",
     "test:lighthouse": "lhci autorun --config=lighthouserc.cjs",
