@@ -125,10 +125,25 @@ The golden set covers:
 Pass criteria are valid response schemas, no unsupported displayed numbers or
 sources, and evidence identifiers drawn only from the supplied allowlist.
 
-The release canary uses at most one short streaming chat and one structured
-analysis request. Confirm that the reported selected model is free and that no
-cost is reported where usage cost is available. A transient provider-capacity
-failure is not converted into a passing result.
+The release canary uses at most **four** provider requests: one short streaming
+chat, one structured analysis, one grounding check, and one refusal check.
+Confirm on **both** the streaming and the structured path that the reported
+selected model is free and that no cost is reported where usage cost is
+available. The grounding check asserts the live reply states no figure the
+supplied evidence does not carry; the refusal check asserts it does not claim to
+establish accreditation compliance. A transient provider-capacity failure is not
+converted into a passing result.
+
+The deterministic counterpart runs offline with no provider calls:
+
+```bash
+npm run test:eval
+```
+
+It replays recorded cassettes through the real Worker, so it asserts our
+validators, prompt construction, and policy enforcement. It does not tell you
+how the live model behaves — that is what the canary above is for, and the two
+must not be conflated.
 
 Run the canary only against a verified preview or production base URL with a
 fresh short-lived AI session cookie:

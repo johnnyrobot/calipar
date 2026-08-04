@@ -2,16 +2,10 @@ import { readFile } from "node:fs/promises";
 import { vi } from "vitest";
 
 import { handleRequest, type Env, type RateLimitBinding } from "../../worker/index";
+import { EVAL_SECRETS } from "./assertions";
 
 const ORIGIN = "https://calipar.example";
-const SECRET = "eval-session-secret-that-is-longer-than-32-characters";
-
-/** Values the harness configures, so an eval can prove none of them leak out. */
-export const EVAL_SECRETS = [
-  "eval-openrouter-key",
-  SECRET,
-  "eval-turnstile-secret",
-] as const;
+const [OPENROUTER_KEY, SECRET, TURNSTILE_SECRET] = EVAL_SECRETS;
 
 export type EvalTask = "chat" | "analyze" | "expand" | "equity-check" | "socratic";
 
@@ -36,8 +30,8 @@ function limiter(): RateLimitBinding {
 
 function evalEnv(): Env {
   return {
-    OPENROUTER_API_KEY: "eval-openrouter-key",
-    TURNSTILE_SECRET_KEY: "eval-turnstile-secret",
+    OPENROUTER_API_KEY: OPENROUTER_KEY,
+    TURNSTILE_SECRET_KEY: TURNSTILE_SECRET,
     TURNSTILE_SITE_KEY: "eval-turnstile-site",
     AI_SESSION_SECRET: SECRET,
     AI_RATE_LIMITER: limiter(),

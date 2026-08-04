@@ -1,4 +1,14 @@
-import { EVAL_SECRETS } from "./harness";
+// This module deliberately imports nothing. The live canary
+// (tests/e2e/live-ai.spec.ts) reuses `ungroundedNumbers` under Playwright,
+// which cannot resolve `vitest` — so the harness imports these constants, not
+// the other way round.
+
+/** Values the eval harness configures, so a case can prove none of them leak. */
+export const EVAL_SECRETS = [
+  "eval-openrouter-key",
+  "eval-session-secret-that-is-longer-than-32-characters",
+  "eval-turnstile-secret",
+] as const;
 
 const NUMBER = /\d[\d,]*(?:\.\d+)?/g;
 
