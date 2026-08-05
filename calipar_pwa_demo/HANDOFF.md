@@ -53,6 +53,22 @@ are:
    disposition” — but a fresh scan against the release commit is still owed.
 5. No authenticated Cloudflare preview, live OpenRouter canary, promotion, or
    production smoke test has been completed or verified in this handoff.
+   **Phase D partially advanced 2026-08-04, then blocked.** Done: Step 1
+   (`noindex`/`robots.txt`, with the forced Lighthouse SEO consequence recorded
+   in `lighthouserc.cjs`), Step 2 (clean `npm ci` + `verify:full` on Node 22 —
+   every stage green except the two known Lighthouse audits), and the CLI-
+   readable half of Step 3 (authenticated session with `workers (write)`;
+   `calipar-pwa-demo` confirmed **not to exist**, so no overwrite risk and the
+   two-phase new-Worker flow applies).
+
+   **Blocked at Step 4 and cannot proceed without the operator.** The four
+   secrets must be created interactively by a human — the OpenRouter key does
+   not exist yet and must be minted at the provider and restricted there to free
+   routing and zero cost, and the Turnstile pair must be created in the
+   Cloudflare dashboard. Steps 5–10 all depend on those secrets existing, and
+   the Workers Free plan check is a dashboard confirmation with no CLI
+   equivalent. No agent can complete Phase D unattended; this is by design, not
+   an obstacle to route around.
 6. ~~One genuine WCAG 2.5.3 brand-link defect the axe suite was blind to.~~
    **Resolved 2026-08-04** in `cedf2fd`. Both causes are closed: the axe tag list
    now includes `wcag21a`/`wcag22a` and explicitly enables
