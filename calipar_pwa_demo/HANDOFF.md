@@ -60,17 +60,29 @@ are:
    so its accessible name contains its visible text. `npm run test:a11y` passes
    12/12, up from 11 — `/reviews/editor/` was added to the sweep, having been
    required by both artifact verifiers but never checked for accessibility.
-7. **CI now runs, and its first run found a real defect.** `pwa-demo-ci.yml`
-   moved to the parent repository root and fired for the first time on PR #1
-   (run `30956933461`, 2026-08-04). It failed at `test:unit` with
-   `webidl.util.markAsUncloneable is not a function` — **all 12 jsdom test files
-   failed to start their workers on Node 20**, because `jsdom@30` depends on
-   `undici@8`, which declares `engines: node >=22.19.0`. The `engines` floor of
-   `>=20.9.0` was simply false, and no local run could have caught it: every
-   local check had been on Node 22.23.0. Engines and both CI jobs are corrected
-   to Node 22. **This is exactly the class of thing "a green local run is not
-   evidence CI works" was pointing at.** Status is still not green — awaiting the
-   re-run.
+7. ~~CI has never been observed running on GitHub.~~ **Resolved 2026-08-04.**
+   `pwa-demo-ci.yml` moved to the parent repository root and fired for the first
+   time on PR #1 (run `30956933461`). That first run found a real defect: it
+   failed at `test:unit` with `webidl.util.markAsUncloneable is not a function`
+   — **all 12 jsdom test files failed to start their workers on Node 20**,
+   because `jsdom@30` depends on `undici@8`, which declares
+   `engines: node >=22.19.0`. The `engines` floor of `>=20.9.0` was simply
+   false, and no local run could have caught it: every local check had been on
+   Node 22.23.0. Engines and both CI jobs are corrected to Node 22. **This is
+   exactly the class of thing "a green local run is not evidence CI works" was
+   pointing at.** CI is now **green on `main`**: run `30958654379`
+   ("CALIPAR PWA demo") against `1f78dc4`, 2026-08-04T23:03Z, conclusion
+   `success`.
+
+   **What green CI does and does not cover.** The passing job is
+   `Build, test, and evaluate` — typecheck, lint, unit, worker, eval, build,
+   artifact verification. The second job, `Authenticated Cloudflare dry run`,
+   was **skipped** (it requires credentials absent on this trigger). Lighthouse
+   was deliberately removed from CI on 2026-08-04, and the browser suites are
+   not in it either. **Green CI is therefore a subset of `npm run verify:full`,
+   which remains the release gate and has not been run against `1f78dc4` on a
+   clean `npm ci`.** Do not read the green badge as release readiness; blockers
+   2, 4, and 5 are untouched by it.
 
 Do not describe this build as launched, production-ready, fully accessible, or
 security-cleared until those gates are closed with fresh evidence.
