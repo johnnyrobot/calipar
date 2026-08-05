@@ -786,7 +786,7 @@ async function streamChat(
   const context = input.context ?? [];
   const upstream = await openRouterRequest(request, env, {
     stream: true,
-    max_tokens: 700,
+    max_tokens: AI_LIMITS.chatMaxTokens,
     messages: [
       { role: "system", content: SYSTEM_BASE },
       ...(input.history ?? []),

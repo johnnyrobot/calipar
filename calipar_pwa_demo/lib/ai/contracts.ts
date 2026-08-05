@@ -2,10 +2,21 @@ export const AI_LIMITS = {
   bodyBytes: 64 * 1024,
   promptCharacters: 4_000,
   historyMessages: 10,
-  historyMessageCharacters: 2_000,
+  // MUST stay above `chatMaxTokens * WORST_CASE_CHARS_PER_TOKEN`, and there is
+  // a test pinning that. A reply the Worker generates is stored and then sent
+  // back as history on the next turn, so a ceiling below what generation can
+  // emit makes a thread reject its own output: every subsequent send fails
+  // AI_VALIDATION_FAILED, and because sending is what would eventually push the
+  // offending message out of the client's last-8 window, it can never age out.
+  // The thread stays dead until the workspace is reset. Was 2_000 against a
+  // 700-token cap (~2,800 chars), so this was reachable in ordinary use.
+  historyMessageCharacters: 3_000,
   contextCharacters: 12_000,
   contextRecords: 6,
-  // Output ceilings. Legitimate replies are capped upstream at max_tokens 700
+  // Generation cap for chat. Lives here rather than as a literal in the Worker
+  // because `historyMessageCharacters` is derived from it — see above.
+  chatMaxTokens: 700,
+  // Output ceilings. Legitimate replies are capped upstream at `chatMaxTokens`
   // (a few KiB); these bound a hostile or broken provider, per AGENTS.md:126-128.
   streamBytes: 256 * 1024,
   streamLineCharacters: 64 * 1024,
