@@ -1,0 +1,12 @@
+# CALIPAR demo — unlisted public beta.
+#
+# This is a no-login demonstration build, not the product. It is meant to be
+# reachable by anyone holding the link and findable by no one else, so search
+# indexing is refused wholesale rather than per-path.
+#
+# Paired with `robots: { index: false, follow: false }` in app/layout.tsx.
+# robots.txt alone does not prevent indexing — a crawler that reaches the page
+# by a link can still list it — so the meta tag is the load-bearing half and
+# this file is the polite half. REMOVE BOTH AT GA.
+User-agent: *
+Disallow: /

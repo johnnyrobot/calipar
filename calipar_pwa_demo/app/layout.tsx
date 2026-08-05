@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   },
   description:
     "A browser-local demonstration of CALIPAR program review and integrated planning.",
+  // Unlisted public beta: reachable by link, findable by no one. This is the
+  // load-bearing half of the pair — public/robots.txt only asks politely, and a
+  // crawler arriving via an inbound link can index a page regardless of it.
+  // REMOVE BOTH AT GA.
+  robots: { index: false, follow: false },
   applicationName: "CALIPAR Demo",
   appleWebApp: {
     capable: true,
