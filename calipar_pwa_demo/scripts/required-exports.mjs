@@ -15,6 +15,10 @@ export const REQUIRED_EXPORTS = [
   ".assetsignore",
   "_headers",
 
+  // Unlisted-beta indexing refusal. Required so a build that silently drops it
+  // fails the gate rather than quietly becoming indexable. REMOVE AT GA.
+  "robots.txt",
+
   // Route shells. Every one of these is also a row in tests/a11y/routes.spec.ts.
   "index.html",
   "404.html",
