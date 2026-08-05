@@ -650,15 +650,24 @@ async function openRouterRequest(
       "The AI provider is not configured.",
     );
   }
+  // Spread the caller's payload FIRST so the free-model and zero-cost/privacy
+  // guarantees are written last and cannot be overridden. The previous ordering
+  // put `model` before `...payload` and the caller's `provider` after the
+  // invariants, so any future passthrough field would have silently inverted
+  // both. Nothing exploited that — every call site is worker-authored — but the
+  // response-side checks (`isFreeModel`, `assertZeroReportedCost`) only catch a
+  // breach *after* the request is billed, so the request must be correct by
+  // construction rather than by convention.
+  const { provider: callerProvider, ...rest } = payload;
   const body = JSON.stringify({
+    ...rest,
     model: "openrouter/free",
-    ...payload,
     provider: {
+      ...(isObject(callerProvider) ? callerProvider : {}),
       allow_fallbacks: true,
       max_price: { prompt: 0, completion: 0, request: 0 },
       data_collection: "deny",
       zdr: true,
-      ...(isObject(payload.provider) ? payload.provider : {}),
     },
   });
   const upstreamSignal = AbortSignal.any([
@@ -777,7 +786,7 @@ async function streamChat(
   const context = input.context ?? [];
   const upstream = await openRouterRequest(request, env, {
     stream: true,
-    max_tokens: 700,
+    max_tokens: AI_LIMITS.chatMaxTokens,
     messages: [
       { role: "system", content: SYSTEM_BASE },
       ...(input.history ?? []),

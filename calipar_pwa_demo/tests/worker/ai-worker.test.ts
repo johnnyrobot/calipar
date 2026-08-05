@@ -256,6 +256,76 @@ describe("CALIPAR AI Worker", () => {
     expect(String(init?.headers)).not.toContain("test-openrouter-key");
   });
 
+  it("ignores caller-supplied model and provider overrides", async () => {
+    // Pins the VALIDATOR boundary: `validateStructured` rebuilds a fresh object
+    // field-by-field, so `model`/`provider` in a caller's body never reach the
+    // upstream payload. That is the property with an attacker on the other end,
+    // and it is what this test protects.
+    //
+    // It deliberately does NOT prove the merge ordering in `openRouterRequest`.
+    // Measured: this test passes under both the old and new ordering, because
+    // nothing caller-controlled reaches the spread. The ordering fix is
+    // defense-in-depth for a future passthrough field and is not observable
+    // through the public surface — so do not read a pass here as covering it.
+    // `require_parameters` is asserted to catch the merge dropping a
+    // worker-authored provider field.
+    const targetEnv = env();
+    const cookie = await createCookie(targetEnv);
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          model: "google/gemma-3-27b-it:free",
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  summary: "Enrollment improved.",
+                  strengths: ["Clear trend"],
+                  concerns: [],
+                  recommendations: ["Continue monitoring"],
+                  insufficientData: false,
+                  evidenceIds: ["metric-1"],
+                }),
+              },
+            },
+          ],
+        }),
+        { headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    const response = await handleRequest(
+      request("/api/ai/analyze", {
+        method: "POST",
+        headers: { Cookie: cookie },
+        body: JSON.stringify({
+          content: "Enrollment improved according to the supplied metric.",
+          evidence: [
+            { id: "metric-1", title: "Enrollment", text: "Change: 4.2%" },
+          ],
+          model: "paid/expensive-model",
+          provider: {
+            max_price: { prompt: 999, completion: 999, request: 999 },
+            data_collection: "allow",
+            zdr: false,
+          },
+        }),
+      }),
+      targetEnv,
+    );
+    expect(response.status).toBe(200);
+
+    const [, init] = vi.mocked(fetch).mock.calls[1]!;
+    const body = JSON.parse(String(init?.body));
+    expect(body.model).toBe("openrouter/free");
+    expect(body.provider).toMatchObject({
+      max_price: { prompt: 0, completion: 0, request: 0 },
+      data_collection: "deny",
+      zdr: true,
+      require_parameters: true,
+    });
+  });
+
   it("rejects a structured response from a non-free model", async () => {
     const targetEnv = env();
     const cookie = await createCookie(targetEnv);

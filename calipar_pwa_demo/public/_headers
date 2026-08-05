@@ -1,5 +1,11 @@
+# No Cache-Control here on purpose. Cloudflare APPENDS headers from every
+# matching rule rather than letting the more specific one win, so a
+# Cache-Control on /* was concatenated onto /_next/static/*, which served
+# "max-age=0, must-revalidate, public, max-age=31536000, immutable". Clients
+# honour the first directive, so the immutable year-long caching was dead.
+# Documents still get "public, max-age=0, must-revalidate" — that is the
+# Workers static-asset default for HTML, measured, not assumed.
 /*
-  Cache-Control: public, max-age=0, must-revalidate
   Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:; manifest-src 'self'
   Cross-Origin-Opener-Policy: same-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()

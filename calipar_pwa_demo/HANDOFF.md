@@ -60,17 +60,29 @@ are:
    so its accessible name contains its visible text. `npm run test:a11y` passes
    12/12, up from 11 — `/reviews/editor/` was added to the sweep, having been
    required by both artifact verifiers but never checked for accessibility.
-7. **CI now runs, and its first run found a real defect.** `pwa-demo-ci.yml`
-   moved to the parent repository root and fired for the first time on PR #1
-   (run `30956933461`, 2026-08-04). It failed at `test:unit` with
-   `webidl.util.markAsUncloneable is not a function` — **all 12 jsdom test files
-   failed to start their workers on Node 20**, because `jsdom@30` depends on
-   `undici@8`, which declares `engines: node >=22.19.0`. The `engines` floor of
-   `>=20.9.0` was simply false, and no local run could have caught it: every
-   local check had been on Node 22.23.0. Engines and both CI jobs are corrected
-   to Node 22. **This is exactly the class of thing "a green local run is not
-   evidence CI works" was pointing at.** Status is still not green — awaiting the
-   re-run.
+7. ~~CI has never been observed running on GitHub.~~ **Resolved 2026-08-04.**
+   `pwa-demo-ci.yml` moved to the parent repository root and fired for the first
+   time on PR #1 (run `30956933461`). That first run found a real defect: it
+   failed at `test:unit` with `webidl.util.markAsUncloneable is not a function`
+   — **all 12 jsdom test files failed to start their workers on Node 20**,
+   because `jsdom@30` depends on `undici@8`, which declares
+   `engines: node >=22.19.0`. The `engines` floor of `>=20.9.0` was simply
+   false, and no local run could have caught it: every local check had been on
+   Node 22.23.0. Engines and both CI jobs are corrected to Node 22. **This is
+   exactly the class of thing "a green local run is not evidence CI works" was
+   pointing at.** CI is now **green on `main`**: run `30958654379`
+   ("CALIPAR PWA demo") against `1f78dc4`, 2026-08-04T23:03Z, conclusion
+   `success`.
+
+   **What green CI does and does not cover.** The passing job is
+   `Build, test, and evaluate` — typecheck, lint, unit, worker, eval, build,
+   artifact verification. The second job, `Authenticated Cloudflare dry run`,
+   was **skipped** (it requires credentials absent on this trigger). Lighthouse
+   was deliberately removed from CI on 2026-08-04, and the browser suites are
+   not in it either. **Green CI is therefore a subset of `npm run verify:full`,
+   which remains the release gate and has not been run against `1f78dc4` on a
+   clean `npm ci`.** Do not read the green badge as release readiness; blockers
+   2, 4, and 5 are untouched by it.
 
 Do not describe this build as launched, production-ready, fully accessible, or
 security-cleared until those gates are closed with fresh evidence.
@@ -629,6 +641,74 @@ Missing write-ups authorized for direct main-agent completion:
 2. `unbounded-structured-ai-output/unbounded-structured-ai-output.md`; a
    partial test file exists, but the report and a verified portable PoC bundle
    still need to be finished.
+
+#### Full-package review pass against the release commit, 2026-08-04
+
+**This is a review pass, not a sealed scan, and it does not close blocker 4.**
+The Codex Security tool was unavailable again in this session, so scan
+`a68f98b4-…` was not loaded, finalized, or confirmed alive. Nothing below was
+produced by it.
+
+Scope was the package as shipped at `1f78dc4`, split across four trust
+boundaries — Worker (`worker/*.ts`, `wrangler.jsonc`), AI contract and browser
+client (`lib/ai/`, every AI render site), browser data layer (`sanitize.ts`,
+`repository.ts`, import/export), and build/deploy/delivery (`_headers`,
+`app/sw.ts`, `scripts/`). The two already-open findings were carried in as
+exclusions rather than re-derived.
+
+**Result: zero vulnerabilities at the >80% exploitability bar.** Several
+defenses are stronger than previously documented:
+
+- **Session/HMAC** — the MAC covers a single base64url'd JSON document, so
+  there are no concatenated fields for a crafted `sid` to shift; `sid` is always
+  `crypto.randomUUID()` and never caller-supplied, so there is no signing
+  oracle; `crypto.subtle.verify`, not a hand-rolled compare; expiry is checked
+  after verification on the server clock, with a type guard so a string `exp`
+  is rejected rather than coerced.
+- **Same-origin** — exact equality, not prefix/suffix; a missing `Origin` and a
+  literal `"null"` are both rejected; applied before route dispatch so it covers
+  every state-changing route; no CORS headers are emitted anywhere, so the two
+  public GET routes are not cross-origin readable either.
+- **Error normalization is total** — every client-visible message is a literal.
+  No catch stringifies an exception, and no error path reads an upstream body.
+- **No SSRF of any kind**, not even path-only: both upstream URLs are module
+  constants. `URL.pathname` does not percent-decode, so `/api/ai/%63hat` 404s
+  rather than aliasing into a task route.
+- **Stored XSS is structurally impossible, not merely sanitized.** The package
+  contains exactly one HTML sink — `sanitize.ts:50`, inside `plainTextFromHtml`
+  — and it is fed DOMPurify output then read back only as `textContent`.
+  `contentHtml` never reaches the DOM as HTML; it renders via
+  `plainTextFromHtml` into a `<textarea value=>`. There is no
+  `dangerouslySetInnerHTML` anywhere and `react-markdown` is imported nowhere.
+- **The severe one that wasn't** — Serwist's `cacheId` is `"calipar-demo"` and
+  the Dexie database is *also* `calipar-demo`. Checked specifically: no
+  collision. `cacheId` prefixes Cache Storage only, and Serwist's own IDB names
+  are `serwist-expiration`/`serwist-background-sync`. A SW update cannot destroy
+  workspace data.
+
+**Three non-security defects surfaced. Two are fixed on this branch:**
+
+1. *Chat threads permanently rejected their own replies* —
+   `historyMessageCharacters` 2,000 against a 700-token (~2,800 char) cap.
+   Fixed; `chatMaxTokens` moved into `AI_LIMITS` and the coupling is now pinned
+   by `tests/unit/ai/contracts.test.ts`.
+2. *Immutable asset caching was dead* — Cloudflare appends `_headers` rules, so
+   `/*` concatenated onto `/_next/static/*`. Fixed.
+3. *Secret-scan coverage is narrower than it reads* — **not fixed, still open.**
+   `scripts/verify/artifacts.mjs:59-66` has no Cloudflare-token pattern; the
+   `textExtensions` filter at `:58` excludes `.svg` and cannot match
+   extensionless files, so `out/_headers` and `out/.assetsignore` are guaranteed
+   to ship and guaranteed not to be scanned. Sharper still: the patterns at
+   `:63-65` key on *variable names*, but Next inlines `NEXT_PUBLIC_*` and
+   deletes the name, so they cannot fire on the most realistic leak shape — only
+   the two shape-based patterns (`:60`, `:61`) survive minification. No live
+   exposure: an independent grep over `out/` returns zero files.
+
+**Coverage gaps — do not read this as exhaustive.** `repository.ts` (826 lines)
+had only its sanitization paths traced, not its full logic; the import
+referential-integrity path is unreviewed; the `analyze`/`equity-check`/
+`socratic` tasks have no UI consumer at all, which shrank the render surface
+actually examined. A sealed scan against the release commit is still owed.
 
 ### Snapshot/finalization hazard
 
