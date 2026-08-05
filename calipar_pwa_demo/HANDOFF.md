@@ -642,6 +642,74 @@ Missing write-ups authorized for direct main-agent completion:
    partial test file exists, but the report and a verified portable PoC bundle
    still need to be finished.
 
+#### Full-package review pass against the release commit, 2026-08-04
+
+**This is a review pass, not a sealed scan, and it does not close blocker 4.**
+The Codex Security tool was unavailable again in this session, so scan
+`a68f98b4-…` was not loaded, finalized, or confirmed alive. Nothing below was
+produced by it.
+
+Scope was the package as shipped at `1f78dc4`, split across four trust
+boundaries — Worker (`worker/*.ts`, `wrangler.jsonc`), AI contract and browser
+client (`lib/ai/`, every AI render site), browser data layer (`sanitize.ts`,
+`repository.ts`, import/export), and build/deploy/delivery (`_headers`,
+`app/sw.ts`, `scripts/`). The two already-open findings were carried in as
+exclusions rather than re-derived.
+
+**Result: zero vulnerabilities at the >80% exploitability bar.** Several
+defenses are stronger than previously documented:
+
+- **Session/HMAC** — the MAC covers a single base64url'd JSON document, so
+  there are no concatenated fields for a crafted `sid` to shift; `sid` is always
+  `crypto.randomUUID()` and never caller-supplied, so there is no signing
+  oracle; `crypto.subtle.verify`, not a hand-rolled compare; expiry is checked
+  after verification on the server clock, with a type guard so a string `exp`
+  is rejected rather than coerced.
+- **Same-origin** — exact equality, not prefix/suffix; a missing `Origin` and a
+  literal `"null"` are both rejected; applied before route dispatch so it covers
+  every state-changing route; no CORS headers are emitted anywhere, so the two
+  public GET routes are not cross-origin readable either.
+- **Error normalization is total** — every client-visible message is a literal.
+  No catch stringifies an exception, and no error path reads an upstream body.
+- **No SSRF of any kind**, not even path-only: both upstream URLs are module
+  constants. `URL.pathname` does not percent-decode, so `/api/ai/%63hat` 404s
+  rather than aliasing into a task route.
+- **Stored XSS is structurally impossible, not merely sanitized.** The package
+  contains exactly one HTML sink — `sanitize.ts:50`, inside `plainTextFromHtml`
+  — and it is fed DOMPurify output then read back only as `textContent`.
+  `contentHtml` never reaches the DOM as HTML; it renders via
+  `plainTextFromHtml` into a `<textarea value=>`. There is no
+  `dangerouslySetInnerHTML` anywhere and `react-markdown` is imported nowhere.
+- **The severe one that wasn't** — Serwist's `cacheId` is `"calipar-demo"` and
+  the Dexie database is *also* `calipar-demo`. Checked specifically: no
+  collision. `cacheId` prefixes Cache Storage only, and Serwist's own IDB names
+  are `serwist-expiration`/`serwist-background-sync`. A SW update cannot destroy
+  workspace data.
+
+**Three non-security defects surfaced. Two are fixed on this branch:**
+
+1. *Chat threads permanently rejected their own replies* —
+   `historyMessageCharacters` 2,000 against a 700-token (~2,800 char) cap.
+   Fixed; `chatMaxTokens` moved into `AI_LIMITS` and the coupling is now pinned
+   by `tests/unit/ai/contracts.test.ts`.
+2. *Immutable asset caching was dead* — Cloudflare appends `_headers` rules, so
+   `/*` concatenated onto `/_next/static/*`. Fixed.
+3. *Secret-scan coverage is narrower than it reads* — **not fixed, still open.**
+   `scripts/verify/artifacts.mjs:59-66` has no Cloudflare-token pattern; the
+   `textExtensions` filter at `:58` excludes `.svg` and cannot match
+   extensionless files, so `out/_headers` and `out/.assetsignore` are guaranteed
+   to ship and guaranteed not to be scanned. Sharper still: the patterns at
+   `:63-65` key on *variable names*, but Next inlines `NEXT_PUBLIC_*` and
+   deletes the name, so they cannot fire on the most realistic leak shape — only
+   the two shape-based patterns (`:60`, `:61`) survive minification. No live
+   exposure: an independent grep over `out/` returns zero files.
+
+**Coverage gaps — do not read this as exhaustive.** `repository.ts` (826 lines)
+had only its sanitization paths traced, not its full logic; the import
+referential-integrity path is unreviewed; the `analyze`/`equity-check`/
+`socratic` tasks have no UI consumer at all, which shrank the render surface
+actually examined. A sealed scan against the release commit is still owed.
+
 ### Snapshot/finalization hazard
 
 The Codex Security finalizer validates the live target against the required
