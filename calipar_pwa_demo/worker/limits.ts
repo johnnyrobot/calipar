@@ -1,4 +1,5 @@
 import type { Env, RateLimitBinding } from "./index";
+import { base64Url } from "./session";
 
 // Abuse ceilings for the AI routes.
 //
@@ -24,12 +25,6 @@ export class LimitExceeded extends Error {
     super(message);
     this.name = "LimitExceeded";
   }
-}
-
-function base64Url(bytes: Uint8Array): string {
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 export async function clientKey(request: Request, secret: string): Promise<string> {
