@@ -15,6 +15,7 @@ import {
   putPreference,
   readWorkspace,
   resetWorkspace,
+  submitReview,
   subscribeWorkspace,
   updateReview,
   upsertActionPlan,
@@ -27,6 +28,7 @@ import {
 import { normalizeStorageError, WorkspaceError } from "@/lib/domain/errors";
 import {
   REVIEW_SECTION_KEYS,
+  ReviewRecordSchema,
   SCHEMA_VERSION,
   WorkspaceExportSchema,
 } from "@/lib/domain/types";
@@ -602,6 +604,166 @@ describe("local workspace repository", () => {
     } satisfies Partial<WorkspaceError>);
   });
 
+  it("records exactly one activity per mutator, and none for the two opt-outs", async () => {
+    // This is the candidate-1 workspace-commit module's job, done as a test.
+    // The module was rejected because the shared part of the seven mutators is
+    // a transaction frame, not a value — extracting it needs callbacks, and the
+    // test it would enable ("a fake transaction was called with these tables")
+    // is implementation-coupled. A `commit()` helper also never closed the hole
+    // it was sold on: a new mutator can skip the helper exactly as easily as it
+    // can skip an activity write. This asserts the property directly instead.
+    //
+    // A NEW MUTATOR MUST BE ADDED HERE. That is the point of the test.
+    const timestamp = "2026-07-29T21:00:00.000Z";
+    let created: string;
+
+    const cases: { name: string; run: () => Promise<unknown>; records: 1 | 0 }[] =
+      [
+        {
+          name: "createReview",
+          records: 1,
+          run: async () => {
+            const review = await createReview(
+              {
+                organizationId: "org-biology",
+                title: "Activity property review",
+                academicYear: "2025-26",
+                type: "annual",
+              },
+              database,
+            );
+            created = review.id;
+            return review;
+          },
+        },
+        {
+          name: "updateReview",
+          records: 1,
+          run: () =>
+            updateReview(created, { title: "Renamed once" }, undefined, database),
+        },
+        {
+          name: "submitReview",
+          records: 1,
+          run: async () => {
+            const draft = await database.reviews.get(created);
+            const sections = structuredClone(draft!.sections);
+            for (const key of REVIEW_SECTION_KEYS) {
+              sections[key].status = "completed";
+              sections[key].contentHtml = `<p>Completed ${key}</p>`;
+            }
+            await updateReview(created, { sections }, undefined, database);
+            return submitReview(created, undefined, database);
+          },
+        },
+        {
+          name: "upsertActionPlan",
+          records: 1,
+          run: () =>
+            upsertActionPlan(
+              {
+                id: "plan-activity-property",
+                reviewId: "review-biology-2025",
+                organizationId: "org-biology",
+                initiativeId: "initiative-completion",
+                title: "Activity property plan",
+                description: "Checks that a plan write records one activity.",
+                owner: "Biology Department",
+                dueDate: "2027-06-30",
+                status: "not_started",
+                addressesEquityGap: false,
+                equityJustification: "",
+                revision: 0,
+                createdAt: timestamp,
+                updatedAt: timestamp,
+              },
+              undefined,
+              database,
+            ),
+        },
+        {
+          name: "upsertResourceRequest",
+          records: 1,
+          run: () =>
+            upsertResourceRequest(
+              {
+                id: "request-activity-property",
+                reviewId: "review-biology-2025",
+                actionPlanId: "plan-activity-property",
+                organizationId: "org-biology",
+                title: "Activity property request",
+                rationale: "Checks that a request write records one activity.",
+                objectCodeSeries: "2000",
+                amountCents: 100_000,
+                priority: 1,
+                status: "requested",
+                revision: 0,
+                createdAt: timestamp,
+                updatedAt: timestamp,
+              },
+              undefined,
+              database,
+            ),
+        },
+        {
+          name: "deleteResourceRequest",
+          records: 1,
+          run: () => deleteResourceRequest("request-activity-property", database),
+        },
+        {
+          name: "addChatThread",
+          records: 1,
+          run: () =>
+            addChatThread(
+              {
+                id: "thread-activity-property",
+                title: "Activity property thread",
+                createdAt: timestamp,
+                updatedAt: timestamp,
+              },
+              database,
+            ),
+        },
+        // The two deliberate opt-outs. Both are recorded decisions, not
+        // omissions: a preference is not an act a visitor would recognise, and
+        // a 20-message conversation must not emit 20 feed rows — the thread
+        // start already did.
+        {
+          name: "putPreference",
+          records: 0,
+          run: () => putPreference("theme", "dark", database),
+        },
+        {
+          name: "addChatMessage",
+          records: 0,
+          run: () =>
+            addChatMessage(
+              {
+                id: "message-activity-property",
+                threadId: "thread-activity-property",
+                role: "user",
+                content: "Does this write an activity record?",
+                model: null,
+                requestId: null,
+                createdAt: timestamp,
+              },
+              database,
+            ),
+        },
+      ];
+
+    const observed: Record<string, number> = {};
+    for (const testCase of cases) {
+      const before = await database.activities.count();
+      await testCase.run();
+      observed[testCase.name] = (await database.activities.count()) - before;
+    }
+
+    expect(observed).toEqual(
+      Object.fromEntries(cases.map(({ name, records }) => [name, records])),
+    );
+  });
+
   it("rejects malformed JSON and schema-invalid imports", async () => {
     await expect(importWorkspace("{", database)).rejects.toMatchObject({
       code: "VALIDATION_FAILED",
@@ -647,5 +809,19 @@ describe("local workspace repository", () => {
     });
     const known = new WorkspaceError("NOT_FOUND", "Known");
     expect(normalizeStorageError(known)).toBe(known);
+  });
+
+  it("reports a schema failure as VALIDATION_FAILED, not as a storage outage", () => {
+    // Found while writing the activity property test above: every mutator
+    // reparses through a Zod schema inside `guarded`, so a ZodError hit the
+    // catch-all and the visitor was told "Browser storage is unavailable. The
+    // demo will not fall back to temporary memory." for what is a data problem
+    // — and it sends anyone debugging it at storage instead of at the record.
+    const rejected = ReviewRecordSchema.safeParse({ id: "" });
+    expect(rejected.success).toBe(false);
+
+    expect(normalizeStorageError(rejected.error)).toMatchObject({
+      code: "VALIDATION_FAILED",
+    });
   });
 });

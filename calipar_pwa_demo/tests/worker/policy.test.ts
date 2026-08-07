@@ -115,4 +115,22 @@ describe("assertZeroCost", () => {
   it("rejects any positive reported cost, however small", () => {
     expect(() => assertZeroCost({ cost: 0.0001 })).toThrow(PolicyViolation);
   });
+
+  it("refuses a cost it cannot read as a number", () => {
+    // The check used to be `typeof cost === "number" && cost > 0`, so a
+    // provider reporting `{"cost": "0.02"}` as a string passed straight
+    // through. The demo cannot confirm that request was free, so the honest
+    // answer is to refuse it rather than to assume zero.
+    expect(() => assertZeroCost({ cost: "0.02" })).toThrow(PolicyViolation);
+    expect(() => assertZeroCost({ cost: "0" })).toThrow(PolicyViolation);
+    expect(() => assertZeroCost({ cost: {} })).toThrow(PolicyViolation);
+    expect(() => assertZeroCost({ cost: Number.NaN })).toThrow(PolicyViolation);
+  });
+
+  it("still accepts the shapes a free route actually reports", () => {
+    // `null` is a real thing providers send for "no cost recorded", and must
+    // not be swept up by the stricter rule above.
+    expect(() => assertZeroCost({ cost: null })).not.toThrow();
+    expect(() => assertZeroCost({ cost: undefined })).not.toThrow();
+  });
 });

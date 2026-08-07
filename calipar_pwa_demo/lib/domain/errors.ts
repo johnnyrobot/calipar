@@ -47,6 +47,19 @@ export function normalizeStorageError(error: unknown): WorkspaceError {
       { cause: error },
     );
   }
+  // Every mutator reparses through a Zod schema inside `guarded`, so a schema
+  // failure reaches this function. It is a data problem, not a storage one, and
+  // the catch-all below would tell the visitor their browser storage was
+  // unavailable — sending anyone debugging it at the wrong layer entirely.
+  // Matched by name rather than `instanceof` so this module keeps importing
+  // nothing, consistent with the branches around it.
+  if (name === "ZodError") {
+    return new WorkspaceError(
+      "VALIDATION_FAILED",
+      "That record could not be saved because it failed validation.",
+      { cause: error },
+    );
+  }
   if (name === "DataError" || name === "ConstraintError") {
     return new WorkspaceError(
       "STORAGE_CORRUPT",

@@ -258,18 +258,6 @@ export async function getReview(
   return database.reviews.get(id);
 }
 
-/**
- * Every workspace mutation routes through this. Without it a storage failure —
- * a quota exceeded, a blocked or corrupt database — escaped a mutator as a raw
- * DOMException and was rendered straight to the visitor, because a DOMException
- * *is* an Error and `components/review-editor.tsx:103` surfaces `error.message`.
- * The WorkspaceErrorCode union promised a closed set of error modes that only
- * the four whole-workspace paths actually honoured.
- *
- * `normalizeStorageError` is identity on WorkspaceError, so the domain errors
- * these mutators raise deliberately — CONFLICT, VALIDATION_FAILED, NOT_FOUND —
- * pass through untouched.
- */
 /** How long consecutive edits to one review count as a single editing session. */
 const EDIT_COALESCE_MS = 5 * 60 * 1_000;
 
@@ -297,6 +285,18 @@ async function findRecentEdit(
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))[0];
 }
 
+/**
+ * Every workspace mutation routes through this. Without it a storage failure —
+ * a quota exceeded, a blocked or corrupt database — escaped a mutator as a raw
+ * DOMException and was rendered straight to the visitor, because a DOMException
+ * *is* an Error and `components/review-editor.tsx:103` surfaces `error.message`.
+ * The WorkspaceErrorCode union promised a closed set of error modes that only
+ * the four whole-workspace paths actually honoured.
+ *
+ * `normalizeStorageError` is identity on WorkspaceError, so the domain errors
+ * these mutators raise deliberately — CONFLICT, VALIDATION_FAILED, NOT_FOUND —
+ * pass through untouched.
+ */
 function guarded<A extends unknown[], R>(
   run: (...args: A) => Promise<R>,
 ): (...args: A) => Promise<R> {
