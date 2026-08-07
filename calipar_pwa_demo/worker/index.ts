@@ -1042,20 +1042,20 @@ function structuredSchema(task: StructuredTask): JsonRecord {
       ],
     };
   }
+  // Socratic is the one task with no evidence: structuredPrompt gives it an
+  // empty allowedEvidence set, so anything the model cited here was bounded,
+  // filtered against an empty set, and discarded — every time. Asking for ids
+  // we will always throw away costs tokens and invites invented citations, so
+  // this schema omits evidenceIds entirely.
   return {
     type: "object",
     additionalProperties: false,
     properties: {
       question: stringSchema,
       rationale: stringSchema,
-      ...common,
+      insufficientData: common.insufficientData,
     },
-    required: [
-      "question",
-      "rationale",
-      "insufficientData",
-      "evidenceIds",
-    ],
+    required: ["question", "rationale", "insufficientData"],
   };
 }
 
@@ -1174,12 +1174,19 @@ function validateStructuredResult(
   }
   // Bound the list before filtering: the filter drops invented ids silently, so
   // without a cap a flood of them is work we do and never report.
-  const rawEvidence = assertStringArray(
-    value.evidenceIds,
-    "evidenceIds",
-    AI_LIMITS.structuredItems,
-  );
-  const evidenceIds = rawEvidence.filter((id) => allowedEvidence.has(id));
+  //
+  // Absent is legitimate for a task whose schema does not ask for evidence
+  // (socratic). Present-but-wrong is still rejected, so a task that does ask
+  // cannot quietly omit it — `strict: true` on the JSON schema makes the field
+  // mandatory for every task that declares it.
+  const evidenceIds =
+    value.evidenceIds === undefined
+      ? []
+      : assertStringArray(
+          value.evidenceIds,
+          "evidenceIds",
+          AI_LIMITS.structuredItems,
+        ).filter((id) => allowedEvidence.has(id));
   const common = {
     insufficientData: value.insufficientData,
     evidenceIds,
