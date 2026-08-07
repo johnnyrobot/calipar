@@ -533,6 +533,75 @@ describe("local workspace repository", () => {
     expect(after.data).toEqual(baseline.data);
   });
 
+  it("holds imports to the same organization rule the write path enforces", async () => {
+    // `createReview` refuses any organization that is not type "program". The
+    // import path checks only that the organization *exists*. Import is the one
+    // path a visitor can feed arbitrary data through, so the looser of the two
+    // is the one that matters.
+    const baseline = await exportWorkspace("baseline", database);
+    const institution = baseline.data.organizations.find(
+      (organization) => organization.type === "institution",
+    );
+    expect(institution).toBeDefined();
+
+    // The write path's answer, for comparison.
+    await expect(
+      createReview(
+        {
+          organizationId: institution!.id,
+          title: "Institution-level review",
+          academicYear: "2025-26",
+          type: "annual",
+        },
+        database,
+      ),
+    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" });
+
+    // Move the review AND everything that references it, so the graph stays
+    // otherwise consistent and the only rule broken is the organization type.
+    // Without this the plans and requests would fail the organizationId
+    // equality check instead, and the test would pass for the wrong reason.
+    const drifted = structuredClone(baseline);
+    const review = drifted.data.reviews[0]!;
+    review.organizationId = institution!.id;
+    for (const plan of drifted.data.actionPlans) {
+      if (plan.reviewId === review.id) plan.organizationId = institution!.id;
+    }
+    for (const request of drifted.data.resourceRequests) {
+      if (request.reviewId === review.id) {
+        request.organizationId = institution!.id;
+      }
+    }
+
+    await expect(importWorkspace(drifted, database)).rejects.toMatchObject({
+      code: "IMPORT_REFERENTIAL_INTEGRITY",
+    } satisfies Partial<WorkspaceError>);
+  });
+
+  it("catches a plan or request on a non-existent organization transitively", async () => {
+    // The import graph check never looks up `plan.organizationId` in the
+    // organization set directly, which reads like a gap next to the write path.
+    // It is not: the plan must agree with its review's organization, and the
+    // review's organization must be a real program. Pinned here so nobody
+    // deletes the equality check as redundant — it is load-bearing.
+    const baseline = await exportWorkspace("baseline", database);
+
+    const driftedPlan = structuredClone(baseline);
+    driftedPlan.data.actionPlans[0]!.organizationId = "org-does-not-exist";
+    await expect(importWorkspace(driftedPlan, database)).rejects.toMatchObject({
+      code: "IMPORT_REFERENTIAL_INTEGRITY",
+    } satisfies Partial<WorkspaceError>);
+
+    const driftedRequest = structuredClone(baseline);
+    driftedRequest.data.resourceRequests[0]!.organizationId =
+      "org-does-not-exist";
+    await expect(
+      importWorkspace(driftedRequest, database),
+    ).rejects.toMatchObject({
+      code: "IMPORT_REFERENTIAL_INTEGRITY",
+    } satisfies Partial<WorkspaceError>);
+  });
+
   it("rejects malformed JSON and schema-invalid imports", async () => {
     await expect(importWorkspace("{", database)).rejects.toMatchObject({
       code: "VALIDATION_FAILED",
