@@ -75,13 +75,14 @@ Import/export: `exportWorkspace` emits a versioned envelope (`format`/`schemaVer
 
 `worker/index.ts` is the router and the `fetch` handler. Non-`/api/` requests fall through to `env.ASSETS`; Cloudflare's `run_worker_first: ["/api/*"]` means static requests normally never reach it at all.
 
-Three sibling modules hold the abuse controls, each unit-tested directly without constructing a route:
+Four sibling modules hold the safety controls, each unit-tested directly without constructing a route:
 
 | File | Responsibility |
 | --- | --- |
 | `worker/limits.ts` | `clientKey` (salted SHA-256 of `CF-Connecting-IP`), `enforceTaskLimits`, `enforceMintLimits`, `LimitExceeded` |
 | `worker/body.ts` | `readBoundedJson` / `readBoundedText` — the byte ceiling enforced *during* the read, `BodyTooLarge`, `BodyInvalid` |
 | `worker/stream.ts` | `StreamBudget` / `StreamLimitExceeded` — four output ceilings the SSE relay consults on every read |
+| `worker/policy.ts` | `buildUpstreamBody` (invariants written last, so no payload can override them), `assertFreeModel`, `assertZeroCost`, `PolicyViolation` |
 
 They throw plain errors, never `ApiError` (which is not exported), and `index.ts` maps them onto the public `AIErrorCode` union at the boundary. That is what keeps them importable in isolation.
 
@@ -89,7 +90,7 @@ Routes: `GET /api/health`, `GET /api/ai/status` (public), then POST-only, same-o
 
 **The rate limit is two-tier, and the tiers do different jobs.** A session id is a `crypto.randomUUID()` the caller mints at will, so a per-session limit is fairness, not a ceiling. `AI_IP_LIMITER` (20/60s, keyed on `clientKey`) is the abuse bound; `AI_RATE_LIMITER` (5/60s, keyed on the session) sits under it; `AI_MINT_LIMITER` (2/60s) bounds minting itself and runs as the first statement of `createSession`, before the body read and before Turnstile is contacted. Cloudflare's native limiter is the only stateful primitive available here and its `period` accepts **only 10 or 60 seconds** — no longer window is expressible, so there is no daily budget. Without `CF-Connecting-IP` every caller shares one bucket: the ceiling degrades to global rather than disappearing.
 
-The Worker **constructs** the upstream call; the browser cannot influence it. `openRouterRequest` hard-codes `model: "openrouter/free"` plus `max_price: {prompt: 0, completion: 0, request: 0}`, `data_collection: "deny"`, `zdr: true`, and responses are re-checked (`isFreeModel`, `assertZeroReportedCost`). Chat streams typed SSE (`meta`/`delta`/`done`/`error`, parsed by `streamChat` in `lib/ai/client.ts`); structured tasks are JSON-schema-constrained and revalidated field-by-field before returning. Errors normalize to the `AIErrorCode` union — never leak upstream bodies. `lib/ai/contracts.ts` is the shared type contract between browser and Worker; change both sides together.
+The Worker **constructs** the upstream call; the browser cannot influence it. `buildUpstreamBody` in `worker/policy.ts` hard-codes `model: "openrouter/free"` plus `max_price: {prompt: 0, completion: 0, request: 0}`, `data_collection: "deny"`, `zdr: true` — written *after* the caller's payload is spread, so no payload field can override them — and responses are re-checked (`assertFreeModel`, `assertZeroCost`). `openRouterRequest` keeps transport only: retry, timeout, the auth header. Chat streams typed SSE (`meta`/`delta`/`done`/`error`, parsed by `streamChat` in `lib/ai/client.ts`); structured tasks are JSON-schema-constrained and revalidated field-by-field before returning. Errors normalize to the `AIErrorCode` union — never leak upstream bodies. `lib/ai/contracts.ts` is the shared type contract between browser and Worker; change both sides together.
 
 ### Build and offline pipeline
 

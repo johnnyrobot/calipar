@@ -6,6 +6,7 @@ import {
   type Env,
   type RateLimitBinding,
 } from "../../worker/index";
+import { buildUpstreamBody } from "../../worker/policy";
 
 const origin = "https://calipar.example";
 const sessionSecret = "test-session-secret-that-is-longer-than-32-characters";
@@ -100,6 +101,23 @@ describe("CALIPAR AI Worker", () => {
       sessionRequired: true,
       turnstileSiteKey: "test-turnstile-site-key",
     });
+  });
+
+  it("discloses on /api/ai/status only what the policy module enforces", async () => {
+    // The status payload restates the policy as literals for the browser.
+    // Nothing derives one from the other — the design pass rejected a
+    // `policyDisclosure()` export as the weak part of the module's interface —
+    // so this is what stops the disclosure and the enforcement drifting apart.
+    const disclosure = (await (
+      await handleRequest(request("/api/ai/status", {}, false), env())
+    ).json()) as Record<string, unknown>;
+    const enforced = buildUpstreamBody({});
+    const provider = enforced.provider as Record<string, unknown>;
+
+    expect(disclosure.freeOnly).toBe(true);
+    expect(enforced.model).toBe("openrouter/free");
+    expect(disclosure.zeroDataRetention).toBe(provider.zdr);
+    expect(disclosure.dataCollection).toBe(provider.data_collection);
   });
 
   it("rejects cross-origin and oversized requests before provider access", async () => {
@@ -262,11 +280,13 @@ describe("CALIPAR AI Worker", () => {
     // upstream payload. That is the property with an attacker on the other end,
     // and it is what this test protects.
     //
-    // It deliberately does NOT prove the merge ordering in `openRouterRequest`.
-    // Measured: this test passes under both the old and new ordering, because
-    // nothing caller-controlled reaches the spread. The ordering fix is
-    // defense-in-depth for a future passthrough field and is not observable
-    // through the public surface — so do not read a pass here as covering it.
+    // It deliberately does NOT prove the merge ordering, which now lives in
+    // `worker/policy.ts`. This test passes under both the old and new ordering,
+    // because nothing caller-controlled reaches the spread. The ordering is
+    // asserted directly and without a network stub in
+    // `tests/worker/policy.test.ts` ("cannot be talked out of the free-only,
+    // zero-cost, ZDR invariants") — measured to fail against the pre-`4e67c7f`
+    // ordering. Do not read a pass here as covering it.
     // `require_parameters` is asserted to catch the merge dropping a
     // worker-authored provider field.
     const targetEnv = env();
