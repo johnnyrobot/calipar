@@ -816,6 +816,16 @@ function sanitizeImportedData(data: WorkspaceData): WorkspaceData {
 
 function assertReferentialIntegrity(data: WorkspaceData): void {
   const organizations = new Set(data.organizations.map(({ id }) => id));
+  // Reviews are held to the stricter of the two sets. `createReview` refuses an
+  // organization that is not a program, and import is the one path a visitor
+  // can feed arbitrary data through, so the two must agree — an imported review
+  // parked on the institution node is a record the write path could never have
+  // produced.
+  const programs = new Set(
+    data.organizations
+      .filter((organization) => organization.type === "program")
+      .map(({ id }) => id),
+  );
   const reviews = new Map(data.reviews.map((review) => [review.id, review]));
   const initiatives = new Set(data.strategicInitiatives.map(({ id }) => id));
   const actionPlans = new Map(data.actionPlans.map((plan) => [plan.id, plan]));
@@ -827,7 +837,7 @@ function assertReferentialIntegrity(data: WorkspaceData): void {
         organization.parentId !== null &&
         !organizations.has(organization.parentId),
     ) ||
-    data.reviews.some((review) => !organizations.has(review.organizationId)) ||
+    data.reviews.some((review) => !programs.has(review.organizationId)) ||
     data.actionPlans.some((plan) => {
       const review = reviews.get(plan.reviewId);
       return (
