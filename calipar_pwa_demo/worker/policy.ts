@@ -80,9 +80,23 @@ export function assertFreeModel(model: unknown): asserts model is string {
 /**
  * Usage acceptance. A free route reports no cost; any positive reported cost
  * means the request was billed, which the demo must never do.
+ *
+ * A `cost` that is present but not a finite number is refused rather than
+ * ignored. The earlier rule was `typeof cost === "number" && cost > 0`, which
+ * let `{"cost": "0.02"}` through as a string — the one shape where the demo
+ * genuinely cannot tell whether it was billed. Absent and `null` still pass:
+ * those mean "no cost recorded", which a free route legitimately reports.
  */
 export function assertZeroCost(usage: unknown): void {
-  if (isObject(usage) && typeof usage.cost === "number" && usage.cost > 0) {
+  if (!isObject(usage)) return;
+  const cost = usage.cost;
+  if (cost === undefined || cost === null) return;
+  if (typeof cost !== "number" || !Number.isFinite(cost)) {
+    throw new PolicyViolation(
+      "The AI provider reported a usage cost the demo could not verify as zero.",
+    );
+  }
+  if (cost > 0) {
     throw new PolicyViolation(
       "The AI provider reported usage outside the zero-cost policy.",
     );
