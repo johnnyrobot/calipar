@@ -270,6 +270,33 @@ export async function getReview(
  * these mutators raise deliberately — CONFLICT, VALIDATION_FAILED, NOT_FOUND —
  * pass through untouched.
  */
+/** How long consecutive edits to one review count as a single editing session. */
+const EDIT_COALESCE_MS = 5 * 60 * 1_000;
+
+/**
+ * The most recent `review.updated` record for this review, if it falls inside
+ * the coalescing window. Returns undefined when the last edit is old enough to
+ * deserve its own entry in the feed.
+ */
+async function findRecentEdit(
+  database: CaliparDemoDB,
+  reviewId: string,
+  now: string,
+): Promise<ActivityRecord | undefined> {
+  const candidates = await database.activities
+    .where("entityId")
+    .equals(reviewId)
+    .toArray();
+  const cutoff = new Date(now).getTime() - EDIT_COALESCE_MS;
+  return candidates
+    .filter(
+      (record) =>
+        record.action === "review.updated" &&
+        new Date(record.occurredAt).getTime() >= cutoff,
+    )
+    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))[0];
+}
+
 function guarded<A extends unknown[], R>(
   run: (...args: A) => Promise<R>,
 ): (...args: A) => Promise<R> {
@@ -391,7 +418,17 @@ async function updateReviewImpl(
     database.activities,
     async () => {
       await database.reviews.put(next);
-      await database.activities.add(activity);
+      // Coalesce, do not append. The editor autosaves on a 700ms debounce
+      // (components/review-editor.tsx:129), so appending produced one record
+      // per typing pause and buried reviews, plans and requests under a single
+      // editing session. An editing session is one act; the record's
+      // occurredAt moves to the latest save within the window.
+      const recent = await findRecentEdit(database, id, timestamp);
+      if (recent) {
+        await database.activities.update(recent.id, { occurredAt: timestamp });
+      } else {
+        await database.activities.add(activity);
+      }
     },
   );
   publish({ type: "review.changed", entityId: id, occurredAt: timestamp });

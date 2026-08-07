@@ -266,6 +266,36 @@ describe("local workspace repository", () => {
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
+  it("coalesces an editing session into one activity record", async () => {
+    // review-editor.tsx:129 autosaves on a 700ms debounce, so appending gave
+    // one feed entry per typing pause and buried every other record type.
+    const seeded = (await listReviews(database))[0];
+    expect(seeded).toBeDefined();
+    const before = await database.activities
+      .where("entityId")
+      .equals(seeded!.id)
+      .filter((r) => r.action === "review.updated")
+      .count();
+
+    let revision = seeded!.revision;
+    for (let save = 0; save < 4; save += 1) {
+      const saved = await updateReview(
+        seeded!.id,
+        { sections: seeded!.sections },
+        revision,
+        database,
+      );
+      revision = saved.revision;
+    }
+
+    const after = await database.activities
+      .where("entityId")
+      .equals(seeded!.id)
+      .filter((r) => r.action === "review.updated")
+      .count();
+    expect(after).toBe(before + 1);
+  });
+
   it("records one activity per conversation, not per message", async () => {
     // The Mission-Bot filter at app/(demo)/activity/page.tsx:38 filters on the
     // "chat" entityType. Nothing ever wrote one, so the button could not match.
