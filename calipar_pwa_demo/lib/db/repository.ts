@@ -389,13 +389,13 @@ export async function submitReview(
       "Only a draft review can be submitted.",
     );
   }
-  if (
-    expectedRevision !== undefined &&
-    expectedRevision !== existing.revision
-  ) {
+  if (expectedRevision !== undefined && existing.revision !== expectedRevision) {
     throw new WorkspaceError(
       "CONFLICT",
       "This review changed in another tab. Reload before submitting.",
+      {
+        details: { expectedRevision, actualRevision: existing.revision },
+      },
     );
   }
   const validation = validateReviewSubmission(existing);
@@ -441,12 +441,21 @@ export async function upsertActionPlan(
   database: CaliparDemoDB = defaultDb,
 ): Promise<ActionPlan> {
   const existing = await database.actionPlans.get(value.id);
-  if (
-    existing &&
-    expectedRevision !== undefined &&
-    existing.revision !== expectedRevision
-  ) {
-    throw new WorkspaceError("CONFLICT", "This action plan changed in another tab.");
+  // `existing?.revision` rather than a guard on `existing`: an expected revision
+  // is a claim about a specific stored version, and a record that is gone
+  // falsifies that claim. Guarding on `existing` treated "it was deleted in
+  // another tab" as a create, silently resurrecting the record at revision 0.
+  if (expectedRevision !== undefined && existing?.revision !== expectedRevision) {
+    throw new WorkspaceError(
+      "CONFLICT",
+      "This action plan changed in another tab.",
+      {
+        details: {
+          expectedRevision,
+          actualRevision: existing?.revision ?? null,
+        },
+      },
+    );
   }
   const [review, organization, initiative] = await Promise.all([
     database.reviews.get(value.reviewId),
@@ -502,14 +511,19 @@ export async function upsertResourceRequest(
   database: CaliparDemoDB = defaultDb,
 ): Promise<ResourceRequest> {
   const existing = await database.resourceRequests.get(value.id);
-  if (
-    existing &&
-    expectedRevision !== undefined &&
-    existing.revision !== expectedRevision
-  ) {
+  // See upsertActionPlan: guarding on `existing` let a stale tab resurrect a
+  // request another tab had deleted. `deleteResourceRequest` is wired to a
+  // button (app/(demo)/resources/page.tsx:93), so that race is reachable.
+  if (expectedRevision !== undefined && existing?.revision !== expectedRevision) {
     throw new WorkspaceError(
       "CONFLICT",
       "This resource request changed in another tab.",
+      {
+        details: {
+          expectedRevision,
+          actualRevision: existing?.revision ?? null,
+        },
+      },
     );
   }
   const [review, organization, actionPlan] = await Promise.all([

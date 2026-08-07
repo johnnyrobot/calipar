@@ -266,6 +266,38 @@ describe("local workspace repository", () => {
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
+  it("does not resurrect a resource request deleted in another tab", async () => {
+    // The multi-tab case the revision guard exists for. Tab A holds a request
+    // at revision 0; tab B deletes it. Tab A then saves. Guarding the revision
+    // check on `existing` skipped it entirely once the record was gone, so the
+    // save landed as a create at revision 0 and the delete was silently undone.
+    const request = await database.resourceRequests.get("resource-biology-tutors");
+    expect(request).toBeDefined();
+    const stale = { ...request!, amountCents: request!.amountCents + 100_000 };
+
+    await deleteResourceRequest(stale.id, database);
+    expect(await database.resourceRequests.get(stale.id)).toBeUndefined();
+
+    await expect(
+      upsertResourceRequest(stale, stale.revision, database),
+    ).rejects.toMatchObject({
+      code: "CONFLICT",
+      details: { expectedRevision: stale.revision, actualRevision: null },
+    });
+    expect(await database.resourceRequests.get(stale.id)).toBeUndefined();
+  });
+
+  it("still creates a resource request when no revision is expected", async () => {
+    // The strict guard must not break the create path: callers that omit
+    // `expectedRevision` are stating no claim about a stored version.
+    const request = await database.resourceRequests.get("resource-biology-tutors");
+    const fresh = { ...request!, id: "resource-brand-new", revision: 0 };
+    await deleteResourceRequest(request!.id, database);
+
+    const created = await upsertResourceRequest(fresh, undefined, database);
+    expect(created.id).toBe("resource-brand-new");
+  });
+
   it("rejects inconsistent plan and resource relationships", async () => {
     const existingPlan = await database.actionPlans.get("plan-biology-tutoring");
     const existingResource = await database.resourceRequests.get(
