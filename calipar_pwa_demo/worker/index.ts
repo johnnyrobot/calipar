@@ -12,6 +12,12 @@ import {
 } from "../lib/ai/contracts";
 import { BodyInvalid, BodyTooLarge, readBoundedJson, readBoundedText } from "./body";
 import { enforceMintLimits, enforceTaskLimits, LimitExceeded } from "./limits";
+import {
+  assertFreeModel,
+  assertZeroCost,
+  buildUpstreamBody,
+  PolicyViolation,
+} from "./policy";
 import { StreamBudget, StreamLimitExceeded } from "./stream";
 
 export interface RateLimitBinding {
@@ -459,6 +465,15 @@ function limitError(error: unknown): ApiError {
   );
 }
 
+/**
+ * Map a free-route policy breach onto the public error contract. A provider
+ * that answered outside the policy produced a response the demo will not
+ * relay, which is AI_BAD_RESPONSE — not an outage and not a caller error.
+ */
+function policyError(error: PolicyViolation): ApiError {
+  return new ApiError("AI_BAD_RESPONSE", 502, error.message);
+}
+
 async function requireSession(request: Request, env: Env): Promise<string> {
   const sessionId = await verifySession(
     cookieValue(request, SESSION_COOKIE),
@@ -568,13 +583,6 @@ function configured(env: Env): boolean {
   );
 }
 
-function isFreeModel(model: unknown): model is string {
-  return (
-    typeof model === "string" &&
-    (model === "openrouter/free" || model.endsWith(":free"))
-  );
-}
-
 function retryAfterSeconds(response: Response): number | undefined {
   const raw = response.headers.get("Retry-After");
   if (!raw) return undefined;
@@ -650,26 +658,10 @@ async function openRouterRequest(
       "The AI provider is not configured.",
     );
   }
-  // Spread the caller's payload FIRST so the free-model and zero-cost/privacy
-  // guarantees are written last and cannot be overridden. The previous ordering
-  // put `model` before `...payload` and the caller's `provider` after the
-  // invariants, so any future passthrough field would have silently inverted
-  // both. Nothing exploited that — every call site is worker-authored — but the
-  // response-side checks (`isFreeModel`, `assertZeroReportedCost`) only catch a
-  // breach *after* the request is billed, so the request must be correct by
-  // construction rather than by convention.
-  const { provider: callerProvider, ...rest } = payload;
-  const body = JSON.stringify({
-    ...rest,
-    model: "openrouter/free",
-    provider: {
-      ...(isObject(callerProvider) ? callerProvider : {}),
-      allow_fallbacks: true,
-      max_price: { prompt: 0, completion: 0, request: 0 },
-      data_collection: "deny",
-      zdr: true,
-    },
-  });
+  // This function owns transport — retry, timeout, the auth header. It does not
+  // own the free-route policy; `worker/policy.ts` does, and it is asserted there
+  // without a network stub.
+  const body = JSON.stringify(buildUpstreamBody(payload));
   const upstreamSignal = AbortSignal.any([
     request.signal,
     AbortSignal.timeout(OPENROUTER_TIMEOUT_MS),
@@ -757,20 +749,6 @@ function usageMeta(
     return undefined;
   }
   return { promptTokens, completionTokens, totalTokens };
-}
-
-function assertZeroReportedCost(value: unknown): void {
-  if (
-    isObject(value) &&
-    typeof value.cost === "number" &&
-    value.cost > 0
-  ) {
-    throw new ApiError(
-      "AI_BAD_RESPONSE",
-      502,
-      "The AI provider reported usage outside the zero-cost policy.",
-    );
-  }
 }
 
 function sseEvent(event: string, data: unknown): Uint8Array {
@@ -863,16 +841,10 @@ async function streamChat(
             );
           }
           if (event.model !== undefined) {
-            if (!isFreeModel(event.model)) {
-              throw new ApiError(
-                "AI_BAD_RESPONSE",
-                502,
-                "The AI provider selected a model outside the free-only policy.",
-              );
-            }
+            assertFreeModel(event.model);
             selectedModel = event.model;
           }
-          assertZeroReportedCost(event.usage);
+          assertZeroCost(event.usage);
           usage = usageMeta(event.usage) ?? usage;
           const choices = Array.isArray(event.choices) ? event.choices : [];
           const first = isObject(choices[0]) ? choices[0] : undefined;
@@ -959,6 +931,8 @@ async function streamChat(
                 "The AI response exceeded its size limit.",
               ),
             );
+          } else if (error instanceof PolicyViolation) {
+            emitError(policyError(error));
           } else if (error instanceof ApiError) emitError(error);
           else {
             emitError(
@@ -1282,14 +1256,8 @@ async function runStructured(
       "The AI provider returned malformed JSON.",
     );
   }
-  if (!isFreeModel(result.model)) {
-    throw new ApiError(
-      "AI_BAD_RESPONSE",
-      502,
-      "The AI provider selected a model outside the free-only policy.",
-    );
-  }
-  assertZeroReportedCost(result.usage);
+  assertFreeModel(result.model);
+  assertZeroCost(result.usage);
   const choices = Array.isArray(result.choices) ? result.choices : [];
   const first = isObject(choices[0]) ? choices[0] : undefined;
   const message = first && isObject(first.message) ? first.message : undefined;
@@ -1403,6 +1371,9 @@ export async function handleRequest(
     return await apiRequest(request, env, requestId);
   } catch (error) {
     if (error instanceof ApiError) return errorResponse(error, requestId);
+    if (error instanceof PolicyViolation) {
+      return errorResponse(policyError(error), requestId);
+    }
     if (request.signal.aborted) {
       return errorResponse(
         new ApiError(
