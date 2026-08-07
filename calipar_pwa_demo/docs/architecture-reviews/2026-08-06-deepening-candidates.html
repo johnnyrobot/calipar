@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Architecture review — calipar_pwa_demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      .seam { stroke-dasharray: 4 4; }
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+      .hatch { background-image: repeating-linear-gradient(45deg, #fecaca 0 6px, #fee2e2 6px 12px); }
+      .lbl { font-size: 10px; letter-spacing: .09em; text-transform: uppercase; }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans antialiased">
+    <main class="max-w-5xl mx-auto px-6 py-12 space-y-14">
+
+      <header class="space-y-5">
+        <div>
+          <h1 class="font-serif text-4xl tracking-tight">Architecture review</h1>
+          <p class="text-slate-500 mt-1"><span class="font-mono text-sm">calipar_pwa_demo</span> · 2026-08-06 · at <span class="font-mono text-sm">2b284d7</span></p>
+        </div>
+
+        <div class="flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-600 border-y border-slate-200 py-3">
+          <span class="flex items-center gap-2"><span class="inline-block w-5 h-3 border border-slate-400"></span> module</span>
+          <span class="flex items-center gap-2"><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke="#64748b" class="seam"/></svg> seam</span>
+          <span class="flex items-center gap-2"><svg width="26" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="#dc2626" stroke-width="2"/><path d="M22 1 L26 4 L22 7Z" fill="#dc2626"/></svg> leakage</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-5 h-3 deep"></span> deep module</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-5 h-3 hatch border border-red-300"></span> restated invariant</span>
+        </div>
+
+        <div class="rounded-lg bg-white border border-slate-200 p-4 text-sm space-y-2">
+          <p class="font-medium text-slate-700">Scope &amp; coverage</p>
+          <p class="text-slate-600">Churn-ranked over 60 commits. <span class="font-mono text-xs">worker/index.ts</span> is the hot spot — 7 touches, 1430 lines. <span class="font-mono text-xs">lib/db/repository.ts</span> second — 4 touches, 826 lines.</p>
+          <p class="text-slate-600"><span class="font-medium">Covered:</span> the Worker cluster and the browser data cluster, both explored and every claim below independently verified against the code. <span class="font-medium">Not covered:</span> the <span class="font-mono text-xs">scripts/</span> cluster — that exploration never returned, and nothing here speaks to it. Candidate 7 was missed by the exploration pass but covered thoroughly by its design pass.</p>
+        </div>
+
+        <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-sm space-y-2">
+          <p class="font-medium text-emerald-900">Since the 2026-07-31 review</p>
+          <p class="text-emerald-800"><span class="font-medium">Candidate 1</span> (derivations interface) — <span class="font-medium">shipped</span>, plus ADRs 0001–0003. <span class="font-medium">Candidate 3</span> (second adapter at the workspace seam) — <span class="font-medium">shipped for the read path</span>: <span class="font-mono text-xs">WorkspaceStateProvider</span> takes a state directly and never touches storage, crossed by 5 test files, and <span class="font-mono text-xs">components/**</span> entered the coverage gate. The <span class="font-mono text-xs">reviews/new</span> latch bug it called "still live" is fixed and has a named test.</p>
+          <p class="text-emerald-800"><span class="font-medium">But it shipped exactly half a seam.</span> Three tests still <span class="font-mono text-xs">vi.mock("@/lib/db/repository", …)</span> spreading the original and stubbing <em>only mutators</em>. The read path has a seam; the write path has none. That missing half is candidate 1 below.</p>
+          <p class="text-emerald-800">Candidates 2, 4 and 5 remain open and reappear below with new evidence.</p>
+        </div>
+      </header>
+
+      <section id="outcomes" class="space-y-5">
+        <h2 class="font-serif text-2xl">Design outcomes</h2>
+        <p class="text-sm text-slate-600">Each candidate below was given a design pass: propose the interface, or argue against it. <span class="font-medium">Two argued themselves out of existence</span>, both replaced by ~15-line fixes. That is the deletion test working.</p>
+
+        <div class="rounded-lg bg-rose-50 border border-rose-200 p-5">
+          <p class="font-medium text-rose-900 mb-1">Six defects found that need no refactor at all</p>
+          <p class="text-xs text-rose-700 mb-3">The most valuable output of the review. All verified against the code; none requires a module.</p>
+          <div class="overflow-x-auto">
+            <table class="text-sm w-full text-rose-900">
+              <thead class="text-left text-rose-700 text-xs"><tr><th class="pr-4 pb-1 font-medium">defect</th><th class="pr-4 pb-1 font-medium">location</th><th class="pb-1 font-medium">effect</th></tr></thead>
+              <tbody class="align-top">
+                <tr><td class="pr-4 py-1">Dead "Mission-Bot" filter</td><td class="pr-4 font-mono text-xs">activity/page.tsx:38</td><td class="text-xs">Pressable control that can never match a record</td></tr>
+                <tr><td class="pr-4 py-1">Raw <span class="font-mono text-xs">DOMException</span> to the user</td><td class="pr-4 font-mono text-xs">9 mutators</td><td class="text-xs">Quota failure renders the browser string, not the authored copy</td></tr>
+                <tr><td class="pr-4 py-1">Delete silently resurrected</td><td class="pr-4 font-mono text-xs">repository.ts:504</td><td class="text-xs"><span class="font-medium">Data loss</span> — stale tab re-creates a deleted request at revision 0</td></tr>
+                <tr><td class="pr-4 py-1">Activity feed floods</td><td class="pr-4 font-mono text-xs">repository.ts:357</td><td class="text-xs">One record per 700 ms autosave</td></tr>
+                <tr><td class="pr-4 py-1">Parse after resolve</td><td class="pr-4 font-mono text-xs">repository.ts:515 / :537</td><td class="text-xs">Unvalidated input drives the reference lookups</td></tr>
+                <tr><td class="pr-4 py-1"><span class="font-mono text-xs">socratic</span> evidence discarded</td><td class="pr-4 font-mono text-xs">worker/index.ts:1105</td><td class="text-xs">Model asked for ids that are always dropped</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-xs text-rose-800 mt-3">Plus one dead file: <span class="font-mono">tests/fixtures/workspace-invalid-reference.json</span> — zero references, and its <span class="font-mono">sections: {}</span> would fail schema before reaching integrity.</p>
+        </div>
+
+        <div class="rounded-lg bg-white border border-slate-200 p-5 text-sm">
+          <p class="font-medium text-slate-800 mb-2">Sequencing — the argument that decided it</p>
+          <p class="text-slate-700">Ship the defect fixes <span class="font-medium">first</span>, land the modules after. Fixing them removes the modules' headline justification, and that is the honest test of whether the modules are worth building: if nobody still wants the refactor afterwards, four commits were saved; if they do, it is being bought for <span class="font-medium">locality</span> alone, with eyes open. The fixes also give each migration a regression net that a test written afterwards cannot provide.</p>
+        </div>
+
+        <div class="rounded-lg bg-amber-50 border border-amber-200 p-5 text-sm">
+          <p class="font-medium text-amber-900 mb-1">One decision blocks the Worker work</p>
+          <p class="text-amber-800">Are <span class="font-mono text-xs">analyze</span>, <span class="font-mono text-xs">equity-check</span> and <span class="font-mono text-xs">socratic</span> deliberate demo surface awaiting UI, or leftovers? Deleting them removes ~210 lines from <span class="font-mono text-xs">worker/index.ts</span>, dissolves candidate 5 entirely, and eliminates all three socratic fallthroughs by subtraction. It is a product decision, not an architectural one.</p>
+        </div>
+      </section>
+
+      <section id="candidates" class="space-y-12">
+
+        <!-- ============ 1 ============ -->
+        <article id="c1" class="space-y-5">
+          <div class="flex items-start justify-between gap-4 flex-wrap">
+            <h2 class="font-serif text-2xl">1 · Put the workspace commit behind an interface</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1">Strong</span>
+              <span class="rounded-full bg-rose-100 text-rose-800 text-xs font-medium px-3 py-1">2 live defects</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 text-xs px-3 py-1">in-process</span>
+            </div>
+          </div>
+
+          <p class="font-mono text-sm text-slate-600">lib/db/repository.ts:290 :364 :417 :474 :543 :580 (six copies) · :600 :628 :638 (three opt-outs) · 4 conflict restatements at :332 :392 :443 :504</p>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="lbl text-slate-500 mb-3">Before — convention at nine call sites</p>
+              <div class="space-y-1.5 text-[11px] font-mono">
+                <div class="flex gap-1"><span class="w-24 shrink-0 text-slate-500">createReview</span><span class="hatch border border-red-300 rounded px-2 flex-1">txn · activity · publish</span></div>
+                <div class="flex gap-1"><span class="w-24 shrink-0 text-slate-500">updateReview</span><span class="hatch border border-red-300 rounded px-2 flex-1">txn · activity · publish</span></div>
+                <div class="flex gap-1"><span class="w-24 shrink-0 text-slate-500">submitReview</span><span class="hatch border border-red-300 rounded px-2 flex-1">txn · activity · publish</span></div>
+                <div class="flex gap-1"><span class="w-24 shrink-0 text-slate-500">actionPlan</span><span class="hatch border border-red-300 rounded px-2 flex-1">txn · activity · publish</span></div>
+                <div class="flex gap-1"><span class="w-24 shrink-0 text-slate-500">resourceReq</span><span class="hatch border border-red-300 rounded px-2 flex-1">txn · activity · publish</span></div>
+                <div class="flex gap-1"><span class="w-24 shrink-0 text-slate-500">deleteReq</span><span class="hatch border border-red-300 rounded px-2 flex-1">txn · activity · publish</span></div>
+                <div class="flex gap-1 pt-1.5"><span class="w-24 shrink-0 text-red-600">addChatMsg</span><span class="border border-red-400 border-dashed rounded px-2 flex-1 text-red-700">txn · <s>activity</s> · publish</span></div>
+                <div class="flex gap-1"><span class="w-24 shrink-0 text-red-600">addChatThread</span><span class="border border-red-400 border-dashed rounded px-2 flex-1 text-red-700"><s>txn</s> · <s>activity</s> · publish</span></div>
+                <div class="flex gap-1"><span class="w-24 shrink-0 text-red-600">putPreference</span><span class="border border-red-400 border-dashed rounded px-2 flex-1 text-red-700"><s>txn</s> · <s>activity</s> · publish</span></div>
+              </div>
+              <p class="text-xs text-red-700 mt-3">Three mutators silently opt out. Nothing can detect it.</p>
+            </div>
+            <div class="rounded-lg border-2 border-slate-900 bg-white p-4">
+              <p class="lbl text-slate-500 mb-3">After — one commit, N mutators</p>
+              <div class="space-y-1.5 text-[11px] font-mono">
+                <div class="flex gap-1"><span class="w-24 shrink-0 text-slate-500">createReview</span><span class="border border-slate-300 rounded px-2 flex-1 text-slate-600">describe change</span></div>
+                <div class="flex gap-1"><span class="w-24 shrink-0 text-slate-500">updateReview</span><span class="border border-slate-300 rounded px-2 flex-1 text-slate-600">describe change</span></div>
+                <div class="flex gap-1"><span class="w-24 shrink-0 text-slate-500">…9 mutators</span><span class="border border-slate-300 rounded px-2 flex-1 text-slate-600">describe change</span></div>
+                <div class="deep text-slate-100 rounded px-3 py-4 mt-3 text-[11px] leading-relaxed">
+                  <p class="font-sans font-medium mb-1.5 text-xs">the workspace commit</p>
+                  revision check · rw transaction<br/>activity record · publish<br/>normalizeStorageError
+                </div>
+                <p class="text-[11px] font-sans text-slate-600 pt-2">Omitting the activity record stops being possible.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <p class="lbl text-slate-500 mb-1">Problem</p>
+              <p class="text-slate-700">"A change and its activity record land together, then the change is announced" is convention restated at nine call sites rather than an interface — so a mutator can omit half of it, and three already do.</p>
+            </div>
+            <div>
+              <p class="lbl text-slate-500 mb-1">Solution</p>
+              <p class="text-slate-700">One <span class="font-medium">workspace commit</span> module takes a described change and owns the revision check, the transaction, the activity record, the fan-out, and error normalisation. Mutators keep only domain rules.</p>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-red-50 border border-red-200 p-4 text-sm space-y-3">
+            <p class="font-medium text-red-900">Verified: this is no longer latent — two defects are shipped</p>
+            <div>
+              <p class="text-red-900 font-medium text-xs">1 · A dead control in the UI</p>
+              <p class="text-red-800"><span class="font-mono text-xs">ActivityRecordSchema</span> declares a <span class="font-mono text-xs">"chat"</span> entity type (<span class="font-mono text-xs">types.ts:190</span>). No mutator ever writes one — <span class="font-mono text-xs">addChatMessage:638-664</span> opens a transaction and appends no activity, and the seed emits none. So the <span class="font-medium">"Mission-Bot" filter button at <span class="font-mono text-xs">app/(demo)/activity/page.tsx:38</span> renders, is pressable, and can never match a record.</span></p>
+            </div>
+            <div>
+              <p class="text-red-900 font-medium text-xs">2 · A raw <span class="font-mono">DOMException</span> reaching the user</p>
+              <p class="text-red-800"><span class="font-mono text-xs">normalizeStorageError</span> is called at <span class="font-mono text-xs">:195 :244 :678 :809</span> — the four whole-workspace paths — and at <span class="font-medium">none of the nine mutators</span>. A quota-exceeded save escapes <span class="font-mono text-xs">updateReview</span> unnormalised into the editor's notice line (<span class="font-mono text-xs">review-editor.tsx:103</span>). The <span class="font-mono text-xs">WorkspaceErrorCode</span> union promises a closed set of error modes the write path does not honour.</p>
+            </div>
+            <div>
+              <p class="text-red-900 font-medium text-xs">3 · The conflict interface has already drifted</p>
+              <div class="overflow-x-auto mt-1">
+                <table class="text-xs w-full text-red-900">
+                  <thead class="text-left text-red-700"><tr><th class="pr-4 font-medium">site</th><th class="pr-4 font-medium">comparison</th><th class="pr-4 font-medium">details</th><th class="font-medium">guard</th></tr></thead>
+                  <tbody class="font-mono">
+                    <tr><td class="pr-4">:332 save review</td><td class="pr-4">existing !== expected</td><td class="pr-4 font-sans font-medium">yes</td><td>—</td></tr>
+                    <tr><td class="pr-4">:392 submit review</td><td class="pr-4">expected !== existing</td><td class="pr-4 font-sans">no</td><td>—</td></tr>
+                    <tr><td class="pr-4">:443 action plan</td><td class="pr-4">existing !== expected</td><td class="pr-4 font-sans">no</td><td>existing &amp;&amp;</td></tr>
+                    <tr><td class="pr-4">:504 resource request</td><td class="pr-4">existing !== expected</td><td class="pr-4 font-sans">no</td><td>existing &amp;&amp;</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="text-red-800 mt-1">A conflict UI reading <span class="font-mono text-xs">details.actualRevision</span> works when saving a review and silently degrades on three other paths. Only the review mutators gate on editability at all.</p>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-slate-100 border border-slate-300 p-4 text-sm">
+            <p class="font-medium text-slate-800">Why this lands where the coverage gate can see it</p>
+            <p class="text-slate-700 mt-1"><span class="font-mono text-xs">vitest.config.ts:26</span> covers <span class="font-mono text-xs">lib/**</span> and <span class="font-mono text-xs">components/**</span> — <span class="font-mono text-xs">app/**</span> is absent, and <span class="font-medium">5 of the 7 modules importing the repository live there</span>. Every call-site defect found sits in that unmeasured five. Pushing the invariant down into <span class="font-mono text-xs">lib/db/</span> buys correctness the gate <em>can</em> enforce, instead of widening the gate over a demo's pages.</p>
+          </div>
+
+          <div>
+            <p class="lbl text-slate-500 mb-2">Wins</p>
+            <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-1 text-sm text-slate-700 list-disc list-inside">
+              <li>locality: one commit, one place</li>
+              <li>activity record cannot be omitted</li>
+              <li>storage errors normalise on every write</li>
+              <li><span class="font-mono text-xs">CONFLICT</span> shape stops varying</li>
+              <li>gives the write path its missing adapter</li>
+              <li>retires three <span class="font-mono text-xs">vi.mock</span>s</li>
+              <li>leverage: 9 mutators, 1 interface</li>
+              <li>atomicity proven once, not ×6</li>
+            </ul>
+          </div>
+
+          <p class="text-xs text-slate-500 border-l-2 border-slate-300 pl-3">Deletion test: <span class="font-medium">reappears</span> at nine call sites — along with the freedom to omit any part of it, which three mutators already exercise. Prior review candidate 2, still open, now with two shipped consequences. Contradicts no ADR.</p>
+        </article>
+
+        <!-- ============ 2 ============ -->
+        <article id="c2" class="space-y-5 border-t border-slate-200 pt-12">
+          <div class="flex items-start justify-between gap-4 flex-wrap">
+            <h2 class="font-serif text-2xl">2 · Give the demo session an interface</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1">Strong</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 text-xs px-3 py-1">in-process</span>
+            </div>
+          </div>
+
+          <p class="font-mono text-sm text-slate-600">worker/index.ts:334-480, :549-555 · worker/limits.ts:29-33 · tests/worker/ai-worker.test.ts</p>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="lbl text-slate-500 mb-3">Before — no interface, so tests go around</p>
+              <pre class="mermaid">
+flowchart TD
+  T[30 worker tests] -->|26 of 41 calls| CC[createCookie: full POST /api/ai/session]
+  CC --> HR[handleRequest]
+  HR --> RS[requireSession]
+  RS -.-> SS[signSession]
+  RS -.-> VS[verifySession]
+  RS -.-> CV[cookieValue]
+  CC -->|burns fetch call 0| MK[mock.calls index shifts]
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#7f1d1d;
+  classDef hidden fill:#f1f5f9,stroke:#cbd5e1,stroke-dasharray:3 3;
+  class MK leak
+  class SS,VS,CV hidden
+              </pre>
+            </div>
+            <div class="rounded-lg border-2 border-slate-900 bg-white p-4">
+              <p class="lbl text-slate-500 mb-3">After — one interface, tests cross it directly</p>
+              <pre class="mermaid">
+flowchart TD
+  T[30 worker tests] -->|one import| MS[mintSession / readSession]
+  MS --> SESS[the demo session]
+  T2[route tests] --> HR[handleRequest]
+  HR --> RQ[requireSession = readSession + enforceTaskLimits]
+  RQ --> SESS
+  classDef deep fill:#0f172a,color:#f8fafc,stroke:#0f172a,stroke-width:2px;
+  class SESS deep
+              </pre>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <p class="lbl text-slate-500 mb-1">Problem</p>
+              <p class="text-slate-700">Session minting and verification are unexported, so 26 of 41 <span class="font-mono text-xs">handleRequest</span> calls round-trip an HTTP mint just to get a cookie, and the crypto can only be observed as a 401.</p>
+            </div>
+            <div>
+              <p class="lbl text-slate-500 mb-1">Solution</p>
+              <p class="text-slate-700">Move codec, HMAC, expiry stamping and cookie parsing behind <span class="font-mono text-xs">mintSession</span> / <span class="font-mono text-xs">readSession</span>, throwing plain errors mapped at the seam — the contract <span class="font-mono text-xs">limits.ts</span>, <span class="font-mono text-xs">body.ts</span> and <span class="font-mono text-xs">stream.ts</span> already use.</p>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-red-50 border border-red-200 p-4 text-sm">
+            <p class="font-medium text-red-900">Verified: a test promises coverage that cannot exist</p>
+            <p class="text-red-800 mt-1"><span class="font-mono text-xs">tests/worker/ai-worker.test.ts:574</span> is named <em>"rejects tampered, expired-shaped, and malformed session cookies"</em>. Its three variants are <span class="font-mono text-xs">${cookie}tampered</span>, <span class="font-mono text-xs">missing-signature</span>, <span class="font-mono text-xs">bad.payload.extra</span>. <span class="font-medium">None is expired</span>, and none can be — <span class="font-mono text-xs">signSession</span> always stamps <span class="font-mono text-xs">Date.now() + SESSION_SECONDS</span> and is unreachable from a test. The expiry branch at <span class="font-mono text-xs">:412</span> is untested.</p>
+          </div>
+
+          <div>
+            <p class="lbl text-slate-500 mb-2">Wins</p>
+            <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-1 text-sm text-slate-700 list-disc list-inside">
+              <li>locality: one module owns session</li>
+              <li>expiry becomes testable at all</li>
+              <li>leverage: 26 tests drop a round-trip</li>
+              <li>kills <span class="font-mono text-xs">mock.calls[1]</span> index leak</li>
+              <li>deletes duplicated <span class="font-mono text-xs">base64Url</span></li>
+              <li>clock injectable, per <span class="font-mono text-xs">stream.ts</span></li>
+            </ul>
+          </div>
+
+          <p class="text-xs text-slate-500 border-l-2 border-slate-300 pl-3">Deletion test: <span class="font-medium">reappears</span> — base64url codec, HMAC import, expiry stamping and checking, cookie parsing. <span class="font-mono">base64Url</span> is already copied verbatim into <span class="font-mono">limits.ts:29-33</span>; code with no home. Honest caveat: this is <em>not</em> a seam — one caller each, nothing varies. It earns its place as a test surface, following the <span class="font-mono">limits/body/stream</span> precedent, not by adapter count.</p>
+        </article>
+
+        <!-- ============ 3 ============ -->
+        <article id="c3" class="space-y-5 border-t border-slate-200 pt-12">
+          <div class="flex items-start justify-between gap-4 flex-wrap">
+            <h2 class="font-serif text-2xl">3 · Give the free-route policy an interface</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1">Strong</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 text-xs px-3 py-1">in-process</span>
+            </div>
+          </div>
+
+          <p class="font-mono text-sm text-slate-600">worker/index.ts:571-576, :653-672, :762-774, :865-875, :1278-1285, :1329-1339</p>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="lbl text-slate-500 mb-3">Before — one claim, four restatements</p>
+              <div class="space-y-2">
+                <div class="hatch border border-red-300 rounded px-3 py-2 text-xs font-mono">:653 openRouterRequest — model + max_price + zdr + deny</div>
+                <div class="hatch border border-red-300 rounded px-3 py-2 text-xs font-mono">:865 stream arm — isFreeModel + cost</div>
+                <div class="hatch border border-red-300 rounded px-3 py-2 text-xs font-mono">:1278 structured arm — isFreeModel + cost</div>
+                <div class="hatch border border-red-300 rounded px-3 py-2 text-xs font-mono">:1329 /api/ai/status — literals restated</div>
+                <p class="text-xs text-red-700 pt-1">None assertable without a signed cookie and a global fetch stub.</p>
+              </div>
+            </div>
+            <div class="rounded-lg border-2 border-slate-900 bg-white p-4">
+              <p class="lbl text-slate-500 mb-3">After — one module, four callers</p>
+              <div class="space-y-2">
+                <div class="deep text-slate-100 rounded px-3 py-4 text-xs">
+                  <p class="font-medium mb-2">the free-route policy</p>
+                  <p class="font-mono opacity-80 leading-relaxed">buildUpstreamBody()<br/>acceptModel()<br/>acceptUsage()<br/>policyDisclosure()</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-[10px] font-mono text-slate-600">
+                  <div class="border border-slate-300 rounded px-2 py-1 text-center">stream</div>
+                  <div class="border border-slate-300 rounded px-2 py-1 text-center">structured</div>
+                  <div class="border border-slate-300 rounded px-2 py-1 text-center">request</div>
+                  <div class="border border-slate-300 rounded px-2 py-1 text-center">status</div>
+                </div>
+                <p class="text-xs text-slate-600 pt-1">Status <em>derives</em> its claim instead of restating it.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <p class="lbl text-slate-500 mb-1">Problem</p>
+              <p class="text-slate-700">The product's central safety claim exists as six checks in three shapes plus a hard-coded restatement in the status endpoint, none reachable without HTTP.</p>
+            </div>
+            <div>
+              <p class="lbl text-slate-500 mb-1">Solution</p>
+              <p class="text-slate-700">One module owns construction and acceptance of the free/zero-cost/ZDR invariants; the two transports and the status endpoint become its callers.</p>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-red-50 border border-red-200 p-4 text-sm">
+            <p class="font-medium text-red-900">Verified: a safety fix landed that the test surface cannot verify</p>
+            <p class="text-red-800 mt-1">Commit <span class="font-mono text-xs">4e67c7f</span> reordered the spread at <span class="font-mono text-xs">:653-672</span> so caller fields cannot override <span class="font-mono text-xs">max_price</span> / <span class="font-mono text-xs">zdr</span> / <span class="font-mono text-xs">data_collection</span>. The test comment at <span class="font-mono text-xs">tests/worker/ai-worker.test.ts:259-271</span> records, in the codebase's own words, that the test <em>"passes under both the old and new ordering — do not read a pass here as covering it."</em> The missing interface is already presenting its bill.</p>
+          </div>
+
+          <div>
+            <p class="lbl text-slate-500 mb-2">Wins</p>
+            <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-1 text-sm text-slate-700 list-disc list-inside">
+              <li>the ordering fix becomes assertable</li>
+              <li>locality: policy in one module</li>
+              <li>status stops drifting from truth</li>
+              <li>two transports, one policy</li>
+              <li>no cookie, no fetch stub</li>
+              <li>leverage: 4 call sites, 1 interface</li>
+            </ul>
+          </div>
+
+          <p class="text-xs text-slate-500 border-l-2 border-slate-300 pl-3">Deletion test: <span class="font-medium">reappears</span> — <span class="font-mono">isFreeModel</span> and <span class="font-mono">assertZeroReportedCost</span> already have two call sites each in two response shapes, and the status endpoint is a third, drift-prone restatement. Satisfies the two-adapter rule on the consumption side: streaming relay and structured JSON, one policy.</p>
+        </article>
+
+        <!-- ============ 4 ============ -->
+        <article id="c4" class="space-y-5 border-t border-slate-200 pt-12">
+          <div class="flex items-start justify-between gap-4 flex-wrap">
+            <h2 class="font-serif text-2xl">4 · State the workspace's referential rules once</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1">Strong</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 text-xs px-3 py-1">in-process</span>
+            </div>
+          </div>
+
+          <p class="font-mono text-sm text-slate-600">lib/db/repository.ts:265-271, :451-466, :515-535 (write path) · :711-758 (import path) · tests/unit/data-layer.test.ts:61-72 (by hand)</p>
+
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <pre class="mermaid">
+flowchart LR
+  subgraph WP[write path — per record]
+    M1[createReview :265]
+    M2[upsertActionPlan :451]
+    M3[upsertResourceRequest :515]
+  end
+  subgraph IP[import path — whole graph]
+    AR[assertReferentialIntegrity :711]
+  end
+  R{{same referential rules}}
+  M1 --> R
+  M2 --> R
+  M3 --> R
+  AR --> R
+  TH[data-layer.test.ts:61 — restated by hand] -.-> R
+  classDef dup fill:#fee2e2,stroke:#dc2626,stroke-width:2px;
+  class R dup
+            </pre>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <p class="lbl text-slate-500 mb-1">Problem</p>
+              <p class="text-slate-700">The same graph rules are written once per record on the write path and again over the whole workspace on import, so only one of them is the real definition of a valid workspace.</p>
+            </div>
+            <div>
+              <p class="lbl text-slate-500 mb-1">Solution</p>
+              <p class="text-slate-700">One <span class="font-medium">workspace integrity</span> module answers "does this record fit this workspace?" — consulted per-record by the write path and over the whole graph by import and reset.</p>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-red-50 border border-red-200 p-4 text-sm">
+            <p class="font-medium text-red-900">Verified: the two implementations have already drifted</p>
+            <p class="text-red-800 mt-1">For a resource request, the write path (<span class="font-mono text-xs">:515-535</span>) resolves <span class="font-mono text-xs">organizations.get(...)</span> and fails on <span class="font-mono text-xs">!organization</span>. The import path (<span class="font-mono text-xs">:733-746</span>) <span class="font-medium">never checks the organization exists</span> — it infers it transitively through the review. The null-guard differs too: <span class="font-mono text-xs">value.actionPlanId &amp;&amp;</span> versus <span class="font-mono text-xs">request.actionPlanId !== null</span>. Two implementations of one rule, already disagreeing about what a valid workspace is.</p>
+          </div>
+
+          <div>
+            <p class="lbl text-slate-500 mb-2">Wins</p>
+            <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-1 text-sm text-slate-700 list-disc list-inside">
+              <li>one definition of a valid workspace</li>
+              <li>write path and import path agree, provably</li>
+              <li>rules testable as plain values</li>
+              <li>largest block of Dexie tests needs no IndexedDB</li>
+            </ul>
+          </div>
+
+          <p class="text-xs text-slate-500 border-l-2 border-slate-300 pl-3">Deletion test: <span class="font-medium">reappears</span> across four callers — three mutators re-inline their joins, import re-inlines the graph walk, the seed test re-inlines its hand check. Biggest test-surface win in the cluster: today the same rule needs a seeded Dexie database on the write side and a second database plus a fixture file on the import side. Contradicts no ADR.</p>
+        </article>
+
+        <!-- ============ 5 ============ -->
+        <article id="c5" class="space-y-5 border-t border-slate-200 pt-12">
+          <div class="flex items-start justify-between gap-4 flex-wrap">
+            <h2 class="font-serif text-2xl"><span class="line-through decoration-2 decoration-slate-400">5 · Collapse the task ladders into a task table</span></h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="rounded-full bg-slate-800 text-slate-100 text-xs font-medium px-3 py-1">Killed by its own design pass</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 text-xs px-3 py-1">~15-line fix instead</span>
+            </div>
+          </div>
+
+          <p class="font-mono text-sm text-slate-600">worker/index.ts:45, :295-332, :992-1060, :1062-1107, :1163-1221, :1231-1234, :1348-1354</p>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="lbl text-slate-500 mb-3">Before — seven edit points per task</p>
+              <div class="space-y-1">
+                <div class="border-l-4 border-red-300 bg-red-50 px-3 py-1.5 text-[11px] font-mono">:45 StructuredTask union</div>
+                <div class="border-l-4 border-red-300 bg-red-50 px-3 py-1.5 text-[11px] font-mono">:1348 supported[] — hand-written</div>
+                <div class="border-l-4 border-red-300 bg-red-50 px-3 py-1.5 text-[11px] font-mono">:295 validateStructured</div>
+                <div class="border-l-4 border-red-300 bg-red-50 px-3 py-1.5 text-[11px] font-mono">:992 structuredSchema</div>
+                <div class="border-l-4 border-red-300 bg-red-50 px-3 py-1.5 text-[11px] font-mono">:1062 structuredPrompt</div>
+                <div class="border-l-4 border-red-300 bg-red-50 px-3 py-1.5 text-[11px] font-mono">:1163 validateStructuredResult</div>
+                <div class="border-l-4 border-red-300 bg-red-50 px-3 py-1.5 text-[11px] font-mono">:1231 maxTokens</div>
+              </div>
+            </div>
+            <div class="rounded-lg border-2 border-slate-900 bg-white p-4">
+              <p class="lbl text-slate-500 mb-3">After — one record per task</p>
+              <div class="deep text-slate-100 rounded px-4 py-4 text-[11px] font-mono leading-relaxed">
+                <p class="font-sans font-medium mb-2 text-xs">the task table</p>
+                analyze: { parseInput, schema,<br/>
+                &nbsp;&nbsp;prompt, maxTokens, validateResult }<br/>
+                expand: { … }<br/>
+                equity-check: { … }<br/>
+                socratic: { … }
+              </div>
+              <p class="text-xs text-slate-600 mt-3">A missing arm becomes a type error, not a silent fallthrough.</p>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm">
+            <p class="font-medium text-amber-900">Verified: three bare fallthroughs treat any unmatched task as socratic</p>
+            <p class="text-amber-800 mt-1"><span class="font-mono text-xs">:327</span>, <span class="font-mono text-xs">:1045</span> and <span class="font-mono text-xs">:1216</span> each end with an unguarded <span class="font-mono text-xs">return</span> that is the socratic arm. Only the hand-written <span class="font-mono text-xs">supported</span> array at <span class="font-mono text-xs">:1348</span> — <span class="font-medium">not derived from the <span class="font-mono">StructuredTask</span> union</span> — stops a fifth task from being silently validated as socratic in three places.</p>
+          </div>
+
+          <div>
+            <p class="lbl text-slate-500 mb-2">Wins</p>
+            <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-1 text-sm text-slate-700 list-disc list-inside">
+              <li>locality: one task, one record</li>
+              <li>exhaustiveness becomes a type error</li>
+              <li>seven edit points become one</li>
+              <li>arms testable as pure functions</li>
+            </ul>
+          </div>
+
+          <p class="text-xs text-slate-500 border-l-2 border-slate-300 pl-3">Deletion test: <span class="font-medium">reappears weakly</span> — the ladders are already written, so the gain is locality and exhaustiveness rather than removed complexity. A config table can read worse than an explicit switch. Sequence after the Strong candidates, and after 6 — which may shrink it from four arms to two.</p>
+        </article>
+
+        <!-- ============ 6 ============ -->
+        <article id="c6" class="space-y-5 border-t border-slate-200 pt-12">
+          <div class="flex items-start justify-between gap-4 flex-wrap">
+            <h2 class="font-serif text-2xl">6 · Delete three task shapes that have no caller</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="rounded-full bg-amber-100 text-amber-800 text-xs font-medium px-3 py-1">Worth exploring</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 text-xs px-3 py-1">deletion, not deepening</span>
+            </div>
+          </div>
+
+          <p class="font-mono text-sm text-slate-600">worker/index.ts (analyze · equity-check · socratic arms) · lib/ai/client.ts · lib/ai/contracts.ts</p>
+
+          <div class="rounded-lg border border-slate-200 bg-white p-5">
+            <p class="lbl text-slate-500 mb-4">Call sites in <span class="font-mono">app/</span> + <span class="font-mono">components/</span></p>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3"><span class="font-mono text-xs w-28">streamChat</span><div class="h-5 bg-emerald-500 rounded-sm" style="width:28px"></div><span class="text-xs text-slate-600">1</span></div>
+              <div class="flex items-center gap-3"><span class="font-mono text-xs w-28">expand</span><div class="h-5 bg-emerald-500 rounded-sm" style="width:28px"></div><span class="text-xs text-slate-600">1</span></div>
+              <div class="flex items-center gap-3"><span class="font-mono text-xs w-28">analyze</span><div class="h-5 hatch border border-red-300 rounded-sm" style="width:4px"></div><span class="text-xs text-red-700">0</span></div>
+              <div class="flex items-center gap-3"><span class="font-mono text-xs w-28">equityCheck</span><div class="h-5 hatch border border-red-300 rounded-sm" style="width:4px"></div><span class="text-xs text-red-700">0</span></div>
+              <div class="flex items-center gap-3"><span class="font-mono text-xs w-28">socratic</span><div class="h-5 hatch border border-red-300 rounded-sm" style="width:4px"></div><span class="text-xs text-red-700">0</span></div>
+            </div>
+            <p class="text-xs text-slate-600 mt-4">Each unused shape still carries an input validator, a JSON schema, a prompt builder, and field-by-field result revalidation in the Worker.</p>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <p class="lbl text-slate-500 mb-1">Problem</p>
+              <p class="text-slate-700">Three of five task shapes are fully built and fully validated with no caller, and they are three of the seven edit points in candidate 5.</p>
+            </div>
+            <div>
+              <p class="lbl text-slate-500 mb-1">Solution</p>
+              <p class="text-slate-700">Decide deliberately: ship a caller, or delete them. Not a deepening either way.</p>
+            </div>
+          </div>
+
+          <p class="text-xs text-slate-500 border-l-2 border-slate-300 pl-3">Deletion test: <span class="font-medium">vanishes</span> — nothing reappears, because nothing calls them. The one candidate where the honest recommendation may be to remove code rather than reshape it. <span class="font-medium">Product decision, not an architectural one</span> — if they are demo surface waiting on UI, keep them and say so.</p>
+        </article>
+
+        <!-- ============ 7 ============ -->
+        <article id="c7" class="space-y-5 border-t border-slate-200 pt-12">
+          <div class="flex items-start justify-between gap-4 flex-wrap">
+            <h2 class="font-serif text-2xl"><span class="line-through decoration-2 decoration-slate-400">7 · One SSE codec across the contract seam</span></h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="rounded-full bg-slate-800 text-slate-100 text-xs font-medium px-3 py-1">Killed by its own design pass</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 text-xs px-3 py-1">ports &amp; adapters</span>
+            </div>
+          </div>
+
+          <p class="font-mono text-sm text-slate-600">worker/index.ts:776-778 (sseEvent) · lib/ai/client.ts:169-236 · lib/ai/contracts.ts:148</p>
+
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <pre class="mermaid">
+flowchart LR
+  subgraph W[worker]
+    SE[sseEvent — encodes literals]
+  end
+  subgraph B[browser]
+    DP[dispatch — decodes literals]
+  end
+  CE["ChatStreamEvent (contracts.ts:148)"]
+  SE -. never used .-> CE
+  DP -. never used .-> CE
+  SE ==>|wire format, verified by hand-written string fixtures| DP
+  classDef unused fill:#fef3c7,stroke:#d97706,stroke-dasharray:4 4;
+  class CE unused
+            </pre>
+          </div>
+
+          <div class="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm">
+            <p class="font-medium text-amber-900">Verified — and it argues both ways</p>
+            <p class="text-amber-800 mt-1"><span class="font-mono text-xs">ChatStreamEvent</span> is defined at <span class="font-mono text-xs">contracts.ts:148</span> and referenced <span class="font-medium">nowhere else</span> — the interface was already named, then both sides bypassed it. But the extraction is smaller than it looks: the Worker's <span class="font-mono text-xs">consume</span> also decodes <em>OpenRouter's</em> SSE, a different format that would not move into a shared codec. Only the app-side encode/decode pair is genuinely duplicated.</p>
+          </div>
+
+          <p class="text-xs text-slate-500 border-l-2 border-slate-300 pl-3">Deletion test: <span class="font-medium">reappears, but less than the prior review implied</span> — rated Speculative on that basis; "two implementations of one thing" overstates it. Real but small: round-trip tests replace hand-written string fixtures, and the unused union stops being a lie. Note <span class="font-mono">client.ts:170</span> early-returns without resetting <span class="font-mono">currentEvent</span>, safe only because the one current adapter always emits <span class="font-mono">event:</span> and <span class="font-mono">data:</span> together — an interface leaning on an undocumented property of its only adapter.</p>
+        </article>
+
+      </section>
+
+      <section id="already-deep" class="border-t border-slate-200 pt-10">
+        <h2 class="font-serif text-xl mb-4">Checked and found already deep — leave alone</h2>
+        <div class="grid md:grid-cols-2 gap-x-10 gap-y-2 text-sm text-slate-700">
+          <p><span class="font-mono text-xs">lib/domain/derivations.ts</span> — pure, <span class="font-mono text-xs">WorkspaceData → WorkspaceDerivations</span>, no Dexie in its tests, and its tests actively police ADRs 0002 and 0003. The benchmark for the rest of the cluster.</p>
+          <p><span class="font-mono text-xs">components/workspace-provider.tsx</span> — deep on the read path; three states, one hook, two adapters, a self-consistent fixture.</p>
+          <p><span class="font-mono text-xs">worker/limits.ts</span>, <span class="font-mono text-xs">body.ts</span>, <span class="font-mono text-xs">stream.ts</span> — each hides several failure modes behind two or three arguments and is tested without constructing a route. The precedent candidates 2 and 3 should extend.</p>
+          <p><span class="font-mono text-xs">handleRequest</span> — <span class="font-mono text-xs">(Request, Env) → Response</span> over a 1400-line implementation. Textbook deep.</p>
+          <p><span class="font-mono text-xs">lib/domain/errors.ts</span> — closed code union, one normalizer, tested as plain values. The module is fine; candidate 1's problem is that the write path never calls it.</p>
+          <p><span class="font-mono text-xs">lib/utils/sanitize.ts</span>, <span class="font-mono text-xs">lib/db/database.ts</span> — both correctly small.</p>
+        </div>
+        <div class="rounded-lg bg-slate-100 border border-slate-300 p-4 text-sm mt-5">
+          <p class="font-medium text-slate-800">One vocabulary correction worth keeping</p>
+          <p class="text-slate-700 mt-1">The optional trailing <span class="font-mono text-xs">database</span> argument on the 17 exported repository functions is <span class="font-medium">not a seam</span> — <span class="font-mono text-xs">createDatabase(name)</span> returns the same class under a different IndexedDB name, so there is one implementation and zero adapters. It is a test-isolation parameter, and a legitimate one. The only real seam in that cluster is <span class="font-mono text-xs">useWorkspace()</span>.</p>
+        </div>
+      </section>
+
+      <section id="top-recommendation" class="border-t-2 border-slate-900 pt-8">
+        <p class="lbl text-slate-500 mb-3">Top recommendation</p>
+        <div class="rounded-xl deep text-slate-100 p-8 space-y-4">
+          <h2 class="font-serif text-3xl">Start with <a href="#c1" class="underline decoration-slate-500 underline-offset-4">the workspace commit</a>.</h2>
+          <p class="text-slate-300 leading-relaxed">It is the only candidate with defects <em>already shipped</em> rather than latent: a "Mission-Bot" filter button that can never match a record, and a raw <span class="font-mono text-sm">DOMException</span> reaching the user's notice line. It lands in <span class="font-mono text-sm">lib/**</span>, which the coverage gate measures — unlike the five repository callers in <span class="font-mono text-sm">app/**</span>, where every call-site defect was found. And it gives the write path the adapter the last review's candidate 3 only half-delivered, retiring three <span class="font-mono text-sm">vi.mock</span>s.</p>
+          <p class="text-slate-400 text-sm">Then <a href="#c2" class="underline decoration-slate-500 underline-offset-4">the demo session</a> before <a href="#c3" class="underline decoration-slate-500 underline-offset-4">the free-route policy</a> — policy assertions cost a cookie and a fetch stub today, which is exactly what the session interface removes. Both extend a seam that already works: <span class="font-mono">limits.ts</span>, <span class="font-mono">body.ts</span> and <span class="font-mono">stream.ts</span> throw plain errors that <span class="font-mono">index.ts</span> maps onto the public <span class="font-mono">AIErrorCode</span> union.</p>
+        </div>
+      </section>
+
+      <footer class="text-xs text-slate-400 border-t border-slate-200 pt-6">
+        Vocabulary from <span class="font-mono">/codebase-design</span>; domain terms from <span class="font-mono">CONTEXT.md</span>. ADRs 0001–0003 treated as decided; no candidate contradicts one. The <span class="font-mono">scripts/</span> cluster was not covered.
+      </footer>
+
+    </main>
+  </body>
+</html>
