@@ -266,6 +266,51 @@ describe("local workspace repository", () => {
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
+  it("records one activity per conversation, not per message", async () => {
+    // The Mission-Bot filter at app/(demo)/activity/page.tsx:38 filters on the
+    // "chat" entityType. Nothing ever wrote one, so the button could not match.
+    const before = await database.activities.where("entityType").equals("chat").count();
+    expect(before).toBe(0);
+
+    const thread = await addChatThread(
+      {
+        id: "thread-activity-check",
+        title: "Enrollment questions",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      database,
+    );
+
+    const afterThread = await database.activities
+      .where("entityType")
+      .equals("chat")
+      .toArray();
+    expect(afterThread).toHaveLength(1);
+    expect(afterThread[0]!.summary).toContain("Enrollment questions");
+
+    // Three messages must not add three more records.
+    for (const text of ["first", "second", "third"]) {
+      await addChatMessage(
+        {
+          id: `msg-${text}`,
+          threadId: thread.id,
+          role: "user",
+          content: text,
+          model: null,
+          requestId: null,
+          createdAt: new Date().toISOString(),
+        },
+        database,
+      );
+    }
+    const afterMessages = await database.activities
+      .where("entityType")
+      .equals("chat")
+      .count();
+    expect(afterMessages).toBe(1);
+  });
+
   it("surfaces a storage failure as a WorkspaceErrorCode, not a raw DOMException", async () => {
     // A DOMException *is* an Error, and review-editor.tsx:103 renders
     // error.message, so before this an out-of-space save showed the visitor the

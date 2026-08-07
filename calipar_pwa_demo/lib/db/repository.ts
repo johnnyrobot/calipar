@@ -668,7 +668,28 @@ async function addChatThreadImpl(
   database: CaliparDemoDB = defaultDb,
 ): Promise<ChatThread> {
   const thread = ChatThreadSchema.parse(value);
-  await database.chatThreads.put(thread);
+  // One activity record per conversation, not per message. ActivityRecordSchema
+  // has always declared a "chat" entityType and nothing ever wrote one, so the
+  // Mission-Bot filter at app/(demo)/activity/page.tsx:38 rendered, was
+  // pressable, and could never match. Starting a conversation is the act a
+  // visitor would recognise; a message is not, and per-message records would
+  // drown the feed the reviews and plans share.
+  const activity = createActivity(
+    "chat",
+    thread.id,
+    "chat.started",
+    `Started a Mission-Bot conversation: ${thread.title}.`,
+    thread.updatedAt,
+  );
+  await database.transaction(
+    "rw",
+    database.chatThreads,
+    database.activities,
+    async () => {
+      await database.chatThreads.put(thread);
+      await database.activities.add(activity);
+    },
+  );
   publish({ type: "chat.changed", entityId: thread.id, occurredAt: thread.updatedAt });
   return thread;
 }
