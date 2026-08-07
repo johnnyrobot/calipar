@@ -258,7 +258,58 @@ export async function getReview(
   return database.reviews.get(id);
 }
 
-export async function createReview(
+/**
+ * Every workspace mutation routes through this. Without it a storage failure —
+ * a quota exceeded, a blocked or corrupt database — escaped a mutator as a raw
+ * DOMException and was rendered straight to the visitor, because a DOMException
+ * *is* an Error and `components/review-editor.tsx:103` surfaces `error.message`.
+ * The WorkspaceErrorCode union promised a closed set of error modes that only
+ * the four whole-workspace paths actually honoured.
+ *
+ * `normalizeStorageError` is identity on WorkspaceError, so the domain errors
+ * these mutators raise deliberately — CONFLICT, VALIDATION_FAILED, NOT_FOUND —
+ * pass through untouched.
+ */
+/** How long consecutive edits to one review count as a single editing session. */
+const EDIT_COALESCE_MS = 5 * 60 * 1_000;
+
+/**
+ * The most recent `review.updated` record for this review, if it falls inside
+ * the coalescing window. Returns undefined when the last edit is old enough to
+ * deserve its own entry in the feed.
+ */
+async function findRecentEdit(
+  database: CaliparDemoDB,
+  reviewId: string,
+  now: string,
+): Promise<ActivityRecord | undefined> {
+  const candidates = await database.activities
+    .where("entityId")
+    .equals(reviewId)
+    .toArray();
+  const cutoff = new Date(now).getTime() - EDIT_COALESCE_MS;
+  return candidates
+    .filter(
+      (record) =>
+        record.action === "review.updated" &&
+        new Date(record.occurredAt).getTime() >= cutoff,
+    )
+    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))[0];
+}
+
+function guarded<A extends unknown[], R>(
+  run: (...args: A) => Promise<R>,
+): (...args: A) => Promise<R> {
+  return async (...args: A) => {
+    try {
+      return await run(...args);
+    } catch (error) {
+      throw normalizeStorageError(error);
+    }
+  };
+}
+
+async function createReviewImpl(
   input: CreateReviewInput,
   database: CaliparDemoDB = defaultDb,
 ): Promise<ReviewRecord> {
@@ -313,7 +364,7 @@ function sanitizeSections(
   return result;
 }
 
-export async function updateReview(
+async function updateReviewImpl(
   id: string,
   patch: UpdateReviewInput,
   expectedRevision?: number,
@@ -367,14 +418,24 @@ export async function updateReview(
     database.activities,
     async () => {
       await database.reviews.put(next);
-      await database.activities.add(activity);
+      // Coalesce, do not append. The editor autosaves on a 700ms debounce
+      // (components/review-editor.tsx:129), so appending produced one record
+      // per typing pause and buried reviews, plans and requests under a single
+      // editing session. An editing session is one act; the record's
+      // occurredAt moves to the latest save within the window.
+      const recent = await findRecentEdit(database, id, timestamp);
+      if (recent) {
+        await database.activities.update(recent.id, { occurredAt: timestamp });
+      } else {
+        await database.activities.add(activity);
+      }
     },
   );
   publish({ type: "review.changed", entityId: id, occurredAt: timestamp });
   return next;
 }
 
-export async function submitReview(
+async function submitReviewImpl(
   id: string,
   expectedRevision?: number,
   database: CaliparDemoDB = defaultDb,
@@ -389,13 +450,13 @@ export async function submitReview(
       "Only a draft review can be submitted.",
     );
   }
-  if (
-    expectedRevision !== undefined &&
-    expectedRevision !== existing.revision
-  ) {
+  if (expectedRevision !== undefined && existing.revision !== expectedRevision) {
     throw new WorkspaceError(
       "CONFLICT",
       "This review changed in another tab. Reload before submitting.",
+      {
+        details: { expectedRevision, actualRevision: existing.revision },
+      },
     );
   }
   const validation = validateReviewSubmission(existing);
@@ -435,18 +496,27 @@ export async function submitReview(
   return next;
 }
 
-export async function upsertActionPlan(
+async function upsertActionPlanImpl(
   value: ActionPlan,
   expectedRevision?: number,
   database: CaliparDemoDB = defaultDb,
 ): Promise<ActionPlan> {
   const existing = await database.actionPlans.get(value.id);
-  if (
-    existing &&
-    expectedRevision !== undefined &&
-    existing.revision !== expectedRevision
-  ) {
-    throw new WorkspaceError("CONFLICT", "This action plan changed in another tab.");
+  // `existing?.revision` rather than a guard on `existing`: an expected revision
+  // is a claim about a specific stored version, and a record that is gone
+  // falsifies that claim. Guarding on `existing` treated "it was deleted in
+  // another tab" as a create, silently resurrecting the record at revision 0.
+  if (expectedRevision !== undefined && existing?.revision !== expectedRevision) {
+    throw new WorkspaceError(
+      "CONFLICT",
+      "This action plan changed in another tab.",
+      {
+        details: {
+          expectedRevision,
+          actualRevision: existing?.revision ?? null,
+        },
+      },
+    );
   }
   const [review, organization, initiative] = await Promise.all([
     database.reviews.get(value.reviewId),
@@ -496,20 +566,25 @@ export async function upsertActionPlan(
   return next;
 }
 
-export async function upsertResourceRequest(
+async function upsertResourceRequestImpl(
   value: ResourceRequest,
   expectedRevision?: number,
   database: CaliparDemoDB = defaultDb,
 ): Promise<ResourceRequest> {
   const existing = await database.resourceRequests.get(value.id);
-  if (
-    existing &&
-    expectedRevision !== undefined &&
-    existing.revision !== expectedRevision
-  ) {
+  // See upsertActionPlan: guarding on `existing` let a stale tab resurrect a
+  // request another tab had deleted. `deleteResourceRequest` is wired to a
+  // button (app/(demo)/resources/page.tsx:93), so that race is reachable.
+  if (expectedRevision !== undefined && existing?.revision !== expectedRevision) {
     throw new WorkspaceError(
       "CONFLICT",
       "This resource request changed in another tab.",
+      {
+        details: {
+          expectedRevision,
+          actualRevision: existing?.revision ?? null,
+        },
+      },
     );
   }
   const [review, organization, actionPlan] = await Promise.all([
@@ -565,7 +640,7 @@ export async function upsertResourceRequest(
   return next;
 }
 
-export async function deleteResourceRequest(
+async function deleteResourceRequestImpl(
   id: string,
   database: CaliparDemoDB = defaultDb,
 ): Promise<void> {
@@ -597,7 +672,7 @@ export async function deleteResourceRequest(
   publish({ type: "resourceRequest.changed", entityId: id, occurredAt: timestamp });
 }
 
-export async function putPreference(
+async function putPreferenceImpl(
   key: string,
   value: unknown,
   database: CaliparDemoDB = defaultDb,
@@ -625,17 +700,38 @@ export async function getPreference<T>(
   return (record?.value as T | undefined) ?? fallback;
 }
 
-export async function addChatThread(
+async function addChatThreadImpl(
   value: ChatThread,
   database: CaliparDemoDB = defaultDb,
 ): Promise<ChatThread> {
   const thread = ChatThreadSchema.parse(value);
-  await database.chatThreads.put(thread);
+  // One activity record per conversation, not per message. ActivityRecordSchema
+  // has always declared a "chat" entityType and nothing ever wrote one, so the
+  // Mission-Bot filter at app/(demo)/activity/page.tsx:38 rendered, was
+  // pressable, and could never match. Starting a conversation is the act a
+  // visitor would recognise; a message is not, and per-message records would
+  // drown the feed the reviews and plans share.
+  const activity = createActivity(
+    "chat",
+    thread.id,
+    "chat.started",
+    `Started a Mission-Bot conversation: ${thread.title}.`,
+    thread.updatedAt,
+  );
+  await database.transaction(
+    "rw",
+    database.chatThreads,
+    database.activities,
+    async () => {
+      await database.chatThreads.put(thread);
+      await database.activities.add(activity);
+    },
+  );
   publish({ type: "chat.changed", entityId: thread.id, occurredAt: thread.updatedAt });
   return thread;
 }
 
-export async function addChatMessage(
+async function addChatMessageImpl(
   value: ChatMessage,
   database: CaliparDemoDB = defaultDb,
 ): Promise<ChatMessage> {
@@ -662,6 +758,16 @@ export async function addChatMessage(
   });
   return message;
 }
+
+export const createReview = guarded(createReviewImpl);
+export const updateReview = guarded(updateReviewImpl);
+export const submitReview = guarded(submitReviewImpl);
+export const upsertActionPlan = guarded(upsertActionPlanImpl);
+export const upsertResourceRequest = guarded(upsertResourceRequestImpl);
+export const deleteResourceRequest = guarded(deleteResourceRequestImpl);
+export const putPreference = guarded(putPreferenceImpl);
+export const addChatThread = guarded(addChatThreadImpl);
+export const addChatMessage = guarded(addChatMessageImpl);
 
 export async function resetWorkspace(
   database: CaliparDemoDB = defaultDb,

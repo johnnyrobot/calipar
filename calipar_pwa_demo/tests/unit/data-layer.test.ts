@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createDatabase, type CaliparDemoDB } from "@/lib/db/database";
 import {
@@ -264,6 +264,142 @@ describe("local workspace repository", () => {
     await expect(
       deleteResourceRequest(changedResource.id, database),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("coalesces an editing session into one activity record", async () => {
+    // review-editor.tsx:129 autosaves on a 700ms debounce, so appending gave
+    // one feed entry per typing pause and buried every other record type.
+    const seeded = (await listReviews(database))[0];
+    expect(seeded).toBeDefined();
+    const before = await database.activities
+      .where("entityId")
+      .equals(seeded!.id)
+      .filter((r) => r.action === "review.updated")
+      .count();
+
+    let revision = seeded!.revision;
+    for (let save = 0; save < 4; save += 1) {
+      const saved = await updateReview(
+        seeded!.id,
+        { sections: seeded!.sections },
+        revision,
+        database,
+      );
+      revision = saved.revision;
+    }
+
+    const after = await database.activities
+      .where("entityId")
+      .equals(seeded!.id)
+      .filter((r) => r.action === "review.updated")
+      .count();
+    expect(after).toBe(before + 1);
+  });
+
+  it("records one activity per conversation, not per message", async () => {
+    // The Mission-Bot filter at app/(demo)/activity/page.tsx:38 filters on the
+    // "chat" entityType. Nothing ever wrote one, so the button could not match.
+    const before = await database.activities.where("entityType").equals("chat").count();
+    expect(before).toBe(0);
+
+    const thread = await addChatThread(
+      {
+        id: "thread-activity-check",
+        title: "Enrollment questions",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      database,
+    );
+
+    const afterThread = await database.activities
+      .where("entityType")
+      .equals("chat")
+      .toArray();
+    expect(afterThread).toHaveLength(1);
+    expect(afterThread[0]!.summary).toContain("Enrollment questions");
+
+    // Three messages must not add three more records.
+    for (const text of ["first", "second", "third"]) {
+      await addChatMessage(
+        {
+          id: `msg-${text}`,
+          threadId: thread.id,
+          role: "user",
+          content: text,
+          model: null,
+          requestId: null,
+          createdAt: new Date().toISOString(),
+        },
+        database,
+      );
+    }
+    const afterMessages = await database.activities
+      .where("entityType")
+      .equals("chat")
+      .count();
+    expect(afterMessages).toBe(1);
+  });
+
+  it("surfaces a storage failure as a WorkspaceErrorCode, not a raw DOMException", async () => {
+    // A DOMException *is* an Error, and review-editor.tsx:103 renders
+    // error.message, so before this an out-of-space save showed the visitor the
+    // raw browser string instead of the authored copy in lib/domain/errors.ts.
+    const seeded = (await listReviews(database))[0];
+    expect(seeded).toBeDefined();
+    const quota = Object.assign(new Error("out of space"), {
+      name: "QuotaExceededError",
+    });
+    const transaction = vi
+      .spyOn(database, "transaction")
+      .mockRejectedValueOnce(quota as never);
+
+    await expect(
+      updateReview(seeded!.id, { sections: seeded!.sections }, undefined, database),
+    ).rejects.toMatchObject({ code: "STORAGE_QUOTA_EXCEEDED" });
+
+    transaction.mockRestore();
+  });
+
+  it("lets a deliberate domain error through the storage guard untouched", async () => {
+    // normalizeStorageError is identity on WorkspaceError. If that ever stops
+    // holding, every CONFLICT and VALIDATION_FAILED silently becomes a storage
+    // code, so the guard needs a test that it does not over-normalise.
+    await expect(
+      updateReview("review-does-not-exist", { sections: {} as never }, undefined, database),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("does not resurrect a resource request deleted in another tab", async () => {
+    // The multi-tab case the revision guard exists for. Tab A holds a request
+    // at revision 0; tab B deletes it. Tab A then saves. Guarding the revision
+    // check on `existing` skipped it entirely once the record was gone, so the
+    // save landed as a create at revision 0 and the delete was silently undone.
+    const request = await database.resourceRequests.get("resource-biology-tutors");
+    expect(request).toBeDefined();
+    const stale = { ...request!, amountCents: request!.amountCents + 100_000 };
+
+    await deleteResourceRequest(stale.id, database);
+    expect(await database.resourceRequests.get(stale.id)).toBeUndefined();
+
+    await expect(
+      upsertResourceRequest(stale, stale.revision, database),
+    ).rejects.toMatchObject({
+      code: "CONFLICT",
+      details: { expectedRevision: stale.revision, actualRevision: null },
+    });
+    expect(await database.resourceRequests.get(stale.id)).toBeUndefined();
+  });
+
+  it("still creates a resource request when no revision is expected", async () => {
+    // The strict guard must not break the create path: callers that omit
+    // `expectedRevision` are stating no claim about a stored version.
+    const request = await database.resourceRequests.get("resource-biology-tutors");
+    const fresh = { ...request!, id: "resource-brand-new", revision: 0 };
+    await deleteResourceRequest(request!.id, database);
+
+    const created = await upsertResourceRequest(fresh, undefined, database);
+    expect(created.id).toBe("resource-brand-new");
   });
 
   it("rejects inconsistent plan and resource relationships", async () => {
