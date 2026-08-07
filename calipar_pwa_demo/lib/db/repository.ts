@@ -258,7 +258,31 @@ export async function getReview(
   return database.reviews.get(id);
 }
 
-export async function createReview(
+/**
+ * Every workspace mutation routes through this. Without it a storage failure —
+ * a quota exceeded, a blocked or corrupt database — escaped a mutator as a raw
+ * DOMException and was rendered straight to the visitor, because a DOMException
+ * *is* an Error and `components/review-editor.tsx:103` surfaces `error.message`.
+ * The WorkspaceErrorCode union promised a closed set of error modes that only
+ * the four whole-workspace paths actually honoured.
+ *
+ * `normalizeStorageError` is identity on WorkspaceError, so the domain errors
+ * these mutators raise deliberately — CONFLICT, VALIDATION_FAILED, NOT_FOUND —
+ * pass through untouched.
+ */
+function guarded<A extends unknown[], R>(
+  run: (...args: A) => Promise<R>,
+): (...args: A) => Promise<R> {
+  return async (...args: A) => {
+    try {
+      return await run(...args);
+    } catch (error) {
+      throw normalizeStorageError(error);
+    }
+  };
+}
+
+async function createReviewImpl(
   input: CreateReviewInput,
   database: CaliparDemoDB = defaultDb,
 ): Promise<ReviewRecord> {
@@ -313,7 +337,7 @@ function sanitizeSections(
   return result;
 }
 
-export async function updateReview(
+async function updateReviewImpl(
   id: string,
   patch: UpdateReviewInput,
   expectedRevision?: number,
@@ -374,7 +398,7 @@ export async function updateReview(
   return next;
 }
 
-export async function submitReview(
+async function submitReviewImpl(
   id: string,
   expectedRevision?: number,
   database: CaliparDemoDB = defaultDb,
@@ -435,7 +459,7 @@ export async function submitReview(
   return next;
 }
 
-export async function upsertActionPlan(
+async function upsertActionPlanImpl(
   value: ActionPlan,
   expectedRevision?: number,
   database: CaliparDemoDB = defaultDb,
@@ -505,7 +529,7 @@ export async function upsertActionPlan(
   return next;
 }
 
-export async function upsertResourceRequest(
+async function upsertResourceRequestImpl(
   value: ResourceRequest,
   expectedRevision?: number,
   database: CaliparDemoDB = defaultDb,
@@ -579,7 +603,7 @@ export async function upsertResourceRequest(
   return next;
 }
 
-export async function deleteResourceRequest(
+async function deleteResourceRequestImpl(
   id: string,
   database: CaliparDemoDB = defaultDb,
 ): Promise<void> {
@@ -611,7 +635,7 @@ export async function deleteResourceRequest(
   publish({ type: "resourceRequest.changed", entityId: id, occurredAt: timestamp });
 }
 
-export async function putPreference(
+async function putPreferenceImpl(
   key: string,
   value: unknown,
   database: CaliparDemoDB = defaultDb,
@@ -639,7 +663,7 @@ export async function getPreference<T>(
   return (record?.value as T | undefined) ?? fallback;
 }
 
-export async function addChatThread(
+async function addChatThreadImpl(
   value: ChatThread,
   database: CaliparDemoDB = defaultDb,
 ): Promise<ChatThread> {
@@ -649,7 +673,7 @@ export async function addChatThread(
   return thread;
 }
 
-export async function addChatMessage(
+async function addChatMessageImpl(
   value: ChatMessage,
   database: CaliparDemoDB = defaultDb,
 ): Promise<ChatMessage> {
@@ -676,6 +700,16 @@ export async function addChatMessage(
   });
   return message;
 }
+
+export const createReview = guarded(createReviewImpl);
+export const updateReview = guarded(updateReviewImpl);
+export const submitReview = guarded(submitReviewImpl);
+export const upsertActionPlan = guarded(upsertActionPlanImpl);
+export const upsertResourceRequest = guarded(upsertResourceRequestImpl);
+export const deleteResourceRequest = guarded(deleteResourceRequestImpl);
+export const putPreference = guarded(putPreferenceImpl);
+export const addChatThread = guarded(addChatThreadImpl);
+export const addChatMessage = guarded(addChatMessageImpl);
 
 export async function resetWorkspace(
   database: CaliparDemoDB = defaultDb,

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createDatabase, type CaliparDemoDB } from "@/lib/db/database";
 import {
@@ -263,6 +263,35 @@ describe("local workspace repository", () => {
     expect(await database.resourceRequests.get(changedResource.id)).toBeUndefined();
     await expect(
       deleteResourceRequest(changedResource.id, database),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("surfaces a storage failure as a WorkspaceErrorCode, not a raw DOMException", async () => {
+    // A DOMException *is* an Error, and review-editor.tsx:103 renders
+    // error.message, so before this an out-of-space save showed the visitor the
+    // raw browser string instead of the authored copy in lib/domain/errors.ts.
+    const seeded = (await listReviews(database))[0];
+    expect(seeded).toBeDefined();
+    const quota = Object.assign(new Error("out of space"), {
+      name: "QuotaExceededError",
+    });
+    const transaction = vi
+      .spyOn(database, "transaction")
+      .mockRejectedValueOnce(quota as never);
+
+    await expect(
+      updateReview(seeded!.id, { sections: seeded!.sections }, undefined, database),
+    ).rejects.toMatchObject({ code: "STORAGE_QUOTA_EXCEEDED" });
+
+    transaction.mockRestore();
+  });
+
+  it("lets a deliberate domain error through the storage guard untouched", async () => {
+    // normalizeStorageError is identity on WorkspaceError. If that ever stops
+    // holding, every CONFLICT and VALIDATION_FAILED silently becomes a storage
+    // code, so the guard needs a test that it does not over-normalise.
+    await expect(
+      updateReview("review-does-not-exist", { sections: {} as never }, undefined, database),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
