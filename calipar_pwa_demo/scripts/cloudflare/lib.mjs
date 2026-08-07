@@ -271,8 +271,23 @@ export function assertRemoteVersionExists(versionId) {
   } catch {
     fail("Wrangler versions output was not valid JSON.");
   }
-  const serialized = JSON.stringify(versions);
-  if (!serialized.includes(versionId)) {
+  // Match the id field structurally. This used to be
+  // `JSON.stringify(versions).includes(versionId)`, which a version UUID
+  // appearing anywhere in the blob would satisfy — inside a deploy message, a
+  // tag, or an annotation. The entire job of this guard is to refuse to
+  // promote or roll back to a version that does not exist, so a substring hit
+  // is not good enough.
+  const list = Array.isArray(versions)
+    ? versions
+    : Array.isArray(versions?.versions)
+      ? versions.versions
+      : null;
+  if (!list) {
+    fail(
+      "Wrangler versions output was not a recognisable version list; refusing to treat it as a match.",
+    );
+  }
+  if (!list.some((version) => version?.id?.toLowerCase?.() === versionId)) {
     fail(
       `version ${versionId} is not present in the current ${PROJECT_NAME} version list.`,
     );
