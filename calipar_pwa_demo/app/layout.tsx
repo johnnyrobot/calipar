@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { WorkspaceProvider } from "@/components/workspace-provider";
 import { PwaBridge } from "@/components/pwa-bridge";
 import "@/styles/globals.css";
 
@@ -46,10 +45,16 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <a className="skip-link" href="#main-content">
           Skip to main content
         </a>
-        <WorkspaceProvider>
-          <PwaBridge />
-          {children}
-        </WorkspaceProvider>
+        {/*
+          WorkspaceProvider is deliberately NOT here. It is the IndexedDB read
+          path, so mounting it at the root pulled Dexie, Zod, the repository and
+          the sanitiser into the shared bundle for every route — including the
+          landing page and the offline shell, which touch no workspace data. It
+          lives in `app/(demo)/layout.tsx`, which is where every `useWorkspace`
+          caller actually is.
+        */}
+        <PwaBridge />
+        {children}
       </body>
     </html>
   );
