@@ -18,6 +18,7 @@ import {
   buildUpstreamBody,
   PolicyViolation,
 } from "./policy";
+import { issueSession, readSession } from "./session";
 import { StreamBudget, StreamLimitExceeded } from "./stream";
 
 export interface RateLimitBinding {
@@ -50,12 +51,9 @@ export interface ExecutionContextLike {
 type JsonRecord = Record<string, unknown>;
 type StructuredTask = "analyze" | "expand" | "equity-check" | "socratic";
 
-const SESSION_COOKIE = "calipar_ai_session";
-const SESSION_SECONDS = 30 * 60;
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const OPENROUTER_TIMEOUT_MS = 45_000;
 const encoder = new TextEncoder();
-const decoder = new TextDecoder();
 
 const API_HEADERS = {
   "Cache-Control": "no-store",
@@ -337,107 +335,6 @@ function validateStructured(
   };
 }
 
-function base64Url(bytes: Uint8Array): string {
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-}
-
-function fromBase64Url(value: string): Uint8Array<ArrayBuffer> {
-  const padded = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(
-    Math.ceil(value.length / 4) * 4,
-    "=",
-  );
-  const binary = atob(padded);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-  return bytes;
-}
-
-async function hmacKey(secret: string): Promise<CryptoKey> {
-  return crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign", "verify"],
-  );
-}
-
-async function signSession(
-  sessionId: string,
-  secret: string,
-): Promise<string> {
-  const payload = base64Url(
-    encoder.encode(
-      JSON.stringify({
-        sid: sessionId,
-        exp: Math.floor(Date.now() / 1_000) + SESSION_SECONDS,
-      }),
-    ),
-  );
-  const signature = new Uint8Array(
-    await crypto.subtle.sign("HMAC", await hmacKey(secret), encoder.encode(payload)),
-  );
-  return `${payload}.${base64Url(signature)}`;
-}
-
-async function verifySession(
-  token: string | undefined,
-  secret: string,
-): Promise<string | null> {
-  if (!token) return null;
-  const [payload, signature, extra] = token.split(".");
-  if (!payload || !signature || extra) return null;
-  let valid = false;
-  try {
-    valid = await crypto.subtle.verify(
-      "HMAC",
-      await hmacKey(secret),
-      fromBase64Url(signature),
-      encoder.encode(payload),
-    );
-  } catch {
-    return null;
-  }
-  if (!valid) return null;
-  try {
-    const parsed = JSON.parse(decoder.decode(fromBase64Url(payload))) as {
-      sid?: unknown;
-      exp?: unknown;
-    };
-    if (
-      typeof parsed.sid !== "string" ||
-      parsed.sid.length > 128 ||
-      typeof parsed.exp !== "number" ||
-      parsed.exp <= Math.floor(Date.now() / 1_000)
-    ) {
-      return null;
-    }
-    return parsed.sid;
-  } catch {
-    return null;
-  }
-}
-
-function cookieValue(request: Request, name: string): string | undefined {
-  const cookie = request.headers.get("Cookie");
-  if (!cookie) return undefined;
-  for (const part of cookie.split(";")) {
-    const separator = part.indexOf("=");
-    if (separator === -1) continue;
-    if (part.slice(0, separator).trim() === name) {
-      return decodeURIComponent(part.slice(separator + 1).trim());
-    }
-  }
-  return undefined;
-}
-
 function sessionSecret(env: Env): string {
   if (!env.AI_SESSION_SECRET || env.AI_SESSION_SECRET.length < 32) {
     throw new ApiError(
@@ -475,10 +372,7 @@ function policyError(error: PolicyViolation): ApiError {
 }
 
 async function requireSession(request: Request, env: Env): Promise<string> {
-  const sessionId = await verifySession(
-    cookieValue(request, SESSION_COOKIE),
-    sessionSecret(env),
-  );
+  const sessionId = await readSession(request, sessionSecret(env));
   if (!sessionId) {
     throw new ApiError(
       "AI_SESSION_REQUIRED",
@@ -561,13 +455,10 @@ async function createSession(
       "Verification was not accepted. Please try again.",
     );
   }
-  const signed = await signSession(crypto.randomUUID(), sessionSecret(env));
+  const { cookie, expiresIn } = await issueSession(sessionSecret(env));
   const headers = new Headers();
-  headers.set(
-    "Set-Cookie",
-    `${SESSION_COOKIE}=${encodeURIComponent(signed)}; Max-Age=${SESSION_SECONDS}; Path=/api/ai; HttpOnly; Secure; SameSite=Strict`,
-  );
-  return jsonResponse({ ok: true, expiresIn: SESSION_SECONDS }, { headers });
+  headers.set("Set-Cookie", cookie);
+  return jsonResponse({ ok: true, expiresIn }, { headers });
 }
 
 function configured(env: Env): boolean {

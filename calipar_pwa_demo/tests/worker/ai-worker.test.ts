@@ -7,6 +7,7 @@ import {
   type RateLimitBinding,
 } from "../../worker/index";
 import { buildUpstreamBody } from "../../worker/policy";
+import { issueSession } from "../../worker/session";
 
 const origin = "https://calipar.example";
 const sessionSecret = "test-session-secret-that-is-longer-than-32-characters";
@@ -591,11 +592,19 @@ describe("CALIPAR AI Worker", () => {
     expect(weakSecret.status).toBe(503);
   });
 
-  it("rejects tampered, expired-shaped, and malformed session cookies", async () => {
+  it("rejects tampered, expired, and malformed session cookies", async () => {
     const targetEnv = env();
     const cookie = await createCookie(targetEnv);
+    // Genuinely expired, not merely expired-*shaped*: minted against a clock an
+    // hour in the past, so its 30-minute window closed 30 minutes ago. Before
+    // `worker/session.ts` took an injectable clock this variant could not be
+    // constructed, and this test carried the name without the case.
+    const expired = (
+      await issueSession(sessionSecret, () => Date.now() - 60 * 60 * 1_000)
+    ).cookie.split(";")[0]!;
     const variants = [
       `${cookie}tampered`,
+      expired,
       "calipar_ai_session=missing-signature",
       "irrelevant; calipar_ai_session=bad.payload.extra",
     ];

@@ -75,7 +75,7 @@ Import/export: `exportWorkspace` emits a versioned envelope (`format`/`schemaVer
 
 `worker/index.ts` is the router and the `fetch` handler. Non-`/api/` requests fall through to `env.ASSETS`; Cloudflare's `run_worker_first: ["/api/*"]` means static requests normally never reach it at all.
 
-Four sibling modules hold the safety controls, each unit-tested directly without constructing a route:
+Five sibling modules hold the safety controls, each unit-tested directly without constructing a route:
 
 | File | Responsibility |
 | --- | --- |
@@ -83,6 +83,7 @@ Four sibling modules hold the safety controls, each unit-tested directly without
 | `worker/body.ts` | `readBoundedJson` / `readBoundedText` — the byte ceiling enforced *during* the read, `BodyTooLarge`, `BodyInvalid` |
 | `worker/stream.ts` | `StreamBudget` / `StreamLimitExceeded` — four output ceilings the SSE relay consults on every read |
 | `worker/policy.ts` | `buildUpstreamBody` (invariants written last, so no payload can override them), `assertFreeModel`, `assertZeroCost`, `PolicyViolation` |
+| `worker/session.ts` | `issueSession` (owns the whole `Set-Cookie`), `readSession`, `verifySessionToken`, `base64Url`. Takes an injected clock, which is what makes expiry testable |
 
 They throw plain errors, never `ApiError` (which is not exported), and `index.ts` maps them onto the public `AIErrorCode` union at the boundary. That is what keeps them importable in isolation.
 
