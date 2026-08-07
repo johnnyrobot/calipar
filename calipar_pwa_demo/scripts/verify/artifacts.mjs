@@ -55,7 +55,22 @@ if (files.length > 20_000) {
   errors.push(`Export contains ${files.length} assets; Cloudflare Free allows 20,000.`);
 }
 
-const textExtensions = /\.(?:html|js|mjs|css|json|map|txt|xml|webmanifest)$/i;
+// Scan everything that is not demonstrably binary, rather than an allowlist of
+// text extensions. The allowlist silently shrank as the export grew: measured
+// against a real build it skipped `_headers`, `.assetsignore` and four `.svg`
+// files — six shipped text files, and SVG can carry arbitrary strings. An
+// allowlist has to be updated every time a new asset type appears, and nothing
+// fails when it is not; a NUL-byte sniff is wrong only for text files that
+// contain a NUL, which do not ship here.
+const binaryExtensions =
+  /\.(?:png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|eot|mp[34]|webm|ogg|pdf|zip|gz|br|wasm)$/i;
+
+function isProbablyText(file) {
+  if (binaryExtensions.test(file)) return false;
+  const head = readFileSync(file).subarray(0, 8_000);
+  return !head.includes(0);
+}
+
 const secretPatterns = [
   /sk-or-v1-[A-Za-z0-9_-]{20,}/,
   /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
@@ -65,7 +80,9 @@ const secretPatterns = [
   /AI_SESSION_SECRET\s*[:=]\s*["'][^"']+["']/,
 ];
 
-for (const file of files.filter((candidate) => textExtensions.test(candidate))) {
+let scanned = 0;
+for (const file of files.filter(isProbablyText)) {
+  scanned += 1;
   const contents = readFileSync(file, "utf8");
   for (const pattern of secretPatterns) {
     if (pattern.test(contents)) {
@@ -87,6 +104,7 @@ if (errors.length > 0) {
     )
     .digest("hex");
   console.log(
-    `Verified ${files.length} exported assets; manifest digest ${digest.slice(0, 16)}.`,
+    `Verified ${files.length} exported assets ` +
+      `(${scanned} scanned for secrets); manifest digest ${digest.slice(0, 16)}.`,
   );
 }

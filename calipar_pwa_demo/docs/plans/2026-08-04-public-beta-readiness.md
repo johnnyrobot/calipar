@@ -1670,9 +1670,17 @@ Each of these must be run and seen red **before** the fix:
 ## End-to-end, against the real preview
 
 1. `uptime` — confirm the host is quiet before trusting any browser verdict.
-2. `npm ci && npm run verify:full` under Node 20.
+2. `npm ci && npm run verify:full` under Node 22.19+ (<23). The Node 20 floor
+   this step used to name was wrong — `jsdom@30` pulls `undici@8`, which needs
+   `webidl.util.markAsUncloneable`, so every jsdom test file fails to start its
+   worker on Node 20.
 3. `npm run cloudflare:preview` → record the exact version UUID and URL.
-4. `node scripts/verify/headers.mjs <exact-preview-url>`.
+4. `npm run verify:preview -- <exact-preview-url>`. This replaced
+   `scripts/verify/headers.mjs`, which was deleted 2026-08-07: it asserted only
+   content types plus `cache-control` on `/sw.js`, which is why it did not catch
+   the `_headers` append defect fixed in `f680b37`. `verify:preview` carries an
+   explicit guard for that defect and covers routes, CSP, the PWA surface and
+   the API error envelope.
 5. Mint a fresh session cookie in the browser; `PW_BASE_URL=<url> LIVE_AI_SESSION_COOKIE=<value> npm run test:ai:live`.
 6. Abuse check against the live preview: three session mints in a minute → the third is 429; twenty-one task requests from one address in a minute → the twenty-first is 429.
 7. Offline check: load, go offline, navigate, confirm local CRUD works and AI reports unavailable with nothing queued.
